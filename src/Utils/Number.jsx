@@ -14,6 +14,7 @@ function formatAmount(a) {
     : a;
 }
 
+// Load functions through `onLoad` callback
 const { onLoad } = props;
 if (onLoad && typeof onLoad === "function") {
   onLoad({
