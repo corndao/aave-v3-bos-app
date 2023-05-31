@@ -1,3 +1,5 @@
+// Define functions in the module
+
 function formatDate(timestamp) {
   const d = new Date(timestamp);
   return [
@@ -17,13 +19,20 @@ function formatDateTime(timestamp) {
   return formatDate(timestamp) + " " + time;
 }
 
+// --- End of functions definition ---
+
 // Load functions through `onLoad` callback
-const { onLoad } = props;
-if (onLoad && typeof onLoad === "function") {
-  onLoad({
-    formatDate,
-    formatDateTime,
-  });
+function exportFunctions(functions) {
+  const { onLoad } = props;
+  if (onLoad && typeof onLoad === "function") {
+    onLoad(functions);
+  }
 }
+
+// Export functions
+exportFunctions({
+  formatDate,
+  formatDateTime,
+});
 
 return <div style={{ display: "none" }} />;

@@ -1,3 +1,5 @@
+// Define functions in the module
+
 function isValid(a) {
   if (!a) return false;
   if (isNaN(Number(a))) return false;
@@ -14,13 +16,20 @@ function formatAmount(a) {
     : a;
 }
 
+// --- End of functions definition ---
+
 // Load functions through `onLoad` callback
-const { onLoad } = props;
-if (onLoad && typeof onLoad === "function") {
-  onLoad({
-    isValid,
-    formatAmount,
-  });
+function exportFunctions(functions) {
+  const { onLoad } = props;
+  if (onLoad && typeof onLoad === "function") {
+    onLoad(functions);
+  }
 }
+
+// Export functions
+exportFunctions({
+  isValid,
+  formatAmount,
+});
 
 return <div style={{ display: "none" }} />;

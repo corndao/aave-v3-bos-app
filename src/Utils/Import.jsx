@@ -1,5 +1,8 @@
+// `modules` are an array of components path who must have an `onLoad` callback props that return functions
+// `onLoad` needs to be defined in the parent component for receiving the loaded functions
 const { modules, onLoad } = props;
 
+// Helper function
 function hasCommonKeys(a, b) {
   if (!a || !b) return false;
   const commonKeys = Object.keys(a).filter((key) => key in b);
@@ -11,7 +14,7 @@ State.init({
   loadedModules: 0,
 });
 
-// Import functions to state.imports
+// Import functions from modules
 function importFunctions(imports) {
   const loadedModules = state.loadedModules;
   if (!state.imports) {
@@ -39,8 +42,7 @@ function importFunctions(imports) {
   }
 }
 
-// Imported functions
-const imported = !modules ? (
+const importedModules = !modules ? (
   <div />
 ) : (
   <>
@@ -50,4 +52,4 @@ const imported = !modules ? (
   </>
 );
 
-return <div style={{ display: "none" }}>{imported}</div>;
+return <div style={{ display: "none" }}>{importedModules}</div>;
