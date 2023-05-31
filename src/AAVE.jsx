@@ -44,7 +44,9 @@ const body = !state.imports ? (
 
 return (
   <div>
+    {/* Component Head */}
     <Widget src={`${config.ownerId}/widget/Utils.Number`} props={{ onLoad }} />
+    {/* Component Body */}
     {body}
   </div>
 );
