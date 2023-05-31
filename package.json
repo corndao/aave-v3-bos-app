@@ -1,0 +1,40 @@
+{
+  "name": "aave-v3-bos-app",
+  "version": "0.0.0",
+  "description": "AAVE v3 App on BOS",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install",
+    "start:testnet": "APP_TESTNET_URL=https://test.near.org/aave-v3.testnet/widget/AAVE && open $APP_TESTNET_URL && echo \"Preview at: $APP_TESTNET_URL\"",
+    "dev": "yarn start:testnet && bos-loader aave-v3.testnet --path src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/corndao/aave-v3-bos-app.git"
+  },
+  "keywords": [
+    "aave",
+    "bos",
+    "component"
+  ],
+  "author": "Cornerstone",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/corndao/aave-v3-bos-app/issues"
+  },
+  "homepage": "https://github.com/corndao/aave-v3-bos-app#readme",
+  "engines": {
+    "node": ">=14"
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "es5"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.2",
+    "prettier": "^2.8.8"
+  }
+}
