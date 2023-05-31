@@ -16,7 +16,6 @@ function formatAmount(a) {
 
 const { onLoad } = props;
 if (onLoad && typeof onLoad === "function") {
-  console.log("onLoad");
   onLoad({
     isValid,
     formatAmount,
