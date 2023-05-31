@@ -23,12 +23,11 @@ function importFunctions(imports) {
       loadedModules: loadedModules + 1,
     });
   } else if (!hasCommonKeys(state.imports, imports)) {
-    const updated = {
-      ...state.imports,
-      ...imports,
-    };
     State.update({
-      imports: updated,
+      imports: {
+        ...state.imports,
+        ...imports,
+      },
       loadedModules: loadedModules + 1,
     });
   }
