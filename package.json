@@ -1,16 +1,16 @@
 {
-  "name": "bos-emoji-search",
-  "version": "0.0.1",
-  "description": "Emoji Search on BOS",
+  "name": "aave-bos-app",
+  "version": "0.0.0",
+  "description": "AAVE v3 App on BOS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky install",
-    "start:testnet": "APP_TESTNET_URL=https://test.near.org/emoji-search.testnet/widget/EmojiSearch && open $APP_TESTNET_URL && echo \"Preview at: $APP_TESTNET_URL\"",
-    "dev": "yarn start:testnet && bos-loader emoji-search.testnet --path src"
+    "start:testnet": "APP_TESTNET_URL=https://test.near.org/aave-v3.testnet/widget/AAVE && open $APP_TESTNET_URL && echo \"Preview at: $APP_TESTNET_URL\"",
+    "dev": "yarn start:testnet && bos-loader aave-v3.testnet --path src"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openwebbuild/bos-emoji-search.git"
+    "url": "git+https://github.com/corndao/aave-v3-bos-app.git"
   },
   "keywords": [
     "emoji",
@@ -18,12 +18,12 @@
     "bos",
     "component"
   ],
-  "author": "think-in-universe",
+  "author": "Cornerstone",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/openwebbuild/bos-emoji-search/issues"
+    "url": "https://github.com/corndao/aave-v3-bos-app/issues"
   },
-  "homepage": "https://github.com/openwebbuild/bos-emoji-search#readme",
+  "homepage": "https://github.com/corndao/aave-v3-bos-app#readme",
   "engines": {
     "node": ">=14"
   },
