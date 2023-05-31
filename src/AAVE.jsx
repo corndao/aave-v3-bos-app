@@ -21,7 +21,7 @@ State.init({
 });
 
 // Import functions to state.imports
-function onLoad(imports) {
+function importFunctions(imports) {
   if (!state.imports) {
     State.update({
       imports,
@@ -45,7 +45,10 @@ const body = !state.imports ? (
 return (
   <div>
     {/* Component Head */}
-    <Widget src={`${config.ownerId}/widget/Utils.Number`} props={{ onLoad }} />
+    <Widget
+      src={`${config.ownerId}/widget/Utils.Number`}
+      props={{ onLoad: importFunctions }}
+    />
     {/* Component Body */}
     {body}
   </div>
