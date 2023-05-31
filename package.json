@@ -1,5 +1,5 @@
 {
-  "name": "aave-bos-app",
+  "name": "aave-v3-bos-app",
   "version": "0.0.0",
   "description": "AAVE v3 App on BOS",
   "scripts": {
