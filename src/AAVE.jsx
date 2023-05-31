@@ -31,13 +31,12 @@ function importFunctions(imports) {
   }
 }
 
-// Define the modules you'd like to load here
+// Define the modules you'd like to import
 const modules = [
   `${config.ownerId}/widget/Utils.Number`,
   `${config.ownerId}/widget/Utils.Date`,
 ];
-
-// Imported functions
+// Import functions
 const { formatAmount, formatDateTime } = state.imports;
 
 // Component body
