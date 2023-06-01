@@ -2,42 +2,29 @@
 // `onLoad` needs to be defined in the parent component for receiving the loaded functions
 const { modules, onLoad } = props;
 
-// Helper function
-function hasCommonKeys(a, b) {
-  if (!a || !b) return false;
-  const commonKeys = Object.keys(a).filter((key) => key in b);
-  return commonKeys.length > 0;
-}
-
 State.init({
-  imports: null,
+  modules: {},
   loadedModules: 0,
 });
 
 // Import functions from modules
-function importFunctions(imports) {
+function importFunctions(name, functions) {
+  const modules = state.modules;
   const loadedModules = state.loadedModules;
-  if (!state.imports) {
+  if (!modules[name]) {
+    modules[name] = functions;
     State.update({
-      imports,
-      loadedModules: loadedModules + 1,
-    });
-  } else if (!hasCommonKeys(state.imports, imports)) {
-    State.update({
-      imports: {
-        ...state.imports,
-        ...imports,
-      },
+      modules,
       loadedModules: loadedModules + 1,
     });
   }
   // invoke `onLoad` if all modules are ready
   if (
-    state.loadedModules >= modules.length &&
+    state.loadedModules === Object.keys(modules).length &&
     onLoad &&
     typeof onLoad === "function"
   ) {
-    onLoad(state.imports);
+    onLoad(state.modules);
   }
 }
 
@@ -45,8 +32,11 @@ const importedModules = !modules ? (
   <div />
 ) : (
   <>
-    {modules.map((path) => (
-      <Widget src={path} props={{ onLoad: importFunctions }} />
+    {Object.entries(modules).map(([name, path]) => (
+      <Widget
+        src={path}
+        props={{ onLoad: (functions) => importFunctions(name, functions) }}
+      />
     ))}
   </>
 );
