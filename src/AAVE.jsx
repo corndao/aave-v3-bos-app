@@ -38,8 +38,7 @@ const modules = [
   `${config.ownerId}/widget/Utils.Data`,
 ];
 // Import functions
-const { formatAmount, formatDateTime, getReservesData, getStakedBalance } =
-  state.imports;
+const { formatAmount, formatDateTime, getReservesData } = state.imports;
 
 // Component body
 const body = !state.imports ? (
@@ -50,7 +49,6 @@ const body = !state.imports ? (
     <div>Time: {formatDateTime(Date.now())}</div>
     <div>Price: {formatAmount("1.001")}</div>
     <div>{getReservesData()}</div>
-    <div>{getStakedBalance("0xae7ab96520de3a18e5e111b5eaab095312d7fe84")}</div>
   </div>
 );
 
