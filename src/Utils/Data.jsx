@@ -48,7 +48,6 @@ function exportFunctions(functions) {
 // Export functions
 exportFunctions({
   getReservesData,
-  getStakedBalance,
 });
 
 return <div style={{ display: "none" }} />;
