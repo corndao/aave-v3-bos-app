@@ -19,12 +19,14 @@ const config = getConfig(context.networkId);
 
 // App states
 State.init({
-  imports: null,
+  imports: {},
 });
+
+const loading = Object.keys(state.imports).length === 0;
 
 // Import functions to state.imports
 function importFunctions(imports) {
-  if (!state.imports) {
+  if (loading) {
     State.update({
       imports,
     });
@@ -32,15 +34,16 @@ function importFunctions(imports) {
 }
 
 // Define the modules you'd like to import
-const modules = [
-  `${config.ownerId}/widget/Utils.Number`,
-  `${config.ownerId}/widget/Utils.Date`,
-];
+const modules = {
+  number: `${config.ownerId}/widget/Utils.Number`,
+  date: `${config.ownerId}/widget/Utils.Date`,
+};
 // Import functions
-const { formatAmount, formatDateTime } = state.imports;
+const { formatAmount } = state.imports.number;
+const { formatDateTime } = state.imports.date;
 
 // Component body
-const body = !state.imports ? (
+const body = loading ? (
   "Loading..."
 ) : (
   <div>

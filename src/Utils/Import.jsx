@@ -1,43 +1,27 @@
-// `modules` are an array of components path who must have an `onLoad` callback props that return functions
+// `modules` are a map from module name to component path who must have an `onLoad` callback props that return functions
 // `onLoad` needs to be defined in the parent component for receiving the loaded functions
 const { modules, onLoad } = props;
 
-// Helper function
-function hasCommonKeys(a, b) {
-  if (!a || !b) return false;
-  const commonKeys = Object.keys(a).filter((key) => key in b);
-  return commonKeys.length > 0;
-}
-
 State.init({
-  imports: null,
-  loadedModules: 0,
+  modules: {},
 });
 
 // Import functions from modules
-function importFunctions(imports) {
-  const loadedModules = state.loadedModules;
-  if (!state.imports) {
+function importFunctions(name, functions) {
+  const modules = state.modules;
+  if (!modules[name]) {
+    modules[name] = functions;
     State.update({
-      imports,
-      loadedModules: loadedModules + 1,
-    });
-  } else if (!hasCommonKeys(state.imports, imports)) {
-    State.update({
-      imports: {
-        ...state.imports,
-        ...imports,
-      },
-      loadedModules: loadedModules + 1,
+      modules,
     });
   }
   // invoke `onLoad` if all modules are ready
   if (
-    state.loadedModules >= modules.length &&
+    Object.keys(state.modules).length === Object.keys(modules).length &&
     onLoad &&
     typeof onLoad === "function"
   ) {
-    onLoad(state.imports);
+    onLoad(state.modules);
   }
 }
 
@@ -45,8 +29,11 @@ const importedModules = !modules ? (
   <div />
 ) : (
   <>
-    {modules.map((path) => (
-      <Widget src={path} props={{ onLoad: importFunctions }} />
+    {Object.entries(modules).map(([name, path]) => (
+      <Widget
+        src={path}
+        props={{ onLoad: (functions) => importFunctions(name, functions) }}
+      />
     ))}
   </>
 );
