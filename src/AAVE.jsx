@@ -50,6 +50,8 @@ const body = loading ? (
     <div>AAVE</div>
     <div>Time: {formatDateTime(Date.now())}</div>
     <div>Price: {formatAmount("1.001")}</div>
+    <div>{getReservesData()}</div>
+    <div>{getStakedBalance("0xae7ab96520de3a18e5e111b5eaab095312d7fe84")}</div>
   </div>
 );
 
