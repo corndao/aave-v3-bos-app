@@ -42,23 +42,6 @@ const modules = [
 const { formatAmount, formatDateTime, getReservesData, decodeResult } =
   state.imports;
 
-// function decodeResult2(method, rawData) {
-//   console.log("decodeResult2", method);
-
-//   const dataProviderABi = fetch(
-//     "https://gist.githubusercontent.com/danielwpz/b8988ee623b3648f2c86e26b5d4532e4/raw/be9f9c1ede832b4088e4de82f35351b2ae664125/UiPoolDataProviderV3.json"
-//   );
-//   if (!dataProviderABi || !dataProviderABi.ok) {
-//     console.log("cannot load ABI 2");
-//     return null;
-//   }
-//   const dataProviderIface = new ethers.utils.Interface(dataProviderABi.body);
-
-//   const data = dataProviderIface.decodeFunctionResult(method, rawData);
-//   console.log(`decode ${method} result:`, data);
-//   return data;
-// }
-
 if (state.imports && !state.reserveData) {
   getReservesData("home").then((data) => {
     console.log("home data", data.slice(0, 100));
