@@ -39,19 +39,14 @@ const modules = [
   `${config.ownerId}/widget/Utils.Data`,
 ];
 // Import functions
-const { formatAmount, formatDateTime, getReservesData, decodeResult } =
-  state.imports;
+const { formatAmount, formatDateTime, getReservesData } = state.imports;
 
 if (state.imports && !state.reserveData) {
-  getReservesData("home").then((data) => {
-    console.log("home data", data.slice(0, 100));
-    const reserveData = decodeResult("getReservesData", data);
-    console.log("home reserves", reserveData);
+  getReservesData().then((reserveData) => {
+    console.log("update reserves", reserveData);
     State.update({ reserveData });
   });
 }
-
-console.log("reserve data", state.reserveData);
 
 // Component body
 const body =
