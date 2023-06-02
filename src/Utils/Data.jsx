@@ -46,6 +46,10 @@ function decodeResult(method, rawData) {
   const dataProviderABi = fetch(
     "https://gist.githubusercontent.com/danielwpz/b8988ee623b3648f2c86e26b5d4532e4/raw/be9f9c1ede832b4088e4de82f35351b2ae664125/UiPoolDataProviderV3.json"
   );
+  if (!dataProviderABi || !dataProviderABi.ok) {
+    console.log("cannot load ABI");
+    return null;
+  }
   const dataProviderIface = new ethers.utils.Interface(dataProviderABi.body);
 
   const data = dataProviderIface.decodeFunctionResult(method, rawData);
