@@ -20,6 +20,7 @@ const config = getConfig(context.networkId);
 // App states
 State.init({
   imports: null,
+  reserveData: null,
 });
 
 // Import functions to state.imports
@@ -40,17 +41,42 @@ const modules = [
 // Import functions
 const { formatAmount, formatDateTime, getReservesData } = state.imports;
 
+function decodeResult(method, rawData) {
+  console.log("decodeResult2", method);
+
+  const dataProviderABi = fetch(
+    "https://gist.githubusercontent.com/danielwpz/b8988ee623b3648f2c86e26b5d4532e4/raw/be9f9c1ede832b4088e4de82f35351b2ae664125/UiPoolDataProviderV3.json"
+  );
+  const dataProviderIface = new ethers.utils.Interface(dataProviderABi.body);
+
+  const data = dataProviderIface.decodeFunctionResult(method, rawData);
+  console.log(`decode ${method} result:`, data);
+  return data;
+}
+
+if (state.imports && !state.reserveData) {
+  getReservesData("home").then((data) => {
+    console.log("home data", data.slice(0, 100));
+    const reserveData = decodeResult("getReservesData", data);
+    console.log("home reserves", reserveData);
+    State.update({ reserveData });
+  });
+}
+
+console.log("reserve data", state.reserveData);
+
 // Component body
-const body = !state.imports ? (
-  "Loading..."
-) : (
-  <div>
-    <div>AAVE</div>
-    <div>Time: {formatDateTime(Date.now())}</div>
-    <div>Price: {formatAmount("1.001")}</div>
-    <div>{getReservesData()}</div>
-  </div>
-);
+const body =
+  !state.imports || !state.reserveData ? (
+    "Loading..."
+  ) : (
+    <div>
+      <div>AAVE</div>
+      <div>Time: {formatDateTime(Date.now())}</div>
+      <div>Price: {formatAmount("1.001")}</div>
+      <div># of Reserves: {state.reserveData[0].length}</div>
+    </div>
+  );
 
 return (
   <div>
