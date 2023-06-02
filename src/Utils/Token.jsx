@@ -27,7 +27,7 @@ const erc20BalanceOf = (tokenAddress, account) => {
 
 erc20BalanceOf(
   "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-  "0x45B24A7F55021f2DC27E6afBA07C9E7C70c03d1f"
+  "0xDFd5293D8e347dFe59E90eFd55b2956a1343963d"
 ).then((data) => {
   console.log("balanceOf:");
   console.log(data.toString());
