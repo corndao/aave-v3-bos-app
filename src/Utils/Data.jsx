@@ -5,6 +5,7 @@
 //   symbol: string,
 //   decimals: number,
 // }
+// returns Market[]
 function getMarkets() {
   return asyncFetch(
     "https://inquisitive-fox-1c50a5.netlify.app/.netlify/functions/markets"
@@ -20,6 +21,7 @@ function getMarkets() {
 //   underlyingBalance: string,
 //   underlyingBalanceUSD: string,
 // }
+// returns UserDeposit[]
 function getUserDeposits(address) {
   return asyncFetch(
     `https://inquisitive-fox-1c50a5.netlify.app/.netlify/functions/deposits?address=${address}`
