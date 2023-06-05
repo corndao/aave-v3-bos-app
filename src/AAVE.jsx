@@ -5,11 +5,13 @@ function getConfig(network) {
       return {
         ownerId: "aave-v3.near",
         nodeUrl: "https://rpc.mainnet.near.org",
+        ipfsPrefix: "https://ipfs.near.social/ipfs",
       };
     case "testnet":
       return {
         ownerId: "aave-v3.testnet",
         nodeUrl: "https://rpc.testnet.near.org",
+        ipfsPrefix: "https://ipfs.near.social/ipfs",
       };
     default:
       throw Error(`Unconfigured environment '${network}'.`);
@@ -42,15 +44,41 @@ const modules = {
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
 
+const Body = styled.div`
+  padding: 24px 15px;
+  background: #0e0e26;
+  min-height: 100vh;
+  color: white;
+`;
+
 // Component body
 const body = loading ? (
   "Loading..."
 ) : (
-  <div>
-    <div>AAVE</div>
-    <div>Time: {formatDateTime(Date.now())}</div>
-    <div>Price: {formatAmount("1.001")}</div>
-  </div>
+  <>
+    <Widget
+      src={`${config.ownerId}/widget/Components.Header`}
+      props={{ config }}
+    />
+    <Body>
+      <Widget
+        src={`${config.ownerId}/widget/Components.NetworkSwitcher`}
+        props={{ config }}
+      />
+      <Widget
+        src={`${config.ownerId}/widget/Components.TabSwitcher`}
+        props={{ config }}
+      />
+      <Widget
+        src={`${config.ownerId}/widget/Components.Card.YourSupplies`}
+        props={{ config }}
+      />
+      <Widget
+        src={`${config.ownerId}/widget/Components.Card.YourSupplies`}
+        props={{ config, supply: true }}
+      />
+    </Body>
+  </>
 );
 
 return (
