@@ -7,7 +7,7 @@ return (
       style: {
         marginTop: "16px",
       },
-      title: "Your supplies",
+      title: "AssetsToSupply",
       body:
         supply === undefined ? (
           <Widget
@@ -42,7 +42,7 @@ return (
                   props={{
                     children: [
                       <div className="card-data-row">
-                        <div className="card-data-key">Supply balance</div>
+                        <div className="card-data-key">Wallet balance</div>
                         <div className="card-data-value">
                           <div>0.0923810</div>
                           <div>$ 0.09</div>
@@ -52,15 +52,25 @@ return (
                         <div className="card-data-key">Supply APY</div>
                         <div className="card-data-value">2.06%</div>
                       </div>,
+                      <div className="card-data-row">
+                        <div className="card-data-key">Can be collateral</div>
+                        <div className="card-data-value">
+                          <img
+                            src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
+                            width={16}
+                            height={16}
+                          />
+                        </div>
+                      </div>,
                     ],
                   }}
                 />,
                 <Widget
                   src={`${config.ownerId}/widget/Components.PrimaryButton`}
                   props={{
-                    children: "Withdraw",
+                    children: "Supply",
                     onClick: () => {
-                      console.log("Withdraw");
+                      console.log("Supply");
                     },
                   }}
                 />,

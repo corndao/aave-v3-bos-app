@@ -77,6 +77,14 @@ const body = loading ? (
         src={`${config.ownerId}/widget/Components.Card.YourSupplies`}
         props={{ config, supply: true }}
       />
+      <Widget
+        src={`${config.ownerId}/widget/Components.Card.AssetsToSupply`}
+        props={{ config }}
+      />
+      <Widget
+        src={`${config.ownerId}/widget/Components.Card.AssetsToSupply`}
+        props={{ config, supply: true }}
+      />
     </Body>
   </>
 );
