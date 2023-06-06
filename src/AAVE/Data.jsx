@@ -8,7 +8,7 @@
 // returns Market[]
 function getMarkets() {
   return asyncFetch(
-    "https://inquisitive-fox-1c50a5.netlify.app/.netlify/functions/markets"
+    "https://bos-aave-api.netlify.app/.netlify/functions/markets"
   );
 }
 
@@ -24,7 +24,7 @@ function getMarkets() {
 // returns UserDeposit[]
 function getUserDeposits(address) {
   return asyncFetch(
-    `https://inquisitive-fox-1c50a5.netlify.app/.netlify/functions/deposits?address=${address}`
+    `https://bos-aave-api.netlify.app/.netlify/functions/deposits?address=${address}`
   );
 }
 
