@@ -37,7 +37,7 @@ function importFunctions(imports) {
 const modules = {
   number: `${config.ownerId}/widget/Utils.Number`,
   date: `${config.ownerId}/widget/Utils.Date`,
-  data: `${config.ownerId}/widget/Utils.Data`,
+  data: `${config.ownerId}/widget/Data`,
 };
 // Import functions
 const { formatAmount } = state.imports.number;

@@ -42,6 +42,7 @@ function exportFunctions(functions) {
 exportFunctions({
   getMarkets,
   getUserDeposits,
+  erc20BalanceOf,
 });
 
 return <div style={{ display: "none" }} />;
