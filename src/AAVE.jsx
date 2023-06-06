@@ -56,33 +56,30 @@ const body = loading ? (
   "Loading..."
 ) : (
   <>
-    <Widget
-      src={`${config.ownerId}/widget/Components.Header`}
-      props={{ config }}
-    />
+    <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
       <Widget
-        src={`${config.ownerId}/widget/Components.NetworkSwitcher`}
+        src={`${config.ownerId}/widget/AAVE.NetworkSwitcher`}
         props={{ config }}
       />
       <Widget
-        src={`${config.ownerId}/widget/Components.TabSwitcher`}
+        src={`${config.ownerId}/widget/AAVE.TabSwitcher`}
         props={{ config }}
       />
       <Widget
-        src={`${config.ownerId}/widget/Components.Card.YourSupplies`}
+        src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
         props={{ config }}
       />
       <Widget
-        src={`${config.ownerId}/widget/Components.Card.YourSupplies`}
+        src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
         props={{ config, supply: true }}
       />
       <Widget
-        src={`${config.ownerId}/widget/Components.Card.AssetsToSupply`}
+        src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
         props={{ config }}
       />
       <Widget
-        src={`${config.ownerId}/widget/Components.Card.AssetsToSupply`}
+        src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
         props={{ config, supply: true }}
       />
     </Body>

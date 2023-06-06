@@ -2,20 +2,20 @@ const { config, supply } = props;
 
 const mobileDataRow = (
   <Widget
-    src={`${config.ownerId}/widget/Components.Card.CardContainer`}
+    src={`${config.ownerId}/widget/AAVE.Card.CardContainer`}
     props={{
       children: [
         <Widget
-          src={`${config.ownerId}/widget/Components.Card.Divider`}
+          src={`${config.ownerId}/widget/AAVE.Card.Divider`}
           props={{ config }}
         />,
         <Widget
-          src={`${config.ownerId}/widget/Components.Card.CardsBody`}
+          src={`${config.ownerId}/widget/AAVE.Card.CardsBody`}
           props={{
             config,
             children: [
               <Widget
-                src={`${config.ownerId}/widget/Components.Card.TokenWrapper`}
+                src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
                 props={{
                   children: [
                     <img
@@ -31,7 +31,7 @@ const mobileDataRow = (
                 }}
               />,
               <Widget
-                src={`${config.ownerId}/widget/Components.Card.CardDataWrapper`}
+                src={`${config.ownerId}/widget/AAVE.Card.CardDataWrapper`}
                 props={{
                   children: [
                     <div className="card-data-row">
@@ -59,7 +59,7 @@ const mobileDataRow = (
                 }}
               />,
               <Widget
-                src={`${config.ownerId}/widget/Components.PrimaryButton`}
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                 props={{
                   children: "Supply",
                   onClick: () => {
@@ -84,7 +84,7 @@ const mobileView = (
 
 const dataRow = [
   <Widget
-    src={`${config.ownerId}/widget/Components.Card.TokenWrapper`}
+    src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
     props={{
       children: [
         <img
@@ -112,7 +112,7 @@ const dataRow = [
     />
   </div>,
   <Widget
-    src={`${config.ownerId}/widget/Components.PrimaryButton`}
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
     props={{
       children: "Supply",
       onClick: () => {
@@ -125,7 +125,7 @@ const dataRow = [
 const pcView = (
   <>
     <Widget
-      src={`${config.ownerId}/widget/Components.Card.CardsTable`}
+      src={`${config.ownerId}/widget/AAVE.Card.CardsTable`}
       props={{
         config,
         headers: [
@@ -143,7 +143,7 @@ const pcView = (
 
 return (
   <Widget
-    src={`${config.ownerId}/widget/Components.Card.CardsView`}
+    src={`${config.ownerId}/widget/AAVE.Card.CardsView`}
     props={{
       config,
       style: {
@@ -153,7 +153,7 @@ return (
       body:
         supply === undefined ? (
           <Widget
-            src={`${config.ownerId}/widget/Components.Card.CardEmpty`}
+            src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
             props={{
               config,
               children: "Nothing supplied yet",

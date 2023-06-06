@@ -31,7 +31,7 @@ const CardsTable = styled.div`
 return (
   <>
     <Widget
-      src={`${config.ownerId}/widget/Components.Card.Divider`}
+      src={`${config.ownerId}/widget/AAVE.Card.Divider`}
       props={{ config }}
     />
     <CardsTable>
