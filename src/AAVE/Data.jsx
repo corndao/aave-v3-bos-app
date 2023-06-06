@@ -7,9 +7,7 @@
 // }
 // returns Market[]
 function getMarkets() {
-  return asyncFetch(
-    "https://bos-aave-api.netlify.app/.netlify/functions/markets"
-  );
+  return asyncFetch("https://aave-api.pages.dev/markets");
 }
 
 // interface UserDeposit {
@@ -23,9 +21,7 @@ function getMarkets() {
 // }
 // returns UserDeposit[]
 function getUserDeposits(address) {
-  return asyncFetch(
-    `https://bos-aave-api.netlify.app/.netlify/functions/deposits?address=${address}`
-  );
+  return asyncFetch(`https://aave-api.pages.dev/deposits/${address}`);
 }
 
 // --- End of functions definition ---
