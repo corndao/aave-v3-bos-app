@@ -1,4 +1,4 @@
-const { title, body, style } = props;
+const { title, body, style, config } = props;
 
 const CardsContainer = styled.div`
   border-radius: 10px;
@@ -16,21 +16,16 @@ const CardsTitle = styled.div`
   padding: 0 14px;
 `;
 
-const Divider = styled.hr`
-  width: 100%;
-  border: 0;
-  height: 1px;
-  background: white;
-  border-radius: 9999px;
-`;
-
 const CardsBody = styled.div`
   padding: 0 14px;
 `;
 return (
   <CardsContainer style={style}>
     <CardsTitle>{title}</CardsTitle>
-    <Divider />
+    <Widget
+      src={`${config.ownerId}/widget/Components.Card.Divider`}
+      props={{ config }}
+    />
     <CardsBody>{body}</CardsBody>
   </CardsContainer>
 );
