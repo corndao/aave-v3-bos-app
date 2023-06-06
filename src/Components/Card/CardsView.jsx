@@ -16,16 +16,9 @@ const CardsTitle = styled.div`
   padding: 0 14px;
 `;
 
-const CardsBody = styled.div`
-  padding: 0 14px;
-`;
 return (
   <CardsContainer style={style}>
     <CardsTitle>{title}</CardsTitle>
-    <Widget
-      src={`${config.ownerId}/widget/Components.Card.Divider`}
-      props={{ config }}
-    />
-    <CardsBody>{body}</CardsBody>
+    {body}
   </CardsContainer>
 );

@@ -1,3 +1,5 @@
+const { config } = props;
+
 const CardEmpty = styled.div`
   min-height: 220px;
 
@@ -7,4 +9,12 @@ const CardEmpty = styled.div`
   place-content: center;
 `;
 
-return <CardEmpty>{props.children}</CardEmpty>;
+return (
+  <>
+    <Widget
+      src={`${config.ownerId}/widget/Components.Card.Divider`}
+      props={{ config }}
+    />
+    <CardEmpty>{props.children}</CardEmpty>
+  </>
+);

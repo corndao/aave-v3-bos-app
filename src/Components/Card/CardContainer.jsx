@@ -2,7 +2,9 @@ const CardContainer = styled.div`
   display: flex;
   flex-direction: column;
 
-  gap: 20px;
+  @media (min-width: 640px) {
+    display: none;
+  }
 `;
 
 return <CardContainer>{props.children}</CardContainer>;

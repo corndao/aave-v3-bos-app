@@ -6,6 +6,12 @@ const TabContainer = styled.div`
   border-radius: 10px;
 
   margin-top: 30px;
+
+  @media (min-width: 640px) {
+    max-width: 355px;
+    margin: 0 auto;
+    margin-top: 50px;
+  }
 `;
 
 const TabItem = styled.div`
