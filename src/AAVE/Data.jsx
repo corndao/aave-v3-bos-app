@@ -10,6 +10,23 @@ function getMarkets() {
   return asyncFetch("https://aave-api.pages.dev/markets");
 }
 
+/**
+ * @param {string} account user address
+ * @param {string[]} tokens list of token addresses
+ */
+// interface TokenBalance {
+//   token: string,
+//   balance: string,
+//   decimals: number,
+// }
+// returns TokenBalance[]
+function getUserBalances(account, tokens) {
+  const url = `https://aave-api.pages.dev/balances?account=${account}&tokens=${tokens.join(
+    "|"
+  )}`;
+  return asyncFetch(url);
+}
+
 // interface UserDeposit {
 //   underlyingAsset: string,
 //   name: string,
@@ -38,7 +55,7 @@ function exportFunctions(functions) {
 exportFunctions({
   getMarkets,
   getUserDeposits,
-  erc20BalanceOf,
+  getUserBalances,
 });
 
 return <div style={{ display: "none" }} />;

@@ -42,7 +42,7 @@ const modules = {
 // Import functions
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
-const { getMarkets, getUserDeposits } = state.imports.data;
+const { getMarkets, getUserDeposits, getUserBalances } = state.imports.data;
 
 // Component body
 const body = loading ? (
@@ -56,6 +56,9 @@ const body = loading ? (
     {getUserDeposits("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C").then((r) =>
       console.log(r.body)
     ) && ""}
+    {getUserBalances("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C", [
+      "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+    ]).then((r) => console.log(r.body)) && ""}
   </div>
 );
 
