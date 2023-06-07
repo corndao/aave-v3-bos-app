@@ -39,10 +39,12 @@ function importFunctions(imports) {
 const modules = {
   number: `${config.ownerId}/widget/Utils.Number`,
   date: `${config.ownerId}/widget/Utils.Date`,
+  data: `${config.ownerId}/widget/AAVE.Data`,
 };
 // Import functions
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
+const { getMarkets, getUserDeposits, getUserBalances } = state.imports.data;
 
 const Body = styled.div`
   padding: 24px 15px;
@@ -83,6 +85,13 @@ const body = loading ? (
         props={{ config, supply: true }}
       />
     </Body>
+    {getMarkets().then((r) => console.log(r.body)) && ""}
+    {getUserDeposits("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C").then((r) =>
+      console.log(r.body)
+    ) && ""}
+    {getUserBalances("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C", [
+      "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+    ]).then((r) => console.log(r.body)) && ""}
   </>
 );
 
