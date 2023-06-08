@@ -1,145 +1,4 @@
-const { config, supply } = props;
-
-const mobileDataRow = (
-  <Widget
-    src={`${config.ownerId}/widget/AAVE.Card.CardContainer`}
-    props={{
-      children: [
-        <Widget
-          src={`${config.ownerId}/widget/AAVE.Card.Divider`}
-          props={{ config }}
-        />,
-        <Widget
-          src={`${config.ownerId}/widget/AAVE.Card.CardsBody`}
-          props={{
-            config,
-            children: [
-              <Widget
-                src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
-                props={{
-                  children: [
-                    <img
-                      width={64}
-                      height={64}
-                      src={`${config.ipfsPrefix}/bafkreifsxqn36p7om3pqyrtrd3rkrzowdson3q3xml3ltyadsqhc73f57u`}
-                    />,
-                    <div>
-                      <div className="token-title">Tether</div>
-                      <div className="token-chain">USDT</div>
-                    </div>,
-                  ],
-                }}
-              />,
-              <Widget
-                src={`${config.ownerId}/widget/AAVE.Card.CardDataWrapper`}
-                props={{
-                  children: [
-                    <div className="card-data-row">
-                      <div className="card-data-key">Wallet balance</div>
-                      <div className="card-data-value">
-                        <div>0.0923810</div>
-                        <div>$ 0.09</div>
-                      </div>
-                    </div>,
-                    <div className="card-data-row">
-                      <div className="card-data-key">Supply APY</div>
-                      <div className="card-data-value">2.06%</div>
-                    </div>,
-                    <div className="card-data-row">
-                      <div className="card-data-key">Can be collateral</div>
-                      <div className="card-data-value">
-                        <img
-                          src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
-                          width={16}
-                          height={16}
-                        />
-                      </div>
-                    </div>,
-                  ],
-                }}
-              />,
-              <Widget
-                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                props={{
-                  children: "Supply",
-                  onClick: () => {
-                    console.log("Supply");
-                  },
-                }}
-              />,
-            ],
-          }}
-        />,
-      ],
-    }}
-  />
-);
-
-const mobileView = (
-  <>
-    {mobileDataRow}
-    {mobileDataRow}
-  </>
-);
-
-const dataRow = [
-  <Widget
-    src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
-    props={{
-      children: [
-        <img
-          width={64}
-          height={64}
-          src={`${config.ipfsPrefix}/bafkreifsxqn36p7om3pqyrtrd3rkrzowdson3q3xml3ltyadsqhc73f57u`}
-        />,
-        <div>
-          <div className="token-title">Tether</div>
-          <div className="token-chain">USDT</div>
-        </div>,
-      ],
-    }}
-  />,
-  <div>
-    <div>0.0923810</div>
-    <div>$ 0.09</div>
-  </div>,
-  "2.06 %",
-  <div style={{ paddingLeft: "50px" }}>
-    <img
-      src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
-      width={16}
-      height={16}
-    />
-  </div>,
-  <Widget
-    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-    props={{
-      children: "Supply",
-      onClick: () => {
-        console.log("Supply");
-      },
-    }}
-  />,
-];
-
-const pcView = (
-  <>
-    <Widget
-      src={`${config.ownerId}/widget/AAVE.Card.CardsTable`}
-      props={{
-        config,
-        headers: [
-          "Asset",
-          "Wallet balance",
-          "Supply APY",
-          "Can be collateral",
-          "",
-        ],
-        datas: [dataRow, dataRow, dataRow],
-      }}
-    />
-  </>
-);
+const { config, assetsToSupply } = props;
 
 return (
   <Widget
@@ -151,7 +10,7 @@ return (
       },
       title: "AssetsToSupply",
       body:
-        supply === undefined ? (
+        !assetsToSupply || assetsToSupply.length === 0 ? (
           <Widget
             src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
             props={{
@@ -161,8 +20,148 @@ return (
           />
         ) : (
           <>
-            {pcView}
-            {mobileView}
+            {/* pcView */}
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.Card.CardsTable`}
+              props={{
+                config,
+                headers: [
+                  "Asset",
+                  "Wallet balance",
+                  "Supply APY",
+                  "Can be collateral",
+                  "",
+                ],
+                datas: assetsToSupply.map((row, idx) => [
+                  <Widget
+                    src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
+                    props={{
+                      children: [
+                        <img
+                          width={64}
+                          height={64}
+                          src={`https://app.aave.com/icons/tokens/${row.symbol.toLowerCase()}.svg`}
+                        />,
+                        <div>
+                          <div className="token-title">{row.symbol}</div>
+                          <div className="token-chain">{row.name}</div>
+                        </div>,
+                      ],
+                    }}
+                  />,
+                  <div>
+                    <div>{row.balance}</div>
+                    <div>$ {row.balanceInUSD}</div>
+                  </div>,
+                  `${(Number(row.supplyAPY) * 100).toFixed(2)} %`,
+                  <div style={{ paddingLeft: "50px" }}>
+                    <img
+                      src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
+                      width={16}
+                      height={16}
+                    />
+                  </div>,
+                  <Widget
+                    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                    props={{
+                      children: "Supply",
+                      onClick: () => {
+                        console.log("Supply");
+                      },
+                    }}
+                  />,
+                ]),
+              }}
+            />
+            {/* mobile view */}
+            {assetsToSupply.map((row, idx) => {
+              return (
+                <Widget
+                  src={`${config.ownerId}/widget/AAVE.Card.CardContainer`}
+                  props={{
+                    children: [
+                      <Widget
+                        src={`${config.ownerId}/widget/AAVE.Card.CardsBody`}
+                        props={{
+                          config,
+                          children: [
+                            <Widget
+                              src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
+                              props={{
+                                children: [
+                                  <img
+                                    width={64}
+                                    height={64}
+                                    src={`https://app.aave.com/icons/tokens/${row.symbol.toLowerCase()}.svg`}
+                                  />,
+                                  <div>
+                                    <div className="token-title">
+                                      {row.symbol}
+                                    </div>
+                                    <div className="token-chain">
+                                      {row.name}
+                                    </div>
+                                  </div>,
+                                ],
+                              }}
+                            />,
+                            <Widget
+                              src={`${config.ownerId}/widget/AAVE.Card.CardDataWrapper`}
+                              props={{
+                                children: [
+                                  <div className="card-data-row">
+                                    <div className="card-data-key">
+                                      Wallet balance
+                                    </div>
+                                    <div className="card-data-value">
+                                      <div>{row.balance}</div>
+                                      <div>$ {row.balanceInUSD}</div>
+                                    </div>
+                                  </div>,
+                                  <div className="card-data-row">
+                                    <div className="card-data-key">
+                                      Supply APY
+                                    </div>
+                                    <div className="card-data-value">{`${(
+                                      Number(row.supplyAPY) * 100
+                                    ).toFixed(2)} %`}</div>
+                                  </div>,
+                                  <div className="card-data-row">
+                                    <div className="card-data-key">
+                                      Can be collateral
+                                    </div>
+                                    <div className="card-data-value">
+                                      <img
+                                        src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
+                                        width={16}
+                                        height={16}
+                                      />
+                                    </div>
+                                  </div>,
+                                ],
+                              }}
+                            />,
+                            <Widget
+                              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                              props={{
+                                children: "Supply",
+                                onClick: () => {
+                                  console.log("Supply");
+                                },
+                              }}
+                            />,
+                          ],
+                        }}
+                      />,
+                      <Widget
+                        src={`${config.ownerId}/widget/AAVE.Card.Divider`}
+                        props={{ config }}
+                      />,
+                    ],
+                  }}
+                />
+              );
+            })}
           </>
         ),
     }}

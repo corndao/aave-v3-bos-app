@@ -1,3 +1,46 @@
+// interface Market {
+//   id: string,
+//   underlyingAsset: string,
+//   name: string,
+//   symbol: string,
+//   decimals: number,
+// }
+// returns Market[]
+function getMarkets() {
+  return fetch("https://aave-api.pages.dev/markets");
+}
+
+/**
+ * @param {string} account user address
+ * @param {string[]} tokens list of token addresses
+ */
+// interface TokenBalance {
+//   token: string,
+//   balance: string,
+//   decimals: number,
+// }
+// returns TokenBalance[]
+function getUserBalances(account, tokens) {
+  const url = `https://aave-api.pages.dev/balances?account=${account}&tokens=${tokens.join(
+    "|"
+  )}`;
+  return fetch(url);
+}
+
+// interface UserDeposit {
+//   underlyingAsset: string,
+//   name: string,
+//   symbol: string,
+//   scaledATokenBalance: string,
+//   usageAsCollateralEnabledOnUser: boolean,
+//   underlyingBalance: string,
+//   underlyingBalanceUSD: string,
+// }
+// returns UserDeposit[]
+function getUserDeposits(address) {
+  return fetch(`https://aave-api.pages.dev/deposits/${address}`);
+}
+
 // App config
 function getConfig(network) {
   switch (network) {
@@ -24,7 +67,7 @@ State.init({
   imports: {},
 });
 
-const loading = Object.keys(state.imports).length === 0;
+const loading = !state.assetsToSupply;
 
 // Import functions to state.imports
 function importFunctions(imports) {
@@ -44,7 +87,67 @@ const modules = {
 // Import functions
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
-const { getMarkets, getUserDeposits, getUserBalances } = state.imports.data;
+
+function initData() {
+  const marketsResponse = getMarkets();
+  if (!marketsResponse) {
+    return;
+  }
+  const markets = JSON.parse(marketsResponse.body);
+  const userBalancesResponse = getUserBalances(
+    "0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C",
+    markets.map((market) => market.underlyingAsset)
+  );
+  if (!userBalancesResponse) {
+    return;
+  }
+  const userBalances = JSON.parse(userBalancesResponse.body);
+  const assetsToSupply = markets.map((market, idx) => {
+    const balanceRaw = Big(userBalances[idx].balance).div(
+      Big(10).pow(userBalances[idx].decimals)
+    );
+    const balance = balanceRaw.toFixed(2);
+    const balanceInUSD = balanceRaw
+      .mul(market.marketReferencePriceInUsd)
+      .toFixed(2);
+    return {
+      ...userBalances[idx],
+      ...market,
+      balance,
+      balanceInUSD,
+    };
+  });
+  State.update({
+    assetsToSupply,
+  });
+
+  // yourSupplies
+  const userDepositsResponse = getUserDeposits(
+    "0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C"
+  );
+  if (!userBalancesResponse) {
+    return;
+  }
+  const userDeposits = JSON.parse(userDepositsResponse.body).filter(
+    (row) => Number(row.underlyingBalance) !== 0
+  );
+  const marketsMapping = markets.reduce((prev, cur) => {
+    prev[cur.symbol] = cur;
+    return prev;
+  }, {});
+  const yourSupplies = userDeposits.map((userDeposit) => {
+    const market = marketsMapping[userDeposit.symbol];
+    return {
+      ...market,
+      ...userDeposit,
+    };
+  });
+  State.update({
+    yourSupplies,
+  });
+}
+
+initData();
 
 const Body = styled.div`
   padding: 24px 15px;
@@ -70,28 +173,13 @@ const body = loading ? (
       />
       <Widget
         src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
-        props={{ config }}
-      />
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
-        props={{ config, supply: true }}
+        props={{ config, yourSupplies: state.yourSupplies }}
       />
       <Widget
         src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
-        props={{ config }}
-      />
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
-        props={{ config, supply: true }}
+        props={{ config, assetsToSupply: state.assetsToSupply }}
       />
     </Body>
-    {getMarkets().then((r) => console.log(r.body)) && ""}
-    {getUserDeposits("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C").then((r) =>
-      console.log(r.body)
-    ) && ""}
-    {getUserBalances("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C", [
-      "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-    ]).then((r) => console.log(r.body)) && ""}
   </>
 );
 
