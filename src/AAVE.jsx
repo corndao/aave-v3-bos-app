@@ -1,46 +1,3 @@
-// interface Market {
-//   id: string,
-//   underlyingAsset: string,
-//   name: string,
-//   symbol: string,
-//   decimals: number,
-// }
-// returns Market[]
-function getMarkets() {
-  return fetch("https://aave-api.pages.dev/markets");
-}
-
-/**
- * @param {string} account user address
- * @param {string[]} tokens list of token addresses
- */
-// interface TokenBalance {
-//   token: string,
-//   balance: string,
-//   decimals: number,
-// }
-// returns TokenBalance[]
-function getUserBalances(account, tokens) {
-  const url = `https://aave-api.pages.dev/balances?account=${account}&tokens=${tokens.join(
-    "|"
-  )}`;
-  return fetch(url);
-}
-
-// interface UserDeposit {
-//   underlyingAsset: string,
-//   name: string,
-//   symbol: string,
-//   scaledATokenBalance: string,
-//   usageAsCollateralEnabledOnUser: boolean,
-//   underlyingBalance: string,
-//   underlyingBalanceUSD: string,
-// }
-// returns UserDeposit[]
-function getUserDeposits(address) {
-  return fetch(`https://aave-api.pages.dev/deposits/${address}`);
-}
-
 // App config
 function getConfig(network) {
   switch (network) {
@@ -87,6 +44,7 @@ const modules = {
 // Import functions
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
+const { getMarkets, getUserBalances, getUserDeposits } = state.imports.data;
 
 function initData() {
   const marketsResponse = getMarkets();
@@ -147,7 +105,9 @@ function initData() {
   });
 }
 
-initData();
+if (!loading) {
+  initData();
+}
 
 const Body = styled.div`
   padding: 24px 15px;
