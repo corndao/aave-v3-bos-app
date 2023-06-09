@@ -1,3 +1,10 @@
+function isValid(a) {
+  if (!a) return false;
+  if (isNaN(Number(a))) return false;
+  if (a === "") return false;
+  return true;
+}
+
 // interface Market {
 //   id: string,
 //   underlyingAsset: string,
@@ -90,8 +97,12 @@ const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
 
 function initData() {
-  Ethers?.provider()
-    ?.getSigner()
+  const provider = Ethers.provider();
+  if (!provider) {
+    return;
+  }
+  provider
+    .getSigner()
     ?.getAddress()
     ?.then((address) => {
       State.update({ address });
@@ -114,6 +125,9 @@ function initData() {
   }
   const userBalances = JSON.parse(userBalancesResponse.body);
   const assetsToSupply = markets.map((market, idx) => {
+    if (!isValid(userBalances[idx].decimals)) {
+      return;
+    }
     const balanceRaw = Big(userBalances[idx].balance).div(
       Big(10).pow(userBalances[idx].decimals)
     );
@@ -165,6 +179,12 @@ const Body = styled.div`
   color: white;
 `;
 
+const FlexContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+`;
 // Component body
 const body = loading ? (
   "Loading..."
@@ -172,10 +192,21 @@ const body = loading ? (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.NetworkSwitcher`}
-        props={{ config }}
-      />
+      <FlexContainer>
+        <Widget
+          src={`${config.ownerId}/widget/AAVE.NetworkSwitcher`}
+          props={{
+            config,
+            switchNetwork: (chainId) => {
+              State.update({
+                chainId,
+                assetsToSupply: undefined,
+                yourSupplies: undefined,
+              });
+            },
+          }}
+        />
+      </FlexContainer>
       <Widget
         src={`${config.ownerId}/widget/AAVE.TabSwitcher`}
         props={{ config }}
