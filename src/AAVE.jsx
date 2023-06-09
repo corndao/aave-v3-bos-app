@@ -6,8 +6,8 @@
 //   decimals: number,
 // }
 // returns Market[]
-function getMarkets() {
-  return fetch("https://aave-api.pages.dev/markets");
+function getMarkets(chainId) {
+  return fetch(`https://aave-api.pages.dev/${chainId}/markets`);
 }
 
 /**
@@ -20,8 +20,8 @@ function getMarkets() {
 //   decimals: number,
 // }
 // returns TokenBalance[]
-function getUserBalances(account, tokens) {
-  const url = `https://aave-api.pages.dev/balances?account=${account}&tokens=${tokens.join(
+function getUserBalances(chainId, account, tokens) {
+  const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
     "|"
   )}`;
   return fetch(url);
@@ -37,8 +37,8 @@ function getUserBalances(account, tokens) {
 //   underlyingBalanceUSD: string,
 // }
 // returns UserDeposit[]
-function getUserDeposits(address) {
-  return fetch(`https://aave-api.pages.dev/deposits/${address}`);
+function getUserDeposits(chainId, address) {
+  return fetch(`https://aave-api.pages.dev/${chainId}/deposits/${address}`);
 }
 
 // App config
@@ -65,6 +65,7 @@ const config = getConfig(context.networkId);
 // App states
 State.init({
   imports: {},
+  chainId: 42161,
 });
 
 const loading = !state.assetsToSupply;
@@ -89,13 +90,23 @@ const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
 
 function initData() {
-  const marketsResponse = getMarkets();
+  Ethers?.provider()
+    ?.getSigner()
+    ?.getAddress()
+    ?.then((address) => {
+      State.update({ address });
+    });
+  if (!state.address) {
+    return;
+  }
+  const marketsResponse = getMarkets(state.chainId);
   if (!marketsResponse) {
     return;
   }
   const markets = JSON.parse(marketsResponse.body);
   const userBalancesResponse = getUserBalances(
-    "0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C",
+    state.chainId,
+    state.address,
     markets.map((market) => market.underlyingAsset)
   );
   if (!userBalancesResponse) {
@@ -122,10 +133,8 @@ function initData() {
   });
 
   // yourSupplies
-  const userDepositsResponse = getUserDeposits(
-    "0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C"
-  );
-  if (!userBalancesResponse) {
+  const userDepositsResponse = getUserDeposits(state.chainId, state.address);
+  if (!userDepositsResponse) {
     return;
   }
   const userDeposits = JSON.parse(userDepositsResponse.body).filter(

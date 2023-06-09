@@ -105,7 +105,7 @@ return (
               src={`${config.ownerId}/widget/AAVE.Card.CardsTable`}
               props={{
                 config,
-                headers: ["Asset", "Wallet balance", "Supply APY", ""],
+                headers: ["Asset", "Supply balance", "Supply APY", ""],
                 datas: yourSupplies.map((row) => {
                   return [
                     <Widget
@@ -132,7 +132,7 @@ return (
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                       props={{
-                        children: "Supply",
+                        children: "Withdraw",
                         onClick: () => {
                           console.log("Supply");
                         },
