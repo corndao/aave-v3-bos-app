@@ -6,8 +6,8 @@
 //   decimals: number,
 // }
 // returns Market[]
-function getMarkets() {
-  return asyncFetch("https://aave-api.pages.dev/markets");
+function getMarkets(chainId) {
+  return asyncFetch(`https://aave-api.pages.dev/${chainId}/markets`);
 }
 
 /**
@@ -20,8 +20,8 @@ function getMarkets() {
 //   decimals: number,
 // }
 // returns TokenBalance[]
-function getUserBalances(account, tokens) {
-  const url = `https://aave-api.pages.dev/balances?account=${account}&tokens=${tokens.join(
+function getUserBalances(chainId, account, tokens) {
+  const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
     "|"
   )}`;
   return asyncFetch(url);
@@ -37,8 +37,10 @@ function getUserBalances(account, tokens) {
 //   underlyingBalanceUSD: string,
 // }
 // returns UserDeposit[]
-function getUserDeposits(address) {
-  return asyncFetch(`https://aave-api.pages.dev/deposits/${address}`);
+function getUserDeposits(chainId, address) {
+  return asyncFetch(
+    `https://aave-api.pages.dev/${chainId}/deposits/${address}`
+  );
 }
 
 // --- End of functions definition ---
