@@ -75,7 +75,7 @@ State.init({
   chainId: 42161,
 });
 
-const loading = !state.assetsToSupply;
+const loading = !state.assetsToSupply || !state.yourSupplies;
 
 // Import functions to state.imports
 function importFunctions(imports) {
@@ -99,6 +99,7 @@ const { formatDateTime } = state.imports.date;
 function initData() {
   const provider = Ethers.provider();
   if (!provider) {
+    State.update({ connectWallet: false });
     return;
   }
   provider
@@ -187,7 +188,12 @@ const FlexContainer = styled.div`
 `;
 // Component body
 const body = loading ? (
-  "Loading..."
+  <>
+    <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
+    <Body>
+      {state.connectWallet ? "Loading" : "Need to connect wallet first."}
+    </Body>
+  </>
 ) : (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
