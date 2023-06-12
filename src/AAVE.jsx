@@ -1,3 +1,5 @@
+const ROUND_DOWN = 0;
+
 function isValid(a) {
   if (!a) return false;
   if (isNaN(Number(a))) return false;
@@ -56,12 +58,24 @@ function getConfig(network) {
         ownerId: "aave-v3.near",
         nodeUrl: "https://rpc.mainnet.near.org",
         ipfsPrefix: "https://ipfs.near.social/ipfs",
+        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        wrappedTokenGatewayV3Address:
+          "0xb5ee21786d28c5ba61661550879475976b707099",
+        wrappedTokenGatewayV3ABI: fetch(
+          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
+        ),
       };
     case "testnet":
       return {
         ownerId: "aave-v3.testnet",
         nodeUrl: "https://rpc.testnet.near.org",
         ipfsPrefix: "https://ipfs.near.social/ipfs",
+        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        wrappedTokenGatewayV3Address:
+          "0xb5ee21786d28c5ba61661550879475976b707099",
+        wrappedTokenGatewayV3ABI: fetch(
+          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
+        ),
       };
     default:
       throw Error(`Unconfigured environment '${network}'.`);
@@ -110,7 +124,11 @@ function initData() {
     ?.then((address) => {
       State.update({ address });
     });
-  if (!state.address) {
+  provider
+    .getSigner()
+    ?.getBalance()
+    .then((balance) => State.update({ ethBalance: balance }));
+  if (!state.address || !state.ethBalance) {
     return;
   }
   const marketsResponse = getMarkets(state.chainId);
@@ -131,13 +149,13 @@ function initData() {
     if (!isValid(userBalances[idx].decimals)) {
       return;
     }
-    const balanceRaw = Big(userBalances[idx].balance).div(
-      Big(10).pow(userBalances[idx].decimals)
-    );
-    const balance = balanceRaw.toFixed(2);
+    const balanceRaw = Big(
+      market.symbol === "WETH" ? state.ethBalance : userBalances[idx].balance
+    ).div(Big(10).pow(userBalances[idx].decimals));
+    const balance = balanceRaw.toFixed(3, ROUND_DOWN);
     const balanceInUSD = balanceRaw
       .mul(market.marketReferencePriceInUsd)
-      .toFixed(2);
+      .toFixed(3, ROUND_DOWN);
     return {
       ...userBalances[idx],
       ...market,

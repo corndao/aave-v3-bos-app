@@ -1,4 +1,24 @@
-const { config } = props;
+const { config, data, onRequestClose } = props;
+
+if (!data) {
+  return;
+}
+
+const ROUND_DOWN = 0;
+function isValid(a) {
+  if (!a) return false;
+  if (isNaN(Number(a))) return false;
+  if (a === "") return false;
+  return true;
+}
+
+const {
+  decimals,
+  symbol,
+  underlyingBalance,
+  underlyingBalanceUSD,
+  marketReferencePriceInUsd,
+} = data;
 
 const WithdrawContainer = styled.div`
   display: flex;
@@ -41,6 +61,58 @@ const TransactionOverviewContainer = styled.div`
   flex-direction: column;
   gap: 20px;
 `;
+
+const Input = styled.input`
+  background: transparent;
+  border: none;
+  outline: none;
+
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  flex: 1;
+  width: 160px;
+
+  &[type="number"]::-webkit-outer-spin-button,
+  &[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  &[type="number"] {
+    -moz-appearance: textfield;
+  }
+`;
+
+State.init({
+  amount: "",
+  amountInUSD: "0.00",
+});
+
+const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
+const remainingSupply = isNaN(_remainingSupply)
+  ? underlyingBalance
+  : Big(_remainingSupply).toFixed(2);
+
+function withdrawETH(amount) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const wrappedTokenGateway = new ethers.Contract(
+        config.wrappedTokenGatewayV3Address,
+        config.wrappedTokenGatewayV3ABI.body,
+        Ethers.provider().getSigner()
+      );
+
+      return wrappedTokenGateway.withdrawETH(
+        config.aavePoolV3Address,
+        amount,
+        address
+      );
+    })
+    .then(() => onRequestClose);
+}
+
 return (
   <Widget
     src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
@@ -59,15 +131,36 @@ return (
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
-                      left: <TokenTexture>0.1</TokenTexture>,
+                      left: (
+                        <TokenTexture>
+                          <Input
+                            type="number"
+                            value={state.amount}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (isValid(value)) {
+                                State.update({
+                                  amountInUSD: Big(value)
+                                    .mul(marketReferencePriceInUsd)
+                                    .toFixed(2, ROUND_DOWN),
+                                });
+                              } else {
+                                State.update({ amountInUSD: "0.00" });
+                              }
+                              State.update({ amount: value });
+                            }}
+                            placeholder="0"
+                          />
+                        </TokenTexture>
+                      ),
                       right: (
                         <TokenWrapper>
                           <img
                             width={26}
                             height={26}
-                            src={`https://app.aave.com/icons/tokens/${"USDT".toLowerCase()}.svg`}
+                            src={`https://app.aave.com/icons/tokens/${symbol.toLowerCase()}.svg`}
                           />
-                          <TokenTexture>USDT</TokenTexture>
+                          <TokenTexture>{symbol}</TokenTexture>
                         </TokenWrapper>
                       ),
                     }}
@@ -75,8 +168,13 @@ return (
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
-                      left: <GrayTexture>$0.09</GrayTexture>,
-                      right: <GrayTexture>Wallet balance: 1.49</GrayTexture>,
+                      left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
+                      right: (
+                        <GrayTexture>
+                          Supply balance:{" "}
+                          {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
+                        </GrayTexture>
+                      ),
                     }}
                   />
                 </>
@@ -94,7 +192,9 @@ return (
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
                       left: <PurpleTexture>Remaining supply</PurpleTexture>,
-                      right: <WhiteTexture>0.98887210 USDT</WhiteTexture>,
+                      right: (
+                        <WhiteTexture>{remainingSupply} USDT</WhiteTexture>
+                      ),
                     }}
                   />
                 </TransactionOverviewContainer>
@@ -104,9 +204,18 @@ return (
           <Widget
             src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
             props={{
-              children: "Supply DAI",
+              children: "Withdraw",
               onClick: () => {
-                console.log("Supply DAI");
+                const amount = Big(state.amount)
+                  .mul(Big(10).pow(decimals))
+                  .toFixed(0);
+                if (symbol === "WETH") {
+                  // supply weth
+                  withdrawETH(amount);
+                } else {
+                  // supply common
+                  console.log(`Withdraw ${symbol}`);
+                }
               },
             }}
           />

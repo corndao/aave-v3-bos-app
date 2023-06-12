@@ -1,5 +1,8 @@
 const { config, yourSupplies, showWithdrawModal, setShowWithdrawModal } = props;
 
+State.init({
+  data: undefined,
+});
 return (
   <>
     <Widget
@@ -94,7 +97,8 @@ return (
                               props={{
                                 children: "Withdraw",
                                 onClick: () => {
-                                  console.log("Withdraw");
+                                  State.update({ data: row });
+                                  setShowWithdrawModal(true);
                                 },
                               }}
                             />,
@@ -141,7 +145,8 @@ return (
                         props={{
                           children: "Withdraw",
                           onClick: () => {
-                            console.log("Supply");
+                            State.update({ data: row });
+                            setShowWithdrawModal(true);
                           },
                         }}
                       />,
@@ -156,7 +161,11 @@ return (
     {showWithdrawModal && (
       <Widget
         src={`${config.ownerId}/widget/AAVE.Modal.WithdrawModal`}
-        props={{ config, onRequestClose: () => setShowWithdrawModal(false) }}
+        props={{
+          config,
+          data: state.data,
+          onRequestClose: () => setShowWithdrawModal(false),
+        }}
       />
     )}
   </>
