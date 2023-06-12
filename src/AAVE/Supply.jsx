@@ -137,6 +137,8 @@ function withdraw(asset, amount) {
 }
 
 /// -- withdraw ETH
+/// -- NOTE: need to approve aWETH token first
+
 function withdrawETH(amount) {
   return Ethers.provider()
     .getSigner()
@@ -157,6 +159,8 @@ function withdrawETH(amount) {
 }
 
 /// -- approve/allowance ERC20
+/// -- needed for withdrawing ETH
+
 function approveForGateway(tokenAddress, amount) {
   const token = new ethers.Contract(
     tokenAddress,
