@@ -120,11 +120,16 @@ function depositETH(amount) {
         }
       );
     })
-    .then((res) => {
-      const hash =
-        "0xe0e603df530a864a21f922c3ecf460c5a8319c32c6f582ad6aac461baf804f2";
-      // after success
-      onRequestClose();
+    .then((tx) => {
+      tx.wait().then((res) => {
+        const { status } = res;
+        if (status === 1) {
+          onRequestClose();
+          console.log("tx succeeded", res);
+        } else {
+          console.log("tx failed", res);
+        }
+      });
     });
 }
 

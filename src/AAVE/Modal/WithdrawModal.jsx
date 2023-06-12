@@ -110,7 +110,17 @@ function withdrawETH(amount) {
         address
       );
     })
-    .then(() => onRequestClose);
+    .then((tx) => {
+      tx.wait().then((res) => {
+        const { status } = res;
+        if (status === 1) {
+          onRequestClose();
+          console.log("tx succeeded", res);
+        } else {
+          console.log("tx failed", res);
+        }
+      });
+    });
 }
 
 return (
