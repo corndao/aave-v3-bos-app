@@ -78,6 +78,39 @@ const SwitchTitle = styled.div`
   }
 `;
 
+const DropdownMobile = styled.div`
+  position: fixed;
+  z-index: 9999;
+
+  height: 80vh;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background: #151718;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  padding: 20px 12px;
+  font-size: 12px;
+
+  .dropdown-mobile-item {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+
+    div {
+      margin-left: 10px;
+    }
+  }
+`;
+
+const DropdownContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const DropdownImage = () => (
   <img
     className="dropdown-img"
@@ -99,20 +132,46 @@ const EthImage = () => (
   />
 );
 
+const toggleDropdown = () =>
+  State.update({ showDropdown: !state.showDropdown });
+
 State.init({
   showDropdown: false,
 });
 
 return (
   <>
+    {state.showDropdown && (
+      <DropdownMobile>
+        <div>Select Aave Market</div>
+        <div
+          className="dropdown-mobile-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(1);
+          }}
+        >
+          <EthImage />
+          <div>Ethereum</div>
+        </div>
+        <div
+          className="dropdown-mobile-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(42161);
+          }}
+        >
+          <ArbImage />
+          <div>Arbitrum</div>
+        </div>
+      </DropdownMobile>
+    )}
     <SwitchContainer>
-      <ETH_MATIC />
-      <SwitchTitle
-        onClick={() => State.update({ showDropdown: !state.showDropdown })}
-      >
-        Polygon zkEVM
-      </SwitchTitle>
-      <DropdownImage />
+      <DropdownContainer onClick={toggleDropdown}>
+        <ETH_MATIC />
+        <SwitchTitle>Polygon zkEVM</SwitchTitle>
+        <DropdownImage />
+      </DropdownContainer>
       {state.showDropdown && (
         <div className="dropdown-pc">
           <div>Select Aave Market</div>
