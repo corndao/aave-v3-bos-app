@@ -25,8 +25,6 @@ function depositETH(amount) {
     .getSigner()
     .getAddress()
     .then((address) => {
-      console.log("signer address", address);
-
       const wrappedTokenGateway = new ethers.Contract(
         wrappedTokenGatewayV3Address,
         wrappedTokenGatewayV3ABI.body,
@@ -121,32 +119,124 @@ function supplyWithPermit(user, reserve, amount, deadline, rawSig) {
   ](reserve, amount, user, 0, deadline, sig.v, sig.r, sig.s);
 }
 
+/// -- withdraw ERC20 tokens
+
+function withdraw(asset, amount) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const pool = new ethers.Contract(
+        aavePoolV3Address,
+        aavePoolV3ABI.body,
+        Ethers.provider().getSigner()
+      );
+
+      return pool["withdraw(address,uint256,address)"](asset, amount, address);
+    });
+}
+
+/// -- withdraw ETH
+function withdrawETH(amount) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const wrappedTokenGateway = new ethers.Contract(
+        wrappedTokenGatewayV3Address,
+        wrappedTokenGatewayV3ABI.body,
+        Ethers.provider().getSigner()
+      );
+
+      return wrappedTokenGateway.withdrawETH(
+        aavePoolV3Address,
+        amount,
+        address
+      );
+    });
+}
+
+/// -- approve/allowance ERC20
+function approveForGateway(tokenAddress, amount) {
+  const token = new ethers.Contract(
+    tokenAddress,
+    erc20Abi.body,
+    Ethers.provider().getSigner()
+  );
+
+  return token.approve(wrappedTokenGatewayV3Address, amount);
+}
+
+function allowanceForGateway(tokenAddress) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const token = new ethers.Contract(
+        tokenAddress,
+        erc20Abi.body,
+        Ethers.provider().getSigner()
+      );
+
+      return token.allowance(address, wrappedTokenGatewayV3Address);
+    });
+}
+
 // depositETH("1000000000000000")
 //   .then(res => {
 //     console.log('depositETH txn:');
 //     console.log(res);
 //   });
 
-signERC20Approval(
-  "0xf7175dc7d7d42cd41fd7d19f10ade1ea84d99d0c",
-  "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-  "Tether USD",
-  "100000",
-  1686128715
-)
-  .then((rawSig) => {
-    return supplyWithPermit(
-      "0xf7175dc7d7d42cd41fd7d19f10ade1ea84d99d0c",
-      "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-      "100000",
-      1686128715,
-      rawSig
-    );
-  })
-  .then((txn) => {
-    console.log("supply txn");
-    console.log(txn);
-  });
+// signERC20Approval(
+//   "0xf7175dc7d7d42cd41fd7d19f10ade1ea84d99d0c",
+//   "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+//   "Tether USD",
+//   "100000",
+//   1686128715
+// )
+//   .then((rawSig) => {
+//     return supplyWithPermit(
+//       "0xf7175dc7d7d42cd41fd7d19f10ade1ea84d99d0c",
+//       "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+//       "100000",
+//       1686128715,
+//       rawSig
+//     );
+//   })
+//   .then((txn) => {
+//     console.log("supply txn");
+//     console.log(txn);
+//   });
+
+// withdraw(
+//   "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+//   "100000"
+// )
+//   .then(txn => {
+//     console.log("withdraw txn");
+//     console.log(txn);
+//   });
+
+// withdrawETH("100000000000000")
+//   .then(txn => {
+//     console.log("withdraw ETH txn");
+//     console.log(txn);
+//   });
+
+// approveForGateway(
+//   "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
+//   "12003454992880559"
+// )
+//   .then(txn => {
+//     console.log("approve gateway txn");
+//     console.log(txn);
+//   });
+
+// allowanceForGateway("0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8")
+//   .then(allowance => {
+//     console.log('allowance', allowance.toString());
+//   });
 
 return (
   <div>
