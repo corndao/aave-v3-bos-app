@@ -73,6 +73,8 @@ const config = getConfig(context.networkId);
 State.init({
   imports: {},
   chainId: 42161,
+  showWithdrawModal: false,
+  showSupplyModal: false,
 });
 
 const loading = !state.assetsToSupply || !state.yourSupplies;
@@ -219,11 +221,23 @@ const body = loading ? (
       />
       <Widget
         src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
-        props={{ config, yourSupplies: state.yourSupplies }}
+        props={{
+          config,
+          yourSupplies: state.yourSupplies,
+          showWithdrawModal: state.showWithdrawModal,
+          setShowWithdrawModal: (isShow) =>
+            State.update({ showWithdrawModal: isShow }),
+        }}
       />
       <Widget
         src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
-        props={{ config, assetsToSupply: state.assetsToSupply }}
+        props={{
+          config,
+          assetsToSupply: state.assetsToSupply,
+          showSupplyModal: state.showWithdrawModal,
+          setShowSupplyModal: (isShow) =>
+            State.update({ showWithdrawModal: isShow }),
+        }}
       />
     </Body>
   </>
