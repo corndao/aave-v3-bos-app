@@ -104,6 +104,10 @@ const DropdownMobile = styled.div`
       margin-left: 10px;
     }
   }
+
+  @media (min-width: 640px) {
+    display: none;
+  }
 `;
 
 const DropdownContainer = styled.div`
