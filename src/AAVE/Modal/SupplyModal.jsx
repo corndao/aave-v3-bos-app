@@ -1,5 +1,12 @@
-const { config } = props;
+const { config, data } = props;
 
+const {
+  symbol,
+  balance,
+  marketReferencePriceInUsd,
+  supplyAPY,
+  usageAsCollateralEnabled,
+} = data;
 const WithdrawContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -37,6 +44,12 @@ const GreenTexture = styled.div`
   color: #2cffa7;
 `;
 
+const RedTexture = styled.div`
+  font-size: 14px;
+  font-weight: bold;
+  color: red;
+`;
+
 const WhiteTexture = styled.div`
   font-size: 14px;
   font-weight: bold;
@@ -47,11 +60,12 @@ const TransactionOverviewContainer = styled.div`
   flex-direction: column;
   gap: 20px;
 `;
+
 return (
   <Widget
     src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
     props={{
-      title: "Supply MATIC",
+      title: `Supply ${symbol}`,
       onRequestClose: props.onRequestClose,
       children: (
         <WithdrawContainer>
@@ -65,15 +79,15 @@ return (
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
-                      left: <TokenTexture>0.1</TokenTexture>,
+                      left: <TokenTexture>0</TokenTexture>,
                       right: (
                         <TokenWrapper>
                           <img
                             width={26}
                             height={26}
-                            src={`https://app.aave.com/icons/tokens/${"MATIC".toLowerCase()}.svg`}
+                            src={`https://app.aave.com/icons/tokens/${symbol.toLowerCase()}.svg`}
                           />
-                          <TokenTexture>MATIC</TokenTexture>
+                          <TokenTexture>{symbol}</TokenTexture>
                         </TokenWrapper>
                       ),
                     }}
@@ -82,7 +96,9 @@ return (
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
                       left: <GrayTexture>$0.09</GrayTexture>,
-                      right: <GrayTexture>Wallet balance: 1.49</GrayTexture>,
+                      right: (
+                        <GrayTexture>Wallet balance: {balance}</GrayTexture>
+                      ),
                     }}
                   />
                 </>
@@ -100,14 +116,22 @@ return (
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
                       left: <PurpleTexture>Supply APY</PurpleTexture>,
-                      right: <WhiteTexture>2.06%</WhiteTexture>,
+                      right: (
+                        <WhiteTexture>
+                          {(Number(supplyAPY) * 100).toFixed(2)}%
+                        </WhiteTexture>
+                      ),
                     }}
                   />
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
                       left: <PurpleTexture>Collateralization</PurpleTexture>,
-                      right: <GreenTexture>Enabled</GreenTexture>,
+                      right: usageAsCollateralEnabled ? (
+                        <GreenTexture>Enabled</GreenTexture>
+                      ) : (
+                        <RedTexture>Disabled</RedTexture>
+                      ),
                     }}
                   />
                 </TransactionOverviewContainer>
@@ -117,9 +141,15 @@ return (
           <Widget
             src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
             props={{
-              children: "Supply MATIC",
+              children: `Supply ${symbol}`,
               onClick: () => {
-                console.log("Supply MATIC");
+                if (symbol === "WETH") {
+                  // supply weth
+                  console.log(`Supply ${symbol}`);
+                } else {
+                  // supply common
+                  console.log(`Supply ${symbol}`);
+                }
               },
             }}
           />

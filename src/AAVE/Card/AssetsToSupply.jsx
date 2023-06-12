@@ -1,5 +1,9 @@
 const { config, assetsToSupply, showSupplyModal, setShowSupplyModal } = props;
 
+State.init({
+  data: undefined,
+});
+
 return (
   <>
     <Widget
@@ -33,7 +37,7 @@ return (
                     "Can be collateral",
                     "",
                   ],
-                  datas: assetsToSupply.map((row, idx) => [
+                  datas: assetsToSupply.map((row) => [
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
                       props={{
@@ -76,6 +80,7 @@ return (
                       props={{
                         children: "Supply",
                         onClick: () => {
+                          State.update({ data: row });
                           setShowSupplyModal(true);
                         },
                       }}
@@ -84,7 +89,7 @@ return (
                 }}
               />
               {/* mobile view */}
-              {assetsToSupply.map((row, idx) => {
+              {assetsToSupply.map((row) => {
                 return (
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Card.CardContainer`}
@@ -165,6 +170,7 @@ return (
                                 props={{
                                   children: "Supply",
                                   onClick: () => {
+                                    State.update({ data: row });
                                     setShowSupplyModal(true);
                                   },
                                 }}
@@ -188,7 +194,11 @@ return (
     {showSupplyModal && (
       <Widget
         src={`${config.ownerId}/widget/AAVE.Modal.SupplyModal`}
-        props={{ config, onRequestClose: () => setShowSupplyModal(false) }}
+        props={{
+          config,
+          onRequestClose: () => setShowSupplyModal(false),
+          data: state.data,
+        }}
       />
     )}
   </>
