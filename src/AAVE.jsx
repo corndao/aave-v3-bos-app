@@ -110,6 +110,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
       };
+    default:
+      throw new Error("unknown chain id");
   }
 }
 
