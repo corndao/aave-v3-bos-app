@@ -190,7 +190,7 @@ function initData() {
     const balanceRaw = Big(
       market.symbol === "WETH" ? state.ethBalance : userBalances[idx].balance
     ).div(Big(10).pow(userBalances[idx].decimals));
-    const balance = balanceRaw.toFixed(3, ROUND_DOWN);
+    const balance = balanceRaw.toFixed(7, ROUND_DOWN);
     const balanceInUSD = balanceRaw
       .mul(market.marketReferencePriceInUsd)
       .toFixed(3, ROUND_DOWN);

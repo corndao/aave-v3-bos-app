@@ -76,7 +76,7 @@ return (
                                     <div className="card-data-value">
                                       <div>
                                         {Number(row.underlyingBalance).toFixed(
-                                          2
+                                          7
                                         )}
                                       </div>
                                       <div>
@@ -140,7 +140,7 @@ return (
                         }}
                       />,
                       <div>
-                        <div>{Number(row.underlyingBalance).toFixed(2)}</div>
+                        <div>{Number(row.underlyingBalance).toFixed(7)}</div>
                         <div>
                           $ {Number(row.underlyingBalanceUSD).toFixed(2)}
                         </div>
