@@ -122,17 +122,24 @@ const DropdownImage = () => (
   />
 );
 
+const PolygonImage = () => (
+  <img
+    className="dropdown-img"
+    src={`${config.ipfsPrefix}/bafkreieaobutw4ibjbh7cyom4wjzjc3rx2fxs2gpfhzasgsoj5f4hjxo2m`}
+  />
+);
+
 const ArbImage = () => (
   <img
     className="dropdown-img"
-    src={`${config.ipfsPrefix}/bafkreic2ev5k5m44bs6hooi4s3wsmbjtwhh3mrcgoe3wugrg75yhkrorvi`}
+    src={`${config.ipfsPrefix}/bafkreibjsp3la57lxpt2zr3eo4bz4n6hrgr6iordyopkbd4yjy2hgxdrsy`}
   />
 );
 
 const EthImage = () => (
   <img
     className="dropdown-img"
-    src={`${config.ipfsPrefix}/bafkreigeztpd4ehnjdlfzhk4uutrnc6b2v4c6mjcraxq6cbdy76kwtqkf4`}
+    src={`${config.ipfsPrefix}/bafkreih7c6cip4ckunan7c3n5ckyf56mfnqmu7u5zgvxvhqvjsyf76kwxy`}
   />
 );
 
@@ -198,6 +205,16 @@ return (
           >
             <ArbImage />
             <div>Arbitrum</div>
+          </div>
+          <div
+            className="dropdown-pc-item"
+            onClick={() => {
+              State.update({ showDropdown: false });
+              switchNetwork(137);
+            }}
+          >
+            <PolygonImage />
+            <div>Polygon</div>
           </div>
         </div>
       )}
