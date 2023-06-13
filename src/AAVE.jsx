@@ -277,6 +277,7 @@ const body = loading ? (
           showWithdrawModal: state.showWithdrawModal,
           setShowWithdrawModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
+          showAlarmModal: (msg) => State.update({ alarmModalText: msg }),
         }}
       />
       <Widget
@@ -287,8 +288,20 @@ const body = loading ? (
           showSupplyModal: state.showWithdrawModal,
           setShowSupplyModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
+          showAlarmModal: (msg) => State.update({ alarmModalText: msg }),
         }}
       />
+      {state.alarmModalText && (
+        <Widget
+          src={`${config.ownerId}/widget/AAVE.Modal.AlarmModal`}
+          props={{
+            config,
+            title: "All done!",
+            description: state.alarmModalText,
+            onRequestClose: () => State.update({ alarmModalText: false }),
+          }}
+        />
+      )}
     </Body>
   </>
 );

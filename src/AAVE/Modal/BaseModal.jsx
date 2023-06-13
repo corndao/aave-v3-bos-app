@@ -51,7 +51,7 @@ const Title = styled.div`
   font-weight: bold;
 `;
 
-const Body = styled.div`
+const ModalBody = styled.div`
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   padding: 30px 14px;
 `;
@@ -62,7 +62,7 @@ return (
         <Title>{props.title}</Title>
         <CloseImage />
       </Header>
-      <Body>{props.children}</Body>
+      <ModalBody>{props.children}</ModalBody>
     </ModalContainer>
   </ModalWrapper>
 );

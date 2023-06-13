@@ -1,4 +1,4 @@
-const { config, data, onRequestClose } = props;
+const { config, data, onRequestClose, showAlarmModal } = props;
 
 if (!data) {
   return;
@@ -125,6 +125,11 @@ function depositETH(amount) {
         const { status } = res;
         if (status === 1) {
           onRequestClose();
+          showAlarmModal(
+            `You supplied ${Big(amount)
+              .div(Big(10).pow(decimals))
+              .toFixed(8)} ${symbol}`
+          );
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
@@ -134,124 +139,126 @@ function depositETH(amount) {
 }
 
 return (
-  <Widget
-    src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
-    props={{
-      title: `Supply ${symbol}`,
-      onRequestClose: onRequestClose,
-      children: (
-        <WithdrawContainer>
-          <Widget
-            src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
-            props={{
-              title: "Amount",
-              config,
-              children: (
-                <>
-                  <Widget
-                    src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
-                    props={{
-                      left: (
-                        <TokenTexture>
-                          <Input
-                            type="number"
-                            value={state.amount}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (isValid(value)) {
-                                State.update({
-                                  amountInUSD: Big(value)
-                                    .mul(marketReferencePriceInUsd)
-                                    .toFixed(2, ROUND_DOWN),
-                                });
-                              } else {
-                                State.update({ amountInUSD: "0.00" });
-                              }
-                              State.update({ amount: value });
-                            }}
-                            placeholder="0"
-                          />
-                        </TokenTexture>
-                      ),
-                      right: (
-                        <TokenWrapper>
-                          <img
-                            width={26}
-                            height={26}
-                            src={`https://app.aave.com/icons/tokens/${symbol.toLowerCase()}.svg`}
-                          />
-                          <TokenTexture>{symbol}</TokenTexture>
-                        </TokenWrapper>
-                      ),
-                    }}
-                  />
-                  <Widget
-                    src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
-                    props={{
-                      left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
-                      right: (
-                        <GrayTexture>Wallet balance: {balance}</GrayTexture>
-                      ),
-                    }}
-                  />
-                </>
-              ),
-            }}
-          />
-          <Widget
-            src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
-            props={{
-              title: "Transaction overview",
-              config,
-              children: (
-                <TransactionOverviewContainer>
-                  <Widget
-                    src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
-                    props={{
-                      left: <PurpleTexture>Supply APY</PurpleTexture>,
-                      right: (
-                        <WhiteTexture>
-                          {(Number(supplyAPY) * 100).toFixed(2)}%
-                        </WhiteTexture>
-                      ),
-                    }}
-                  />
-                  <Widget
-                    src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
-                    props={{
-                      left: <PurpleTexture>Collateralization</PurpleTexture>,
-                      right: usageAsCollateralEnabled ? (
-                        <GreenTexture>Enabled</GreenTexture>
-                      ) : (
-                        <RedTexture>Disabled</RedTexture>
-                      ),
-                    }}
-                  />
-                </TransactionOverviewContainer>
-              ),
-            }}
-          />
-          <Widget
-            src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-            props={{
-              children: `Supply ${symbol}`,
-              onClick: () => {
-                const amount = Big(state.amount)
-                  .mul(Big(10).pow(decimals))
-                  .toFixed(0);
-                if (symbol === "WETH") {
-                  // supply weth
-                  depositETH(amount);
-                } else {
-                  // supply common
-                  console.log(`Supply ${symbol}`);
-                }
-              },
-            }}
-          />
-        </WithdrawContainer>
-      ),
-      config,
-    }}
-  />
+  <>
+    <Widget
+      src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
+      props={{
+        title: `Supply ${symbol}`,
+        onRequestClose: onRequestClose,
+        children: (
+          <WithdrawContainer>
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
+              props={{
+                title: "Amount",
+                config,
+                children: (
+                  <>
+                    <Widget
+                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                      props={{
+                        left: (
+                          <TokenTexture>
+                            <Input
+                              type="number"
+                              value={state.amount}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (isValid(value)) {
+                                  State.update({
+                                    amountInUSD: Big(value)
+                                      .mul(marketReferencePriceInUsd)
+                                      .toFixed(2, ROUND_DOWN),
+                                  });
+                                } else {
+                                  State.update({ amountInUSD: "0.00" });
+                                }
+                                State.update({ amount: value });
+                              }}
+                              placeholder="0"
+                            />
+                          </TokenTexture>
+                        ),
+                        right: (
+                          <TokenWrapper>
+                            <img
+                              width={26}
+                              height={26}
+                              src={`https://app.aave.com/icons/tokens/${symbol.toLowerCase()}.svg`}
+                            />
+                            <TokenTexture>{symbol}</TokenTexture>
+                          </TokenWrapper>
+                        ),
+                      }}
+                    />
+                    <Widget
+                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                      props={{
+                        left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
+                        right: (
+                          <GrayTexture>Wallet balance: {balance}</GrayTexture>
+                        ),
+                      }}
+                    />
+                  </>
+                ),
+              }}
+            />
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
+              props={{
+                title: "Transaction overview",
+                config,
+                children: (
+                  <TransactionOverviewContainer>
+                    <Widget
+                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                      props={{
+                        left: <PurpleTexture>Supply APY</PurpleTexture>,
+                        right: (
+                          <WhiteTexture>
+                            {(Number(supplyAPY) * 100).toFixed(2)}%
+                          </WhiteTexture>
+                        ),
+                      }}
+                    />
+                    <Widget
+                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                      props={{
+                        left: <PurpleTexture>Collateralization</PurpleTexture>,
+                        right: usageAsCollateralEnabled ? (
+                          <GreenTexture>Enabled</GreenTexture>
+                        ) : (
+                          <RedTexture>Disabled</RedTexture>
+                        ),
+                      }}
+                    />
+                  </TransactionOverviewContainer>
+                ),
+              }}
+            />
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+              props={{
+                children: `Supply ${symbol}`,
+                onClick: () => {
+                  const amount = Big(state.amount)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                  if (symbol === "WETH") {
+                    // supply weth
+                    depositETH(amount);
+                  } else {
+                    // supply common
+                    console.log(`Supply ${symbol}`);
+                  }
+                },
+              }}
+            />
+          </WithdrawContainer>
+        ),
+        config,
+      }}
+    />
+  </>
 );

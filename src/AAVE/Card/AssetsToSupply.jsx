@@ -1,4 +1,10 @@
-const { config, assetsToSupply, showSupplyModal, setShowSupplyModal } = props;
+const {
+  config,
+  assetsToSupply,
+  showSupplyModal,
+  setShowSupplyModal,
+  showAlarmModal,
+} = props;
 
 State.init({
   data: undefined,
@@ -198,6 +204,7 @@ return (
           config,
           onRequestClose: () => setShowSupplyModal(false),
           data: state.data,
+          showAlarmModal,
         }}
       />
     )}

@@ -1,4 +1,10 @@
-const { config, yourSupplies, showWithdrawModal, setShowWithdrawModal } = props;
+const {
+  config,
+  yourSupplies,
+  showAlarmModal,
+  showWithdrawModal,
+  setShowWithdrawModal,
+} = props;
 
 State.init({
   data: undefined,
@@ -164,6 +170,7 @@ return (
         props={{
           config,
           data: state.data,
+          showAlarmModal,
           onRequestClose: () => setShowWithdrawModal(false),
         }}
       />
