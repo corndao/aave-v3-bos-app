@@ -124,7 +124,7 @@ const config = getConfig(context.networkId);
 // App states
 State.init({
   imports: {},
-  chainId: 42161,
+  chainId: 1442,
   showWithdrawModal: false,
   showSupplyModal: false,
 });

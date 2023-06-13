@@ -216,6 +216,16 @@ return (
             <PolygonImage />
             <div>Polygon</div>
           </div>
+          <div
+            className="dropdown-pc-item"
+            onClick={() => {
+              State.update({ showDropdown: false });
+              switchNetwork(1442);
+            }}
+          >
+            <PolygonImage />
+            <div>Polygon zkEVM Testnet</div>
+          </div>
         </div>
       )}
     </SwitchContainer>
