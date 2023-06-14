@@ -153,6 +153,8 @@ function initData() {
   if (!provider) {
     State.update({ connectWallet: false });
     return;
+  } else {
+    State.update({ connectWallet: true });
   }
   provider
     .getSigner()
@@ -281,7 +283,7 @@ const body = loading ? (
           showWithdrawModal: state.showWithdrawModal,
           setShowWithdrawModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
-          showAlarmModal: (msg) => State.update({ alarmModalText: msg }),
+          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
         }}
       />
       <Widget
@@ -292,12 +294,12 @@ const body = loading ? (
           showSupplyModal: state.showWithdrawModal,
           setShowSupplyModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
-          showAlarmModal: (msg) => State.update({ alarmModalText: msg }),
+          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
         }}
       />
       {state.alarmModalText && (
         <Widget
-          src={`${config.ownerId}/widget/AAVE.Modal.AlarmModal`}
+          src={`${config.ownerId}/widget/AAVE.Modal.AlertModal`}
           props={{
             config,
             title: "All done!",

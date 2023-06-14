@@ -1,4 +1,4 @@
-const { config, data, onRequestClose, showAlarmModal } = props;
+const { config, data, onRequestClose, showAlertModal } = props;
 
 if (!data) {
   return;
@@ -115,7 +115,7 @@ function withdrawETH(amount) {
         const { status } = res;
         if (status === 1) {
           onRequestClose();
-          showAlarmModal(
+          showAlertModal(
             `You withdraw ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`

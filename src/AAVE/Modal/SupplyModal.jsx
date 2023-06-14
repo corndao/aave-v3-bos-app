@@ -1,4 +1,4 @@
-const { config, data, onRequestClose, showAlarmModal } = props;
+const { config, data, onRequestClose, showAlertModal } = props;
 
 if (!data) {
   return;
@@ -125,7 +125,7 @@ function depositETH(amount) {
         const { status } = res;
         if (status === 1) {
           onRequestClose();
-          showAlarmModal(
+          showAlertModal(
             `You supplied ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`

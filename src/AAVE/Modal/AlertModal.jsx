@@ -1,6 +1,6 @@
 const { config, onRequestClose } = props;
 
-const AlarmModalContainer = styled.div`
+const AlertModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -34,7 +34,7 @@ return (
       title: "",
       onRequestClose,
       children: (
-        <AlarmModalContainer>
+        <AlertModalContainer>
           <Right />
           <Title>{props.title}</Title>
           <Description>{props.description}</Description>
@@ -45,7 +45,7 @@ return (
               onClick: onRequestClose,
             }}
           />
-        </AlarmModalContainer>
+        </AlertModalContainer>
       ),
       config,
     }}
