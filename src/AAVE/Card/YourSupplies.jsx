@@ -121,7 +121,7 @@ return (
                 props={{
                   config,
                   headers: ["Asset", "Supply balance", "Supply APY", ""],
-                  datas: yourSupplies.map((row) => {
+                  data: yourSupplies.map((row) => {
                     return [
                       <Widget
                         src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}

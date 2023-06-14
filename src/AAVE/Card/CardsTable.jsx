@@ -1,6 +1,6 @@
-const { headers, datas, config } = props;
+const { headers, data, config } = props;
 
-if (!headers || !datas) {
+if (!headers || !data) {
   return null;
 }
 
@@ -44,7 +44,7 @@ return (
           </tr>
         </thead>
         <tbody>
-          {datas.map((rows, idx) => (
+          {data.map((rows, idx) => (
             <tr key={idx}>
               {rows.map((data, idx) => (
                 <td key={idx}>{data}</td>

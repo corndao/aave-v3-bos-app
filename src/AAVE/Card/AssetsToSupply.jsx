@@ -43,7 +43,7 @@ return (
                     "Can be collateral",
                     "",
                   ],
-                  datas: assetsToSupply.map((row) => [
+                  data: assetsToSupply.map((row) => [
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
                       props={{
