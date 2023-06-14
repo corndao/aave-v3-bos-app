@@ -120,6 +120,11 @@ State.init({
   chainId: 1442,
   showWithdrawModal: false,
   showSupplyModal: false,
+  connectWallet: true,
+  assetsToSupply: undefined,
+  yourSupplies: undefined,
+  address: undefined,
+  ethBalance: undefined,
 });
 
 const loading = !state.assetsToSupply || !state.yourSupplies;
