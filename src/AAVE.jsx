@@ -223,6 +223,12 @@ function initData() {
       ...market,
       balance,
       balanceInUSD,
+      ...(market.symbol === "WETH"
+        ? {
+            symbol: "ETH",
+            name: "Ethereum",
+          }
+        : {}),
     };
   });
   State.update({
