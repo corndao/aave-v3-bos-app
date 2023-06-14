@@ -1,4 +1,4 @@
-const { config, switchNetwork } = props;
+const { config, chainId, switchNetwork } = props;
 
 const ETH_MATIC = () => (
   <img
@@ -28,13 +28,21 @@ const SwitchContainer = styled.div`
     z-index: 1;
     box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.3);
   }
+
+  .network-img {
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    transition: all 0.3s ease-in-out;
+  }
+
   .dropdown-img {
     width: 16px;
     height: 16px;
     margin-left: 8px;
     transition: all 0.3s ease-in-out;
 
-    transform: rotate(${() => (state.showDropdown ? "180deg" : "0deg")});
+    transform: rotate(${() => (state.showDropdown ? "0deg" : "180deg")});
   }
 
   @media (min-width: 640px) {
@@ -42,6 +50,11 @@ const SwitchContainer = styled.div`
 
     img {
       height: 60px;
+    }
+
+    .network-img {
+      width: 32px;
+      height: 32px;
     }
 
     .dropdown-img {
@@ -128,27 +141,43 @@ const DropdownImage = () => (
 
 const PolygonImage = () => (
   <img
-    className="dropdown-img"
+    className="network-img"
     src={`${config.ipfsPrefix}/bafkreieaobutw4ibjbh7cyom4wjzjc3rx2fxs2gpfhzasgsoj5f4hjxo2m`}
   />
 );
 
 const ArbImage = () => (
   <img
-    className="dropdown-img"
+    className="network-img"
     src={`${config.ipfsPrefix}/bafkreibjsp3la57lxpt2zr3eo4bz4n6hrgr6iordyopkbd4yjy2hgxdrsy`}
   />
 );
 
 const EthImage = () => (
   <img
-    className="dropdown-img"
+    className="network-img"
     src={`${config.ipfsPrefix}/bafkreih7c6cip4ckunan7c3n5ckyf56mfnqmu7u5zgvxvhqvjsyf76kwxy`}
   />
 );
 
 const toggleDropdown = () =>
   State.update({ showDropdown: !state.showDropdown });
+
+const getChainImage = (chainId) => {
+  switch (chainId) {
+    case 1:
+      return EthImage;
+    case 42161:
+      return ArbImage;
+    case 137:
+    case 1442:
+      return PolygonImage;
+    default:
+      throw new Error("unknown chain id");
+  }
+};
+
+const ChainImage = getChainImage(chainId);
 
 State.init({
   showDropdown: false,
@@ -179,12 +208,32 @@ return (
           <ArbImage />
           <div>Arbitrum</div>
         </div>
+        <div
+          className="dropdown-mobile-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(137);
+          }}
+        >
+          <PolygonImage />
+          <div>Polygon</div>
+        </div>
+        <div
+          className="dropdown-mobile-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(1442);
+          }}
+        >
+          <PolygonImage />
+          <div>Polygon zkEVM Testnet</div>
+        </div>
       </DropdownMobile>
     )}
     <SwitchContainer>
       <DropdownContainer onClick={toggleDropdown}>
-        <ETH_MATIC />
-        <SwitchTitle>Polygon zkEVM</SwitchTitle>
+        <ChainImage />
+        <SwitchTitle>{config.chainName}</SwitchTitle>
         <DropdownImage />
       </DropdownContainer>
       {state.showDropdown && (

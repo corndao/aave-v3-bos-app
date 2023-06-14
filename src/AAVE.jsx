@@ -4,6 +4,20 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WrappedTokenGatewayV3ABI.json",
 };
 
+if (
+  state.chainId === undefined &&
+  ethers !== undefined &&
+  Ethers.send("eth_requestAccounts", [])[0]
+) {
+  Ethers.provider()
+    .getNetwork()
+    .then((data) => {
+      if (data?.chainId) {
+        State.update({ chainId: data.chainId });
+      }
+    });
+}
+
 function isValid(a) {
   if (!a) return false;
   if (isNaN(Number(a))) return false;
@@ -59,6 +73,7 @@ function getAAVEConfig(chainId) {
   switch (chainId) {
     case 1: // ethereum mainnet
       return {
+        chainName: "Ethereum Mainnet",
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
@@ -72,6 +87,7 @@ function getAAVEConfig(chainId) {
       };
     case 42161: // arbitrum one
       return {
+        chainName: "Arbitrum Mainnet",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
@@ -85,6 +101,7 @@ function getAAVEConfig(chainId) {
       };
     case 137: // polygon mainnet
       return {
+        chainName: "Polygon Mainnet",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
@@ -98,6 +115,7 @@ function getAAVEConfig(chainId) {
       };
     case 1442: // zkevm testnet
       return {
+        chainName: "Polygon zkEVM Testnet",
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
@@ -141,7 +159,7 @@ const config = getConfig(context.networkId);
 // App states
 State.init({
   imports: {},
-  chainId: 1442,
+  chainId: undefined,
   showWithdrawModal: false,
   showSupplyModal: false,
   connectWallet: true,
@@ -259,7 +277,9 @@ function initData() {
   });
 }
 
-initData();
+if (state.chainId) {
+  initData();
+}
 
 const Body = styled.div`
   padding: 24px 15px;
@@ -290,13 +310,12 @@ const body = loading ? (
         <Widget
           src={`${config.ownerId}/widget/AAVE.NetworkSwitcher`}
           props={{
+            chainId: state.chainId,
             config,
             switchNetwork: (chainId) => {
-              State.update({
-                chainId,
-                assetsToSupply: undefined,
-                yourSupplies: undefined,
-              });
+              Ethers.send("wallet_switchEthereumChain", [
+                { chainId: `0x${chainId.toString(16)}` },
+              ]);
             },
           }}
         />
