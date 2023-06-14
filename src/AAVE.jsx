@@ -100,7 +100,6 @@ function getConfig(network) {
         nodeUrl: "https://rpc.mainnet.near.org",
         ipfsPrefix: "https://ipfs.near.social/ipfs",
         ...(chainId ? getAAVEConfig(chainId) : {}),
-        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
       };
     case "testnet":
       return {
