@@ -149,6 +149,7 @@ State.init({
   yourSupplies: undefined,
   address: undefined,
   ethBalance: undefined,
+  providerChainId: undefined,
 });
 
 const loading = !state.assetsToSupply || !state.yourSupplies;
@@ -180,6 +181,9 @@ function initData() {
   } else {
     State.update({ connectWallet: true });
   }
+  provider.getNetwork().then((network) => {
+    State.update({ providerChainId: network.chainId });
+  });
   provider
     .getSigner()
     ?.getAddress()
@@ -268,17 +272,20 @@ const FlexContainer = styled.div`
   align-items: center;
   flex-direction: column;
 `;
+
 // Component body
 const body = loading ? (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
-      {state.connectWallet ? "Loading" : "Need to connect wallet first."}
+      {!state.connectWallet && "Need to connect wallet first."}
+      {state.connectWallet && "Loading"}
     </Body>
   </>
 ) : (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
+
     <Body>
       <FlexContainer>
         <Widget
@@ -299,29 +306,34 @@ const body = loading ? (
         src={`${config.ownerId}/widget/AAVE.TabSwitcher`}
         props={{ config }}
       />
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
-        props={{
-          config,
-          yourSupplies: state.yourSupplies,
-          showWithdrawModal: state.showWithdrawModal,
-          setShowWithdrawModal: (isShow) =>
-            State.update({ showWithdrawModal: isShow }),
-          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
-        }}
-      />
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
-        props={{
-          config,
-          chainId: state.chainId,
-          assetsToSupply: state.assetsToSupply,
-          showSupplyModal: state.showWithdrawModal,
-          setShowSupplyModal: (isShow) =>
-            State.update({ showWithdrawModal: isShow }),
-          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
-        }}
-      />
+      {state.providerChainId !== state.chainId && "Need to switch chain"}
+      {state.providerChainId === state.chainId && (
+        <>
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
+            props={{
+              config,
+              yourSupplies: state.yourSupplies,
+              showWithdrawModal: state.showWithdrawModal,
+              setShowWithdrawModal: (isShow) =>
+                State.update({ showWithdrawModal: isShow }),
+              showAlertModal: (msg) => State.update({ alarmModalText: msg }),
+            }}
+          />
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
+            props={{
+              config,
+              chainId: state.chainId,
+              assetsToSupply: state.assetsToSupply,
+              showSupplyModal: state.showWithdrawModal,
+              setShowSupplyModal: (isShow) =>
+                State.update({ showWithdrawModal: isShow }),
+              showAlertModal: (msg) => State.update({ alarmModalText: msg }),
+            }}
+          />
+        </>
+      )}
       {state.alarmModalText && (
         <Widget
           src={`${config.ownerId}/widget/AAVE.Modal.AlertModal`}
