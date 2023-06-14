@@ -1,15 +1,112 @@
+const ROUND_DOWN = 0;
+const CONTRACT_ABI = {
+  wrappedTokenGatewayV3ABI:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WrappedTokenGatewayV3ABI.json",
+};
+
+function isValid(a) {
+  if (!a) return false;
+  if (isNaN(Number(a))) return false;
+  if (a === "") return false;
+  return true;
+}
+
+// interface Market {
+//   id: string,
+//   underlyingAsset: string,
+//   name: string,
+//   symbol: string,
+//   decimals: number,
+// }
+// returns Market[]
+function getMarkets(chainId) {
+  return fetch(`https://aave-api.pages.dev/${chainId}/markets`);
+}
+
+/**
+ * @param {string} account user address
+ * @param {string[]} tokens list of token addresses
+ */
+// interface TokenBalance {
+//   token: string,
+//   balance: string,
+//   decimals: number,
+// }
+// returns TokenBalance[]
+function getUserBalances(chainId, account, tokens) {
+  const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
+    "|"
+  )}`;
+  return fetch(url);
+}
+
+// interface UserDeposit {
+//   underlyingAsset: string,
+//   name: string,
+//   symbol: string,
+//   scaledATokenBalance: string,
+//   usageAsCollateralEnabledOnUser: boolean,
+//   underlyingBalance: string,
+//   underlyingBalanceUSD: string,
+// }
+// returns UserDeposit[]
+function getUserDeposits(chainId, address) {
+  return fetch(`https://aave-api.pages.dev/${chainId}/deposits/${address}`);
+}
+
+// Get AAVE config by chain id
+function getAAVEConfig(chainId) {
+  switch (chainId) {
+    case 1: // ethereum mainnet
+      return {
+        aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+        wrappedTokenGatewayV3Address:
+          "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+      };
+    case 42161: // arbitrum one
+      return {
+        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        wrappedTokenGatewayV3Address:
+          "0xB5Ee21786D28c5Ba61661550879475976B707099",
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+      };
+    case 137: // polygon mainnet
+      return {
+        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        wrappedTokenGatewayV3Address:
+          "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+      };
+    case 1442: // zkevm testnet
+      return {
+        aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
+        wrappedTokenGatewayV3Address:
+          "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+      };
+    default:
+      throw new Error("unknown chain id");
+  }
+}
+
 // App config
 function getConfig(network) {
+  const chainId = state.chainId;
   switch (network) {
     case "mainnet":
       return {
         ownerId: "aave-v3.near",
         nodeUrl: "https://rpc.mainnet.near.org",
+        ipfsPrefix: "https://ipfs.near.social/ipfs",
+        ...(chainId ? getAAVEConfig(chainId) : {}),
       };
     case "testnet":
       return {
         ownerId: "aave-v3.testnet",
         nodeUrl: "https://rpc.testnet.near.org",
+        ipfsPrefix: "https://ipfs.near.social/ipfs",
+        ...(chainId ? getAAVEConfig(chainId) : {}),
       };
     default:
       throw Error(`Unconfigured environment '${network}'.`);
@@ -20,9 +117,17 @@ const config = getConfig(context.networkId);
 // App states
 State.init({
   imports: {},
+  chainId: 1442,
+  showWithdrawModal: false,
+  showSupplyModal: false,
+  connectWallet: true,
+  assetsToSupply: undefined,
+  yourSupplies: undefined,
+  address: undefined,
+  ethBalance: undefined,
 });
 
-const loading = Object.keys(state.imports).length === 0;
+const loading = !state.assetsToSupply || !state.yourSupplies;
 
 // Import functions to state.imports
 function importFunctions(imports) {
@@ -42,24 +147,169 @@ const modules = {
 // Import functions
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
-const { getMarkets, getUserDeposits, getUserBalances } = state.imports.data;
 
+function initData() {
+  const provider = Ethers.provider();
+  if (!provider) {
+    State.update({ connectWallet: false });
+    return;
+  } else {
+    State.update({ connectWallet: true });
+  }
+  provider
+    .getSigner()
+    ?.getAddress()
+    ?.then((address) => {
+      State.update({ address });
+    });
+  provider
+    .getSigner()
+    ?.getBalance()
+    .then((balance) => State.update({ ethBalance: balance }));
+  if (!state.address || !state.ethBalance) {
+    return;
+  }
+  const marketsResponse = getMarkets(state.chainId);
+  if (!marketsResponse) {
+    return;
+  }
+  const markets = JSON.parse(marketsResponse.body);
+  const userBalancesResponse = getUserBalances(
+    state.chainId,
+    state.address,
+    markets.map((market) => market.underlyingAsset)
+  );
+  if (!userBalancesResponse) {
+    return;
+  }
+  const userBalances = JSON.parse(userBalancesResponse.body);
+  const assetsToSupply = markets.map((market, idx) => {
+    if (!isValid(userBalances[idx].decimals)) {
+      return;
+    }
+    const balanceRaw = Big(
+      market.symbol === "WETH" ? state.ethBalance : userBalances[idx].balance
+    ).div(Big(10).pow(userBalances[idx].decimals));
+    const balance = balanceRaw.toFixed(7, ROUND_DOWN);
+    const balanceInUSD = balanceRaw
+      .mul(market.marketReferencePriceInUsd)
+      .toFixed(3, ROUND_DOWN);
+    return {
+      ...userBalances[idx],
+      ...market,
+      balance,
+      balanceInUSD,
+    };
+  });
+  State.update({
+    assetsToSupply,
+  });
+
+  // yourSupplies
+  const userDepositsResponse = getUserDeposits(state.chainId, state.address);
+  if (!userDepositsResponse) {
+    return;
+  }
+  const userDeposits = JSON.parse(userDepositsResponse.body).filter(
+    (row) => Number(row.underlyingBalance) !== 0
+  );
+  const marketsMapping = markets.reduce((prev, cur) => {
+    prev[cur.symbol] = cur;
+    return prev;
+  }, {});
+  const yourSupplies = userDeposits.map((userDeposit) => {
+    const market = marketsMapping[userDeposit.symbol];
+    return {
+      ...market,
+      ...userDeposit,
+    };
+  });
+  State.update({
+    yourSupplies,
+  });
+}
+
+initData();
+
+const Body = styled.div`
+  padding: 24px 15px;
+  background: #0e0e26;
+  min-height: 100vh;
+  color: white;
+`;
+
+const FlexContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+`;
 // Component body
 const body = loading ? (
-  "Loading..."
+  <>
+    <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
+    <Body>
+      {state.connectWallet ? "Loading" : "Need to connect wallet first."}
+    </Body>
+  </>
 ) : (
-  <div>
-    <div>AAVE</div>
-    <div>Time: {formatDateTime(Date.now())}</div>
-    <div>Price: {formatAmount("1.001")}</div>
-    {getMarkets().then((r) => console.log(r.body)) && ""}
-    {getUserDeposits("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C").then((r) =>
-      console.log(r.body)
-    ) && ""}
-    {getUserBalances("0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C", [
-      "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-    ]).then((r) => console.log(r.body)) && ""}
-  </div>
+  <>
+    <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
+    <Body>
+      <FlexContainer>
+        <Widget
+          src={`${config.ownerId}/widget/AAVE.NetworkSwitcher`}
+          props={{
+            config,
+            switchNetwork: (chainId) => {
+              State.update({
+                chainId,
+                assetsToSupply: undefined,
+                yourSupplies: undefined,
+              });
+            },
+          }}
+        />
+      </FlexContainer>
+      <Widget
+        src={`${config.ownerId}/widget/AAVE.TabSwitcher`}
+        props={{ config }}
+      />
+      <Widget
+        src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
+        props={{
+          config,
+          yourSupplies: state.yourSupplies,
+          showWithdrawModal: state.showWithdrawModal,
+          setShowWithdrawModal: (isShow) =>
+            State.update({ showWithdrawModal: isShow }),
+          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
+        }}
+      />
+      <Widget
+        src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
+        props={{
+          config,
+          assetsToSupply: state.assetsToSupply,
+          showSupplyModal: state.showWithdrawModal,
+          setShowSupplyModal: (isShow) =>
+            State.update({ showWithdrawModal: isShow }),
+          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
+        }}
+      />
+      {state.alarmModalText && (
+        <Widget
+          src={`${config.ownerId}/widget/AAVE.Modal.AlertModal`}
+          props={{
+            config,
+            title: "All done!",
+            description: state.alarmModalText,
+            onRequestClose: () => State.update({ alarmModalText: false }),
+          }}
+        />
+      )}
+    </Body>
+  </>
 );
 
 return (
