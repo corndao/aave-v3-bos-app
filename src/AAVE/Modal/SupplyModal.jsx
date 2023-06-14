@@ -207,7 +207,7 @@ return (
             <Widget
               src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
               props={{
-                title: "Transaction overview",
+                title: "Transaction Overview",
                 config,
                 children: (
                   <TransactionOverviewContainer>

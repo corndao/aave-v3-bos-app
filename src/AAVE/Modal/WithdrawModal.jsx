@@ -199,14 +199,14 @@ return (
           <Widget
             src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
             props={{
-              title: "Transaction overview",
+              title: "Transaction Overview",
               config,
               children: (
                 <TransactionOverviewContainer>
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                     props={{
-                      left: <PurpleTexture>Remaining supply</PurpleTexture>,
+                      left: <PurpleTexture>Remaining Supply</PurpleTexture>,
                       right: (
                         <WhiteTexture>{remainingSupply} USDT</WhiteTexture>
                       ),
