@@ -71,7 +71,7 @@ return (
                                 children: [
                                   <div className="card-data-row">
                                     <div className="card-data-key">
-                                      Supply balance
+                                      Supply Balance
                                     </div>
                                     <div className="card-data-value">
                                       <div>
@@ -120,7 +120,7 @@ return (
                 src={`${config.ownerId}/widget/AAVE.Card.CardsTable`}
                 props={{
                   config,
-                  headers: ["Asset", "Supply balance", "Supply APY", ""],
+                  headers: ["Asset", "Supply Balance", "Supply APY", ""],
                   data: yourSupplies.map((row) => {
                     return [
                       <Widget

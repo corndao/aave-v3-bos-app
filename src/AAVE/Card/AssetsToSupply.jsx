@@ -38,9 +38,9 @@ return (
                   config,
                   headers: [
                     "Asset",
-                    "Wallet balance",
+                    "Wallet Balance",
                     "Supply APY",
-                    "Can be collateral",
+                    "Can be Collateral",
                     "",
                   ],
                   data: assetsToSupply.map((row) => [
@@ -132,7 +132,7 @@ return (
                                   children: [
                                     <div className="card-data-row">
                                       <div className="card-data-key">
-                                        Wallet balance
+                                        Wallet Balance
                                       </div>
                                       <div className="card-data-value">
                                         <div>{row.balance}</div>
@@ -149,7 +149,7 @@ return (
                                     </div>,
                                     <div className="card-data-row">
                                       <div className="card-data-key">
-                                        Can be collateral
+                                        Can be Collateral
                                       </div>
                                       <div className="card-data-value">
                                         {row.usageAsCollateralEnabled && (

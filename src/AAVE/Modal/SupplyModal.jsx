@@ -196,7 +196,7 @@ return (
                       props={{
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
-                          <GrayTexture>Wallet balance: {balance}</GrayTexture>
+                          <GrayTexture>Wallet Balance: {balance}</GrayTexture>
                         ),
                       }}
                     />

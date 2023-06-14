@@ -186,7 +186,7 @@ return (
                       left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                       right: (
                         <GrayTexture>
-                          Supply balance:{" "}
+                          Supply Balance:{" "}
                           {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
                         </GrayTexture>
                       ),
