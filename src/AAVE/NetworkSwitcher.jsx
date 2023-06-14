@@ -96,6 +96,10 @@ const DropdownMobile = styled.div`
   font-size: 12px;
 
   .dropdown-mobile-item {
+    .dropdown-img {
+      width: 32px;
+      height: 32px;
+    }
     font-size: 14px;
     display: flex;
     align-items: center;
