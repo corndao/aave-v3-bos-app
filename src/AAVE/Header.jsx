@@ -40,6 +40,6 @@ const AAVELogo = () => (
 return (
   <Header>
     <AAVELogo />
-    <Web3Connect className="web3-connect" connectLabel="Connect wallet" />
+    <Web3Connect className="web3-connect" connectLabel="Connect Wallet" />
   </Header>
 );
