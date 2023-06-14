@@ -1,4 +1,8 @@
 const ROUND_DOWN = 0;
+const CONTRACT_ABI = {
+  wrappedTokenGatewayV3ABI:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WrappedTokenGatewayV3ABI.json",
+};
 
 function isValid(a) {
   if (!a) return false;
@@ -58,36 +62,28 @@ function getAAVEConfig(chainId) {
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
-        wrappedTokenGatewayV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
-        ),
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
       };
     case 42161: // arbitrum one
       return {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
-        wrappedTokenGatewayV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
-        ),
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
       };
     case 137: // polygon mainnet
       return {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
-        wrappedTokenGatewayV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
-        ),
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
       };
     case 1442: // zkevm testnet
       return {
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
-        wrappedTokenGatewayV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
-        ),
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
       };
     default:
       throw new Error("unknown chain id");
@@ -104,9 +100,7 @@ function getConfig(network) {
         nodeUrl: "https://rpc.mainnet.near.org",
         ipfsPrefix: "https://ipfs.near.social/ipfs",
         ...(chainId ? getAAVEConfig(chainId) : {}),
-        wrappedTokenGatewayV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/7867f925ce705b7df93cc61f2b1c0807/raw/ec1b149453a9000cecad647450c267ef351b8ae2/gistfile1.txt"
-        ),
+        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
       };
     case "testnet":
       return {
