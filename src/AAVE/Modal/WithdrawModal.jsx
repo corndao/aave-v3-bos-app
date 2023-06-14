@@ -13,6 +13,7 @@ function isValid(a) {
 }
 
 const {
+  underlyingAsset,
   decimals,
   symbol,
   underlyingBalance,
@@ -92,6 +93,37 @@ const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
 const remainingSupply = isNaN(_remainingSupply)
   ? underlyingBalance
   : Big(_remainingSupply).toFixed(2);
+
+function withdrawErc20(asset, amount) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const pool = new ethers.Contract(
+        config.aavePoolV3Address,
+        config.aavePoolV3ABI.body,
+        Ethers.provider().getSigner()
+      );
+
+      return pool["withdraw(address,uint256,address)"](asset, amount, address);
+    })
+    .then((tx) => {
+      tx.wait().then((res) => {
+        const { status } = res;
+        if (status === 1) {
+          onRequestClose();
+          showAlertModal(
+            `You withdraw ${Big(amount)
+              .div(Big(10).pow(decimals))
+              .toFixed(8)} ${symbol}`
+          );
+          console.log("tx succeeded", res);
+        } else {
+          console.log("tx failed", res);
+        }
+      });
+    });
+}
 
 function withdrawETH(amount) {
   return Ethers.provider()
@@ -229,7 +261,7 @@ return (
                   withdrawETH(amount);
                 } else {
                   // supply common
-                  console.log(`Withdraw ${symbol}`);
+                  withdrawErc20(underlyingAsset, amount);
                 }
               },
             }}
