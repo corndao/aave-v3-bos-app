@@ -283,11 +283,6 @@ const body = loading ? (
             chainId: state.chainId,
             config,
             switchNetwork: (chainId) => {
-              State.update({
-                chainId,
-                assetsToSupply: undefined,
-                yourSupplies: undefined,
-              });
               Ethers.send("wallet_switchEthereumChain", [
                 { chainId: `0x${chainId.toString(16)}` },
               ]);
