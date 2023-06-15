@@ -67,7 +67,7 @@ return (
                     </div>,
                     `${(Number(row.supplyAPY) * 100).toFixed(2)} %`,
                     <div style={{ paddingLeft: "50px" }}>
-                      {row.isIsolated && "-"}
+                      {row.isIsolated && "—"}
                       {!row.isIsolated && (
                         <>
                           {row.usageAsCollateralEnabled && (
