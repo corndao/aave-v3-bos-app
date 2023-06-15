@@ -334,6 +334,14 @@ function updateData() {
   });
 }
 
+function onActionSuccess(msg) {
+  // update data if action finishes
+  updateData();
+  setTimeout(() => {
+    State.update({ alertModalText: msg });
+  }, 5000);
+}
+
 checkProvider();
 if (state.walletConnected && state.chainId && loading) {
   updateData();
@@ -395,11 +403,7 @@ const body = loading ? (
           showWithdrawModal: state.showWithdrawModal,
           setShowWithdrawModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
-          showAlertModal: (msg) => {
-            State.update({ alertModalText: msg });
-            // update data if action finishes
-            updateData();
-          },
+          showAlertModal: onActionSuccess,
         }}
       />
       <Widget
@@ -411,11 +415,7 @@ const body = loading ? (
           showSupplyModal: state.showSupplyModal,
           setShowSupplyModal: (isShow) =>
             State.update({ showSupplyModal: isShow }),
-          showAlertModal: (msg) => {
-            State.update({ alertModalText: msg });
-            // update data if action finishes
-            updateData();
-          },
+          showAlertModal: onActionSuccess,
         }}
       />
       {state.alertModalText && (
