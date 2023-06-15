@@ -258,6 +258,12 @@ function initData() {
     return {
       ...market,
       ...userDeposit,
+      ...(market.symbol === "WETH"
+        ? {
+            symbol: "ETH",
+            name: "Ethereum",
+          }
+        : {}),
     };
   });
   State.update({
