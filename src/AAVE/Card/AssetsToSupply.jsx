@@ -20,7 +20,7 @@ return (
         style: {
           marginTop: "16px",
         },
-        title: "AssetsToSupply",
+        title: "Assets to supply",
         body:
           !assetsToSupply || assetsToSupply.length === 0 ? (
             <Widget
