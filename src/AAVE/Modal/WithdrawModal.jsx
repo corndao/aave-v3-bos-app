@@ -13,11 +13,13 @@ function isValid(a) {
 }
 
 const {
+  underlyingAsset,
   decimals,
   symbol,
   underlyingBalance,
   underlyingBalanceUSD,
   marketReferencePriceInUsd,
+  aTokenAddress,
 } = data;
 
 const WithdrawContainer = styled.div`
@@ -86,12 +88,45 @@ const Input = styled.input`
 State.init({
   amount: "",
   amountInUSD: "0.00",
+  allowanceAmount: 0,
+  needApprove: false,
 });
 
 const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
 const remainingSupply = isNaN(_remainingSupply)
   ? underlyingBalance
   : Big(_remainingSupply).toFixed(2);
+
+function withdrawErc20(asset, amount) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const pool = new ethers.Contract(
+        config.aavePoolV3Address,
+        config.aavePoolV3ABI.body,
+        Ethers.provider().getSigner()
+      );
+
+      return pool["withdraw(address,uint256,address)"](asset, amount, address);
+    })
+    .then((tx) => {
+      tx.wait().then((res) => {
+        const { status } = res;
+        if (status === 1) {
+          onRequestClose();
+          showAlertModal(
+            `You withdraw ${Big(amount)
+              .div(Big(10).pow(decimals))
+              .toFixed(8)} ${symbol}`
+          );
+          console.log("tx succeeded", res);
+        } else {
+          console.log("tx failed", res);
+        }
+      });
+    });
+}
 
 function withdrawETH(amount) {
   return Ethers.provider()
@@ -127,6 +162,54 @@ function withdrawETH(amount) {
       });
     });
 }
+
+function approveForGateway(tokenAddress, amount) {
+  const token = new ethers.Contract(
+    tokenAddress,
+    config.erc20Abi.body,
+    Ethers.provider().getSigner()
+  );
+
+  return token.approve(config.wrappedTokenGatewayV3Address, amount);
+}
+
+function allowanceForGateway(tokenAddress) {
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      const token = new ethers.Contract(
+        tokenAddress,
+        config.erc20Abi.body,
+        Ethers.provider().getSigner()
+      );
+
+      return token.allowance(address, config.wrappedTokenGatewayV3Address);
+    });
+}
+
+function update() {
+  allowanceForGateway(aTokenAddress)
+    .then((amount) => Number(amount.toString()))
+    .then((amount) =>
+      State.update({
+        allowanceAmount: Big(amount).div(Big(10).pow(decimals)).toNumber(),
+      })
+    );
+
+  if (
+    !isValid(state.amount) ||
+    !isValid(state.allowanceAmount) ||
+    Number(state.allowanceAmount) < Number(state.amount) ||
+    Number(state.amount) === 0
+  ) {
+    State.update({ needApprove: true });
+  } else {
+    State.update({ needApprove: false });
+  }
+}
+
+update();
 
 return (
   <Widget
@@ -216,24 +299,47 @@ return (
               ),
             }}
           />
-          <Widget
-            src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-            props={{
-              children: "Withdraw",
-              onClick: () => {
-                const amount = Big(state.amount)
-                  .mul(Big(10).pow(decimals))
-                  .toFixed(0);
-                if (symbol === "WETH") {
-                  // supply weth
-                  withdrawETH(amount);
-                } else {
-                  // supply common
-                  console.log(`Withdraw ${symbol}`);
-                }
-              },
-            }}
-          />
+          {state.needApprove && (
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+              props={{
+                children: "Approve ETH",
+                onClick: () => {
+                  const amount = Big(state.amount)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                  approveForGateway(aTokenAddress, amount).then((tx) => {
+                    tx.wait().then((res) => {
+                      const { status } = res;
+                      if (status === 1) {
+                        State.update({ needApprove: false });
+                      }
+                    });
+                  });
+                },
+              }}
+            />
+          )}
+          {!state.needApprove && (
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+              props={{
+                children: "Withdraw",
+                onClick: () => {
+                  const amount = Big(state.amount)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                  if (symbol === "WETH") {
+                    // supply weth
+                    withdrawETH(amount);
+                  } else {
+                    // supply common
+                    withdrawErc20(underlyingAsset, amount);
+                  }
+                },
+              }}
+            />
+          )}
         </WithdrawContainer>
       ),
       config,

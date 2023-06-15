@@ -1,4 +1,4 @@
-const { config, data, onRequestClose, showAlertModal } = props;
+const { config, data, onRequestClose, showAlertModal, chainId } = props;
 
 if (!data) {
   return;
@@ -19,6 +19,8 @@ const {
   supplyAPY,
   usageAsCollateralEnabled,
   decimals,
+  token,
+  name: tokenName,
 } = data;
 
 const WithdrawContainer = styled.div`
@@ -101,6 +103,86 @@ State.init({
   amountInUSD: "0.00",
 });
 
+function getNonce(tokenAddress, userAddress) {
+  const token = new ethers.Contract(
+    tokenAddress,
+    config.erc20Abi.body,
+    Ethers.provider().getSigner()
+  );
+
+  return token.nonces(userAddress).then((nonce) => nonce.toNumber());
+}
+
+/**
+ *
+ * @param {string} user user address
+ * @param {string} reserve AAVE reserve address (token to supply)
+ * @param {string} tokenName token name
+ * @param {string} amount token amount in full decimals
+ * @param {number} deadline unix timestamp in SECONDS
+ * @returns raw signature string will could be used in supplyWithPermit
+ */
+function signERC20Approval(user, reserve, tokenName, amount, deadline) {
+  return getNonce(reserve, user).then((nonce) => {
+    const typeData = {
+      types: {
+        EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" },
+          { name: "verifyingContract", type: "address" },
+        ],
+        Permit: [
+          { name: "owner", type: "address" },
+          { name: "spender", type: "address" },
+          { name: "value", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      },
+      primaryType: "Permit",
+      domain: {
+        name: tokenName,
+        version: "1",
+        chainId,
+        verifyingContract: reserve,
+      },
+      message: {
+        owner: user,
+        spender: config.aavePoolV3Address,
+        value: amount,
+        nonce,
+        deadline,
+      },
+    };
+
+    const dataToSign = JSON.stringify(typeData);
+
+    return Ethers.provider().send("eth_signTypedData_v4", [user, dataToSign]);
+  });
+}
+
+/**
+ *
+ * @param {string} user user address
+ * @param {string} reserve AAVE reserve address (token to supply)
+ * @param {string} amount token amount in full decimals
+ * @param {number} deadline unix timestamp in SECONDS
+ * @param {string} rawSig signature from signERC20Approval
+ * @returns txn object
+ */
+function supplyWithPermit(user, reserve, amount, deadline, rawSig) {
+  const sig = ethers.utils.splitSignature(rawSig);
+  const pool = new ethers.Contract(
+    config.aavePoolV3Address,
+    config.aavePoolV3ABI.body,
+    Ethers.provider().getSigner()
+  );
+  return pool[
+    "supplyWithPermit(address,uint256,address,uint16,uint256,uint8,bytes32,bytes32)"
+  ](reserve, amount, user, 0, deadline, sig.v, sig.r, sig.s);
+}
+
 function depositETH(amount) {
   return Ethers.provider()
     .getSigner()
@@ -135,6 +217,35 @@ function depositETH(amount) {
           console.log("tx failed", res);
         }
       });
+    });
+}
+
+function depositErc20(amount) {
+  const deadline = Math.floor(Date.now() / 1000 + 3600); // after an hour
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((userAddress) => {
+      signERC20Approval(userAddress, token, tokenName, amount, deadline)
+        .then((rawSig) => {
+          return supplyWithPermit(userAddress, token, amount, deadline, rawSig);
+        })
+        .then((tx) => {
+          tx.wait().then((res) => {
+            const { status } = res;
+            if (status === 1) {
+              onRequestClose();
+              showAlertModal(
+                `You supplied ${Big(amount)
+                  .div(Big(10).pow(decimals))
+                  .toFixed(8)} ${symbol}`
+              );
+              console.log("tx succeeded", res);
+            } else {
+              console.log("tx failed", res);
+            }
+          });
+        });
     });
 }
 
@@ -250,7 +361,7 @@ return (
                     depositETH(amount);
                   } else {
                     // supply common
-                    console.log(`Supply ${symbol}`);
+                    depositErc20(amount);
                   }
                 },
               }}

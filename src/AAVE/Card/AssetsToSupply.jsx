@@ -4,6 +4,7 @@ const {
   showSupplyModal,
   setShowSupplyModal,
   showAlertModal,
+  chainId,
 } = props;
 
 State.init({
@@ -205,6 +206,7 @@ return (
           onRequestClose: () => setShowSupplyModal(false),
           data: state.data,
           showAlertModal,
+          chainId,
         }}
       />
     )}

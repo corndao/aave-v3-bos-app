@@ -2,6 +2,10 @@ const ROUND_DOWN = 0;
 const CONTRACT_ABI = {
   wrappedTokenGatewayV3ABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WrappedTokenGatewayV3ABI.json",
+  erc20Abi:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/ERC20Permit.json",
+  aavePoolV3ABI:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
 };
 
 if (
@@ -78,6 +82,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     case 42161: // arbitrum one
       return {
@@ -86,6 +92,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     case 137: // polygon mainnet
       return {
@@ -94,6 +102,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     case 1442: // zkevm testnet
       return {
@@ -102,6 +112,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     default:
       throw new Error("unknown chain id");
@@ -217,6 +229,12 @@ function initData() {
       ...market,
       balance,
       balanceInUSD,
+      ...(market.symbol === "WETH"
+        ? {
+            symbol: "ETH",
+            name: "Ethereum",
+          }
+        : {}),
     };
   });
   State.update({
@@ -309,6 +327,7 @@ const body = loading ? (
         src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
         props={{
           config,
+          chainId: state.chainId,
           assetsToSupply: state.assetsToSupply,
           showSupplyModal: state.showWithdrawModal,
           setShowSupplyModal: (isShow) =>
