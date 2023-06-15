@@ -334,11 +334,17 @@ function updateData() {
   });
 }
 
-function onActionSuccess(msg) {
+function onActionSuccess({ msg, callback }) {
   // update data if action finishes
   updateData();
+  // update UI after data has almost loaded
   setTimeout(() => {
-    State.update({ alertModalText: msg });
+    if (callback) {
+      callback();
+    }
+    if (msg) {
+      State.update({ alertModalText: msg });
+    }
   }, 5000);
 }
 
@@ -403,7 +409,7 @@ const body = loading ? (
           showWithdrawModal: state.showWithdrawModal,
           setShowWithdrawModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
-          showAlertModal: onActionSuccess,
+          onActionSuccess,
         }}
       />
       <Widget
@@ -415,7 +421,7 @@ const body = loading ? (
           showSupplyModal: state.showSupplyModal,
           setShowSupplyModal: (isShow) =>
             State.update({ showSupplyModal: isShow }),
-          showAlertModal: onActionSuccess,
+          onActionSuccess,
         }}
       />
       {state.alertModalText && (

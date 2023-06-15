@@ -1,4 +1,4 @@
-const { config, data, onRequestClose, showAlertModal, chainId } = props;
+const { config, data, onRequestClose, onActionSuccess, chainId } = props;
 
 if (!data) {
   return;
@@ -206,12 +206,12 @@ function depositETH(amount) {
       tx.wait().then((res) => {
         const { status } = res;
         if (status === 1) {
-          onRequestClose();
-          showAlertModal(
-            `You supplied ${Big(amount)
+          onActionSuccess({
+            msg: `You supplied ${Big(amount)
               .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`
-          );
+              .toFixed(8)} ${symbol}`,
+            callback: onRequestClose,
+          });
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
@@ -234,12 +234,12 @@ function depositErc20(amount) {
           tx.wait().then((res) => {
             const { status } = res;
             if (status === 1) {
-              onRequestClose();
-              showAlertModal(
-                `You supplied ${Big(amount)
+              onActionSuccess({
+                msg: `You supplied ${Big(amount)
                   .div(Big(10).pow(decimals))
-                  .toFixed(8)} ${symbol}`
-              );
+                  .toFixed(8)} ${symbol}`,
+                callback: onRequestClose,
+              });
               console.log("tx succeeded", res);
             } else {
               console.log("tx failed", res);

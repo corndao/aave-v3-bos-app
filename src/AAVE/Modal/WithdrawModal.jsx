@@ -1,4 +1,4 @@
-const { config, data, onRequestClose, showAlertModal } = props;
+const { config, data, onRequestClose, onActionSuccess } = props;
 
 if (!data) {
   return;
@@ -114,12 +114,12 @@ function withdrawErc20(asset, amount) {
       tx.wait().then((res) => {
         const { status } = res;
         if (status === 1) {
-          onRequestClose();
-          showAlertModal(
-            `You withdraw ${Big(amount)
+          onActionSuccess({
+            msg: `You withdraw ${Big(amount)
               .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`
-          );
+              .toFixed(8)} ${symbol}`,
+            callback: onRequestClose,
+          });
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
@@ -149,12 +149,12 @@ function withdrawETH(amount) {
       tx.wait().then((res) => {
         const { status } = res;
         if (status === 1) {
-          onRequestClose();
-          showAlertModal(
-            `You withdraw ${Big(amount)
+          onActionSuccess({
+            msg: `You withdraw ${Big(amount)
               .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`
-          );
+              .toFixed(8)} ${symbol}`,
+            callback: onRequestClose,
+          });
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
