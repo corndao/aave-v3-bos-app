@@ -121,10 +121,6 @@ function isValid(a) {
 // }
 // returns Market[]
 function getMarkets(chainId) {
-  return fetch(`https://aave-api.pages.dev/${chainId}/markets`);
-}
-
-function getMarketsAsync(chainId) {
   return asyncFetch(`https://aave-api.pages.dev/${chainId}/markets`);
 }
 
@@ -142,13 +138,6 @@ function getUserBalances(chainId, account, tokens) {
   const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
     "|"
   )}`;
-  return fetch(url);
-}
-
-function getUserBalancesAsync(chainId, account, tokens) {
-  const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
-    "|"
-  )}`;
   return asyncFetch(url);
 }
 
@@ -163,10 +152,6 @@ function getUserBalancesAsync(chainId, account, tokens) {
 // }
 // returns UserDeposit[]
 function getUserDeposits(chainId, address) {
-  return fetch(`https://aave-api.pages.dev/${chainId}/deposits/${address}`);
-}
-
-function getUserDepositsAsync(chainId, address) {
   return asyncFetch(
     `https://aave-api.pages.dev/${chainId}/deposits/${address}`
   );
@@ -227,8 +212,8 @@ const modules = {
   data: `${config.ownerId}/widget/AAVE.Data`,
 };
 // Import functions
-const { formatAmount } = state.imports.number;
-const { formatDateTime } = state.imports.date;
+// const { formatAmount } = state.imports.number;
+// const { formatDateTime } = state.imports.date;
 
 function checkProvider() {
   const provider = Ethers.provider();
@@ -239,98 +224,8 @@ function checkProvider() {
   }
 }
 
-function initData() {
-  const provider = Ethers.provider();
-  if (!provider) {
-    return;
-  }
-  provider
-    .getSigner()
-    ?.getAddress()
-    ?.then((address) => {
-      State.update({ address });
-    });
-  provider
-    .getSigner()
-    ?.getBalance()
-    .then((balance) => State.update({ ethBalance: balance }));
-  if (!state.address || !state.ethBalance) {
-    return;
-  }
-  const marketsResponse = getMarkets(state.chainId);
-  if (!marketsResponse) {
-    return;
-  }
-  const markets = JSON.parse(marketsResponse.body);
-  const userBalancesResponse = getUserBalances(
-    state.chainId,
-    state.address,
-    markets.map((market) => market.underlyingAsset)
-  );
-  if (!userBalancesResponse) {
-    return;
-  }
-  const userBalances = JSON.parse(userBalancesResponse.body);
-  const assetsToSupply = markets.map((market, idx) => {
-    if (!isValid(userBalances[idx].decimals)) {
-      return;
-    }
-    const balanceRaw = Big(
-      market.symbol === "WETH" ? state.ethBalance : userBalances[idx].balance
-    ).div(Big(10).pow(userBalances[idx].decimals));
-    const balance = balanceRaw.toFixed(7, ROUND_DOWN);
-    const balanceInUSD = balanceRaw
-      .mul(market.marketReferencePriceInUsd)
-      .toFixed(3, ROUND_DOWN);
-    return {
-      ...userBalances[idx],
-      ...market,
-      balance,
-      balanceInUSD,
-      ...(market.symbol === "WETH"
-        ? {
-            symbol: "ETH",
-            name: "Ethereum",
-          }
-        : {}),
-    };
-  });
-  State.update({
-    assetsToSupply,
-  });
-
-  // yourSupplies
-  const userDepositsResponse = getUserDeposits(state.chainId, state.address);
-  if (!userDepositsResponse) {
-    return;
-  }
-  const userDeposits = JSON.parse(userDepositsResponse.body).filter(
-    (row) => Number(row.underlyingBalance) !== 0
-  );
-  const marketsMapping = markets.reduce((prev, cur) => {
-    prev[cur.symbol] = cur;
-    return prev;
-  }, {});
-  const yourSupplies = userDeposits.map((userDeposit) => {
-    const market = marketsMapping[userDeposit.symbol];
-    return {
-      ...market,
-      ...userDeposit,
-      ...(market.symbol === "WETH"
-        ? {
-            symbol: "ETH",
-            name: "Ethereum",
-          }
-        : {}),
-    };
-  });
-  State.update({
-    yourSupplies,
-  });
-}
-
 // update data in async manner
-function updateDataAsync() {
+function updateData() {
   const provider = Ethers.provider();
   if (!provider) {
     return;
@@ -351,14 +246,14 @@ function updateDataAsync() {
 
   const prevYourSupplies = state.yourSupplies;
 
-  getMarketsAsync(state.chainId).then((marketsResponse) => {
+  getMarkets(state.chainId).then((marketsResponse) => {
     if (!marketsResponse) {
       return;
     }
     const markets = JSON.parse(marketsResponse.body);
 
     // get user balances
-    getUserBalancesAsync(
+    getUserBalances(
       state.chainId,
       state.address,
       markets.map((market) => market.underlyingAsset)
@@ -400,7 +295,7 @@ function updateDataAsync() {
     });
 
     // get user supplies
-    getUserDepositsAsync(state.chainId, state.address).then(
+    getUserDeposits(state.chainId, state.address).then(
       (userDepositsResponse) => {
         if (!userDepositsResponse) {
           return;
@@ -432,7 +327,7 @@ function updateDataAsync() {
 
         if (JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies)) {
           console.log("refresh again ...", prevYourSupplies, yourSupplies);
-          setTimeout(updateDataAsync, 500);
+          setTimeout(updateData, 500);
         }
       }
     );
@@ -441,7 +336,7 @@ function updateDataAsync() {
 
 checkProvider();
 if (state.walletConnected && state.chainId && loading) {
-  updateDataAsync();
+  updateData();
 }
 
 const Body = styled.div`
@@ -503,7 +398,7 @@ const body = loading ? (
           showAlertModal: (msg) => {
             State.update({ alertModalText: msg });
             // update data if action finishes
-            updateDataAsync();
+            updateData();
           },
         }}
       />
@@ -519,7 +414,7 @@ const body = loading ? (
           showAlertModal: (msg) => {
             State.update({ alertModalText: msg });
             // update data if action finishes
-            updateDataAsync();
+            updateData();
           },
         }}
       />
