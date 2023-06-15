@@ -1,4 +1,4 @@
-const { config, chainId, switchNetwork } = props;
+const { config, chainId, switchNetwork, disabled } = props;
 
 const ETH_MATIC = () => (
   <img
@@ -160,8 +160,9 @@ const EthImage = () => (
   />
 );
 
-const toggleDropdown = () =>
-  State.update({ showDropdown: !state.showDropdown });
+const toggleDropdown = disabled
+  ? () => {}
+  : () => State.update({ showDropdown: !state.showDropdown });
 
 const getChainImage = (chainId) => {
   switch (chainId) {
@@ -234,7 +235,7 @@ return (
       <DropdownContainer onClick={toggleDropdown}>
         <ChainImage />
         <SwitchTitle>{config.chainName}</SwitchTitle>
-        <DropdownImage />
+        {!disabled && <DropdownImage />}
       </DropdownContainer>
       {state.showDropdown && (
         <div className="dropdown-pc">
