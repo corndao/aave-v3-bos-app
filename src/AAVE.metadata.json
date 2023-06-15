@@ -1,0 +1,13 @@
+{
+  "description": "Aave - Open Source Liquidity Protocol",
+  "image": {
+    "ipfs_cid": "bafkreicmsnivbvp2xd3ewcjb5kybgnbnevbcojhn4mgub7rregnbtqcige"
+  },
+  "name": "AAVE v3",
+  "tags": {
+    "app": "",
+    "defi": "",
+    "eth": "",
+    "lending": ""
+  }
+}
