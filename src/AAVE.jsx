@@ -2,6 +2,10 @@ const ROUND_DOWN = 0;
 const CONTRACT_ABI = {
   wrappedTokenGatewayV3ABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WrappedTokenGatewayV3ABI.json",
+  erc20Abi:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/ERC20Permit.json",
+  aavePoolV3ABI:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
 };
 
 if (
@@ -78,12 +82,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(
-          "https://gist.githubusercontent.com/danielwpz/40e8b7ed6ab2f1ba23dae5b0fade3ca3/raw/6a4b332d0992f160f851f533c0aad2c07f668357/ERC20Permit.json"
-        ),
-        aavePoolV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/f5f95a9fdc87dbf38302322ee0fe3bc5/raw/0fa5e7145ba45595fd88a62f3e0592ae8c9fe389/AAVEPoolV3.json"
-        ),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     case 42161: // arbitrum one
       return {
@@ -92,12 +92,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(
-          "https://gist.githubusercontent.com/danielwpz/40e8b7ed6ab2f1ba23dae5b0fade3ca3/raw/6a4b332d0992f160f851f533c0aad2c07f668357/ERC20Permit.json"
-        ),
-        aavePoolV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/f5f95a9fdc87dbf38302322ee0fe3bc5/raw/0fa5e7145ba45595fd88a62f3e0592ae8c9fe389/AAVEPoolV3.json"
-        ),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     case 137: // polygon mainnet
       return {
@@ -106,12 +102,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(
-          "https://gist.githubusercontent.com/danielwpz/40e8b7ed6ab2f1ba23dae5b0fade3ca3/raw/6a4b332d0992f160f851f533c0aad2c07f668357/ERC20Permit.json"
-        ),
-        aavePoolV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/f5f95a9fdc87dbf38302322ee0fe3bc5/raw/0fa5e7145ba45595fd88a62f3e0592ae8c9fe389/AAVEPoolV3.json"
-        ),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     case 1442: // zkevm testnet
       return {
@@ -120,12 +112,8 @@ function getAAVEConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
         wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(
-          "https://gist.githubusercontent.com/danielwpz/40e8b7ed6ab2f1ba23dae5b0fade3ca3/raw/6a4b332d0992f160f851f533c0aad2c07f668357/ERC20Permit.json"
-        ),
-        aavePoolV3ABI: fetch(
-          "https://gist.githubusercontent.com/danielwpz/f5f95a9fdc87dbf38302322ee0fe3bc5/raw/0fa5e7145ba45595fd88a62f3e0592ae8c9fe389/AAVEPoolV3.json"
-        ),
+        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
       };
     default:
       throw new Error("unknown chain id");
