@@ -215,7 +215,7 @@ return (
   <Widget
     src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
     props={{
-      title: "Withdraw USDT",
+      title: `Withdraw ${symbol}`,
       onRequestClose: props.onRequestClose,
       children: (
         <WithdrawContainer>
@@ -299,11 +299,11 @@ return (
               ),
             }}
           />
-          {state.needApprove && (
+          {state.needApprove && symbol === "ETH" && (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
-                children: "Approve ETH",
+                children: `Approve ${symbol}`,
                 onClick: () => {
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
@@ -320,7 +320,7 @@ return (
               }}
             />
           )}
-          {!state.needApprove && (
+          {!(state.needApprove && symbol === "ETH") && (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
@@ -329,7 +329,7 @@ return (
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
-                  if (symbol === "WETH") {
+                  if (symbol === "ETH" || symbol === "WETH") {
                     // supply weth
                     withdrawETH(amount);
                   } else {

@@ -299,6 +299,12 @@ function initData() {
     return {
       ...market,
       ...userDeposit,
+      ...(market.symbol === "WETH"
+        ? {
+            symbol: "ETH",
+            name: "Ethereum",
+          }
+        : {}),
     };
   });
   State.update({
@@ -376,9 +382,9 @@ const body = loading ? (
           config,
           chainId: state.chainId,
           assetsToSupply: state.assetsToSupply,
-          showSupplyModal: state.showWithdrawModal,
+          showSupplyModal: state.showSupplyModal,
           setShowSupplyModal: (isShow) =>
-            State.update({ showWithdrawModal: isShow }),
+            State.update({ showSupplyModal: isShow }),
           showAlertModal: (msg) => State.update({ alarmModalText: msg }),
         }}
       />
