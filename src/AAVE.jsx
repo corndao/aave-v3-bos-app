@@ -441,7 +441,7 @@ function updateDataAsync() {
 
 checkProvider();
 if (state.walletConnected && state.chainId && loading) {
-  initData();
+  updateDataAsync();
 }
 
 const Body = styled.div`
