@@ -1,7 +1,7 @@
 const {
   config,
   yourSupplies,
-  showAlertModal,
+  onActionSuccess,
   showWithdrawModal,
   setShowWithdrawModal,
 } = props;
@@ -170,7 +170,7 @@ return (
         props={{
           config,
           data: state.data,
-          showAlertModal,
+          onActionSuccess,
           onRequestClose: () => setShowWithdrawModal(false),
         }}
       />

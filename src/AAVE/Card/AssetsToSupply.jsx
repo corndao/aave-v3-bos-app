@@ -3,7 +3,7 @@ const {
   assetsToSupply,
   showSupplyModal,
   setShowSupplyModal,
-  showAlertModal,
+  onActionSuccess,
   chainId,
 } = props;
 
@@ -215,7 +215,7 @@ return (
           config,
           onRequestClose: () => setShowSupplyModal(false),
           data: state.data,
-          showAlertModal,
+          onActionSuccess,
           chainId,
         }}
       />

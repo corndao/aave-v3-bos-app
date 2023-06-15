@@ -121,7 +121,7 @@ function isValid(a) {
 // }
 // returns Market[]
 function getMarkets(chainId) {
-  return fetch(`https://aave-api.pages.dev/${chainId}/markets`);
+  return asyncFetch(`https://aave-api.pages.dev/${chainId}/markets`);
 }
 
 /**
@@ -138,7 +138,7 @@ function getUserBalances(chainId, account, tokens) {
   const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
     "|"
   )}`;
-  return fetch(url);
+  return asyncFetch(url);
 }
 
 // interface UserDeposit {
@@ -152,7 +152,9 @@ function getUserBalances(chainId, account, tokens) {
 // }
 // returns UserDeposit[]
 function getUserDeposits(chainId, address) {
-  return fetch(`https://aave-api.pages.dev/${chainId}/deposits/${address}`);
+  return asyncFetch(
+    `https://aave-api.pages.dev/${chainId}/deposits/${address}`
+  );
 }
 
 // App config
@@ -210,8 +212,8 @@ const modules = {
   data: `${config.ownerId}/widget/AAVE.Data`,
 };
 // Import functions
-const { formatAmount } = state.imports.number;
-const { formatDateTime } = state.imports.date;
+// const { formatAmount } = state.imports.number;
+// const { formatDateTime } = state.imports.date;
 
 function checkProvider() {
   const provider = Ethers.provider();
@@ -222,7 +224,8 @@ function checkProvider() {
   }
 }
 
-function initData() {
+// update data in async manner
+function updateData() {
   const provider = Ethers.provider();
   if (!provider) {
     return;
@@ -240,81 +243,114 @@ function initData() {
   if (!state.address || !state.ethBalance) {
     return;
   }
-  const marketsResponse = getMarkets(state.chainId);
-  if (!marketsResponse) {
-    return;
-  }
-  const markets = JSON.parse(marketsResponse.body);
-  const userBalancesResponse = getUserBalances(
-    state.chainId,
-    state.address,
-    markets.map((market) => market.underlyingAsset)
-  );
-  if (!userBalancesResponse) {
-    return;
-  }
-  const userBalances = JSON.parse(userBalancesResponse.body);
-  const assetsToSupply = markets.map((market, idx) => {
-    if (!isValid(userBalances[idx].decimals)) {
+
+  const prevYourSupplies = state.yourSupplies;
+
+  getMarkets(state.chainId).then((marketsResponse) => {
+    if (!marketsResponse) {
       return;
     }
-    const balanceRaw = Big(
-      market.symbol === "WETH" ? state.ethBalance : userBalances[idx].balance
-    ).div(Big(10).pow(userBalances[idx].decimals));
-    const balance = balanceRaw.toFixed(7, ROUND_DOWN);
-    const balanceInUSD = balanceRaw
-      .mul(market.marketReferencePriceInUsd)
-      .toFixed(3, ROUND_DOWN);
-    return {
-      ...userBalances[idx],
-      ...market,
-      balance,
-      balanceInUSD,
-      ...(market.symbol === "WETH"
-        ? {
-            symbol: "ETH",
-            name: "Ethereum",
-          }
-        : {}),
-    };
-  });
-  State.update({
-    assetsToSupply,
-  });
+    const markets = JSON.parse(marketsResponse.body);
 
-  // yourSupplies
-  const userDepositsResponse = getUserDeposits(state.chainId, state.address);
-  if (!userDepositsResponse) {
-    return;
-  }
-  const userDeposits = JSON.parse(userDepositsResponse.body).filter(
-    (row) => Number(row.underlyingBalance) !== 0
-  );
-  const marketsMapping = markets.reduce((prev, cur) => {
-    prev[cur.symbol] = cur;
-    return prev;
-  }, {});
-  const yourSupplies = userDeposits.map((userDeposit) => {
-    const market = marketsMapping[userDeposit.symbol];
-    return {
-      ...market,
-      ...userDeposit,
-      ...(market.symbol === "WETH"
-        ? {
-            symbol: "ETH",
-            name: "Ethereum",
-          }
-        : {}),
-    };
-  });
-  State.update({
-    yourSupplies,
+    // get user balances
+    getUserBalances(
+      state.chainId,
+      state.address,
+      markets.map((market) => market.underlyingAsset)
+    ).then((userBalancesResponse) => {
+      if (!userBalancesResponse) {
+        return;
+      }
+      const userBalances = JSON.parse(userBalancesResponse.body);
+      const assetsToSupply = markets.map((market, idx) => {
+        if (!isValid(userBalances[idx].decimals)) {
+          return;
+        }
+        const balanceRaw = Big(
+          market.symbol === "WETH"
+            ? state.ethBalance
+            : userBalances[idx].balance
+        ).div(Big(10).pow(userBalances[idx].decimals));
+        const balance = balanceRaw.toFixed(7, ROUND_DOWN);
+        const balanceInUSD = balanceRaw
+          .mul(market.marketReferencePriceInUsd)
+          .toFixed(3, ROUND_DOWN);
+        return {
+          ...userBalances[idx],
+          ...market,
+          balance,
+          balanceInUSD,
+          ...(market.symbol === "WETH"
+            ? {
+                symbol: "ETH",
+                name: "Ethereum",
+              }
+            : {}),
+        };
+      });
+
+      State.update({
+        assetsToSupply,
+      });
+    });
+
+    // get user supplies
+    getUserDeposits(state.chainId, state.address).then(
+      (userDepositsResponse) => {
+        if (!userDepositsResponse) {
+          return;
+        }
+        const userDeposits = JSON.parse(userDepositsResponse.body).filter(
+          (row) => Number(row.underlyingBalance) !== 0
+        );
+        const marketsMapping = markets.reduce((prev, cur) => {
+          prev[cur.symbol] = cur;
+          return prev;
+        }, {});
+        const yourSupplies = userDeposits.map((userDeposit) => {
+          const market = marketsMapping[userDeposit.symbol];
+          return {
+            ...market,
+            ...userDeposit,
+            ...(market.symbol === "WETH"
+              ? {
+                  symbol: "ETH",
+                  name: "Ethereum",
+                }
+              : {}),
+          };
+        });
+
+        State.update({
+          yourSupplies,
+        });
+
+        if (JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies)) {
+          console.log("refresh again ...", prevYourSupplies, yourSupplies);
+          setTimeout(updateData, 500);
+        }
+      }
+    );
   });
 }
 
+function onActionSuccess({ msg, callback }) {
+  // update data if action finishes
+  updateData();
+  // update UI after data has almost loaded
+  setTimeout(() => {
+    if (callback) {
+      callback();
+    }
+    if (msg) {
+      State.update({ alertModalText: msg });
+    }
+  }, 5000);
+}
+
 checkProvider();
-if (state.walletConnected && state.chainId) {
-  initData();
+if (state.walletConnected && state.chainId && loading) {
+  updateData();
 }
 
 const Body = styled.div`
@@ -373,7 +409,7 @@ const body = loading ? (
           showWithdrawModal: state.showWithdrawModal,
           setShowWithdrawModal: (isShow) =>
             State.update({ showWithdrawModal: isShow }),
-          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
+          onActionSuccess,
         }}
       />
       <Widget
@@ -385,17 +421,17 @@ const body = loading ? (
           showSupplyModal: state.showSupplyModal,
           setShowSupplyModal: (isShow) =>
             State.update({ showSupplyModal: isShow }),
-          showAlertModal: (msg) => State.update({ alarmModalText: msg }),
+          onActionSuccess,
         }}
       />
-      {state.alarmModalText && (
+      {state.alertModalText && (
         <Widget
           src={`${config.ownerId}/widget/AAVE.Modal.AlertModal`}
           props={{
             config,
             title: "All done!",
-            description: state.alarmModalText,
-            onRequestClose: () => State.update({ alarmModalText: false }),
+            description: state.alertModalText,
+            onRequestClose: () => State.update({ alertModalText: false }),
           }}
         />
       )}
