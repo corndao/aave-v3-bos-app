@@ -7,6 +7,86 @@ const CONTRACT_ABI = {
   aavePoolV3ABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
 };
+const DEFAULT_CHAIN_ID = 1442;
+const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
+const MATIC_TOKEN = { name: "Matic", symbol: "MATIC", decimals: 18 };
+
+// Get AAVE network config by chain id
+function getNetworkConfig(chainId) {
+  const abis = {
+    wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
+    erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
+    aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
+  };
+
+  switch (chainId) {
+    case 1: // ethereum mainnet
+      return {
+        chainName: "Ethereum Mainnet",
+        nativeCurrency: ETH_TOKEN,
+        rpcUrl: "https://rpc.ankr.com/eth",
+        aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+        wrappedTokenGatewayV3Address:
+          "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
+        ...abis,
+      };
+    case 42161: // arbitrum one
+      return {
+        chainName: "Arbitrum Mainnet",
+        nativeCurrency: ETH_TOKEN,
+        rpcUrl: "https://arb1.arbitrum.io/rpc",
+        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        wrappedTokenGatewayV3Address:
+          "0xB5Ee21786D28c5Ba61661550879475976B707099",
+        ...abis,
+      };
+    case 137: // polygon mainnet
+      return {
+        chainName: "Polygon Mainnet",
+        nativeCurrency: MATIC_TOKEN,
+        rpcUrl: "https://rpc.ankr.com/polygon",
+        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        wrappedTokenGatewayV3Address:
+          "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
+        ...abis,
+      };
+    case 1442: // zkevm testnet
+      return {
+        chainName: "Polygon zkEVM Testnet",
+        nativeCurrency: ETH_TOKEN,
+        rpcUrl: "https://rpc.public.zkevm-test.net",
+        aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
+        wrappedTokenGatewayV3Address:
+          "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
+        ...abis,
+      };
+    default:
+      throw new Error("unknown chain id");
+  }
+}
+
+function switchEthereumChain(chainId) {
+  const chainIdHex = `0x${chainId.toString(16)}`;
+  const res = Ethers.send("wallet_switchEthereumChain", [
+    { chainId: chainIdHex },
+  ]);
+  // If `res` === `undefined`, it means switch chain failed, which is very weird but it works.
+  // If `res` is `null` the function is either not called or executed successfully.
+  if (res === undefined) {
+    console.log(
+      `Failed to switch chain to ${chainId}. Add the chain to wallet`
+    );
+    const config = getNetworkConfig(chainId);
+    Ethers.send("wallet_addEthereumChain", [
+      {
+        chainId: chainIdHex,
+        chainName: config.chainName,
+        nativeCurrency: config.nativeCurrency,
+        rpcUrls: [config.rpcUrl],
+      },
+    ]);
+  }
+}
 
 if (
   state.chainId === undefined &&
@@ -16,8 +96,11 @@ if (
   Ethers.provider()
     .getNetwork()
     .then((data) => {
-      if (data?.chainId) {
-        State.update({ chainId: data.chainId });
+      const chainId = data?.chainId;
+      if (chainId && chainId === DEFAULT_CHAIN_ID) {
+        State.update({ chainId });
+      } else {
+        switchEthereumChain(DEFAULT_CHAIN_ID);
       }
     });
 }
@@ -72,54 +155,6 @@ function getUserDeposits(chainId, address) {
   return fetch(`https://aave-api.pages.dev/${chainId}/deposits/${address}`);
 }
 
-// Get AAVE config by chain id
-function getAAVEConfig(chainId) {
-  switch (chainId) {
-    case 1: // ethereum mainnet
-      return {
-        chainName: "Ethereum Mainnet",
-        aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
-        wrappedTokenGatewayV3Address:
-          "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
-        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
-        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
-      };
-    case 42161: // arbitrum one
-      return {
-        chainName: "Arbitrum Mainnet",
-        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
-        wrappedTokenGatewayV3Address:
-          "0xB5Ee21786D28c5Ba61661550879475976B707099",
-        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
-        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
-      };
-    case 137: // polygon mainnet
-      return {
-        chainName: "Polygon Mainnet",
-        aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
-        wrappedTokenGatewayV3Address:
-          "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
-        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
-        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
-      };
-    case 1442: // zkevm testnet
-      return {
-        chainName: "Polygon zkEVM Testnet",
-        aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
-        wrappedTokenGatewayV3Address:
-          "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
-        wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
-        erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
-        aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
-      };
-    default:
-      throw new Error("unknown chain id");
-  }
-}
-
 // App config
 function getConfig(network) {
   const chainId = state.chainId;
@@ -129,14 +164,14 @@ function getConfig(network) {
         ownerId: "aave-v3.near",
         nodeUrl: "https://rpc.mainnet.near.org",
         ipfsPrefix: "https://ipfs.near.social/ipfs",
-        ...(chainId ? getAAVEConfig(chainId) : {}),
+        ...(chainId ? getNetworkConfig(chainId) : {}),
       };
     case "testnet":
       return {
         ownerId: "aave-v3.testnet",
         nodeUrl: "https://rpc.testnet.near.org",
         ipfsPrefix: "https://ipfs.near.social/ipfs",
-        ...(chainId ? getAAVEConfig(chainId) : {}),
+        ...(chainId ? getNetworkConfig(chainId) : {}),
       };
     default:
       throw Error(`Unconfigured environment '${network}'.`);
@@ -150,7 +185,7 @@ State.init({
   chainId: undefined,
   showWithdrawModal: false,
   showSupplyModal: false,
-  connectWallet: true,
+  walletConnected: false,
   assetsToSupply: undefined,
   yourSupplies: undefined,
   address: undefined,
@@ -178,13 +213,19 @@ const modules = {
 const { formatAmount } = state.imports.number;
 const { formatDateTime } = state.imports.date;
 
+function checkProvider() {
+  const provider = Ethers.provider();
+  if (provider) {
+    State.update({ walletConnected: true });
+  } else {
+    State.update({ walletConnected: false });
+  }
+}
+
 function initData() {
   const provider = Ethers.provider();
   if (!provider) {
-    State.update({ connectWallet: false });
     return;
-  } else {
-    State.update({ connectWallet: true });
   }
   provider
     .getSigner()
@@ -271,7 +312,8 @@ function initData() {
   });
 }
 
-if (state.chainId) {
+checkProvider();
+if (state.walletConnected && state.chainId) {
   initData();
 }
 
@@ -293,7 +335,13 @@ const body = loading ? (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
-      {state.connectWallet ? "Loading" : "Need to connect wallet first."}
+      {state.walletConnected
+        ? state.chainId === DEFAULT_CHAIN_ID
+          ? "Loading..."
+          : `Please switch network to ${
+              getNetworkConfig(DEFAULT_CHAIN_ID).chainName
+            }`
+        : "Need to connect wallet first."}
     </Body>
   </>
 ) : (
@@ -307,10 +355,9 @@ const body = loading ? (
             chainId: state.chainId,
             config,
             switchNetwork: (chainId) => {
-              Ethers.send("wallet_switchEthereumChain", [
-                { chainId: `0x${chainId.toString(16)}` },
-              ]);
+              switchEthereumChain(chainId);
             },
+            disabled: true,
           }}
         />
       </FlexContainer>
@@ -335,9 +382,9 @@ const body = loading ? (
           config,
           chainId: state.chainId,
           assetsToSupply: state.assetsToSupply,
-          showSupplyModal: state.showWithdrawModal,
+          showSupplyModal: state.showSupplyModal,
           setShowSupplyModal: (isShow) =>
-            State.update({ showWithdrawModal: isShow }),
+            State.update({ showSupplyModal: isShow }),
           showAlertModal: (msg) => State.update({ alarmModalText: msg }),
         }}
       />
