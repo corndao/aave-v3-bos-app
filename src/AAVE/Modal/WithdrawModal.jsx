@@ -329,7 +329,7 @@ return (
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
-                  if (symbol === "ETH") {
+                  if (symbol === "ETH" || symbol === "WETH") {
                     // supply weth
                     withdrawETH(amount);
                   } else {
