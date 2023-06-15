@@ -10,7 +10,7 @@ const ETH_MATIC = () => (
 const SwitchContainer = styled.div`
   display: flex;
   align-items: center;
-  cursor: pointer;
+  cursor: ${disabled ? "auto" : "pointer"};
 
   position: relative;
 
