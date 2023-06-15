@@ -8,6 +8,8 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
 };
 const DEFAULT_CHAIN_ID = 1442;
+const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
+const MATIC_TOKEN = { name: "Matic", symbol: "MATIC", decimals: 18 };
 
 // Get AAVE network config by chain id
 function getNetworkConfig(chainId) {
@@ -21,7 +23,7 @@ function getNetworkConfig(chainId) {
     case 1: // ethereum mainnet
       return {
         chainName: "Ethereum Mainnet",
-        nativeCurrency: "ETH",
+        nativeCurrency: ETH_TOKEN,
         rpcUrl: "https://rpc.ankr.com/eth",
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
@@ -31,7 +33,7 @@ function getNetworkConfig(chainId) {
     case 42161: // arbitrum one
       return {
         chainName: "Arbitrum Mainnet",
-        nativeCurrency: "ETH",
+        nativeCurrency: ETH_TOKEN,
         rpcUrl: "https://arb1.arbitrum.io/rpc",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
@@ -41,7 +43,7 @@ function getNetworkConfig(chainId) {
     case 137: // polygon mainnet
       return {
         chainName: "Polygon Mainnet",
-        nativeCurrency: "MATIC",
+        nativeCurrency: MATIC_TOKEN,
         rpcUrl: "https://rpc.ankr.com/polygon",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
@@ -51,7 +53,7 @@ function getNetworkConfig(chainId) {
     case 1442: // zkevm testnet
       return {
         chainName: "Polygon zkEVM Testnet",
-        nativeCurrency: "ETH",
+        nativeCurrency: ETH_TOKEN,
         rpcUrl: "https://rpc.public.zkevm-test.net",
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
@@ -65,34 +67,24 @@ function getNetworkConfig(chainId) {
 
 function switchEthereumChain(chainId) {
   const chainIdHex = `0x${chainId.toString(16)}`;
-  try {
-    Ethers.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
-    // .then(error => {
-    //   console.log("switch failed 1", error);
-    // })
-    // .catch(error => {})
-    // .catch((switchError) => {
-    //   console.log("switch failed 1", switchError);
-    // });
-    console.log("switch ethereum chain");
-  } catch (switchError) {
-    console.log("switch failed 2", switchError);
-    // This error code indicates that the chain has not been added to MetaMask.
-    if (switchError.code === 4902) {
-      const config = getNetworkConfig(chainId);
-      try {
-        Ethers.send("wallet_addEthereumChain", [
-          {
-            chainId: chainIdHex,
-            chainName: config.chainName,
-            nativeCurrency: config.nativeCurrency,
-            rpcUrls: [config.rpcUrl],
-          },
-        ]);
-      } catch (addError) {
-        console.log(addError);
-      }
-    }
+  const res = Ethers.send("wallet_switchEthereumChain", [
+    { chainId: chainIdHex },
+  ]);
+  // If `res` === `undefined`, it means switch chain failed, which is very weird but it works.
+  // If `res` is `null` the function is either not called or executed successfully.
+  if (res === undefined) {
+    console.log(
+      `Failed to switch chain to ${chainId}. Add the chain to wallet`
+    );
+    const config = getNetworkConfig(chainId);
+    Ethers.send("wallet_addEthereumChain", [
+      {
+        chainId: chainIdHex,
+        chainName: config.chainName,
+        nativeCurrency: config.nativeCurrency,
+        rpcUrls: [config.rpcUrl],
+      },
+    ]);
   }
 }
 
@@ -337,7 +329,13 @@ const body = loading ? (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
-      {state.walletConnected ? "Loading..." : "Need to connect wallet first."}
+      {state.walletConnected
+        ? state.chainId === DEFAULT_CHAIN_ID
+          ? "Loading..."
+          : `Please switch network to ${
+              getNetworkConfig(DEFAULT_CHAIN_ID).chainName
+            }`
+        : "Need to connect wallet first."}
     </Body>
   </>
 ) : (
