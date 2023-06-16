@@ -290,9 +290,10 @@ function updateData() {
           };
         })
         .sort((asset1, asset2) => {
-          const balance1 = Number(asset1.balance);
-          const balance2 = Number(asset2.balance);
-          if (balance1 !== balance2) return balance2 - balance1;
+          const balanceInUSD1 = Number(asset1.balanceInUSD);
+          const balanceInUSD2 = Number(asset2.balanceInUSD);
+          if (balanceInUSD1 !== balanceInUSD2)
+            return balanceInUSD2 - balanceInUSD1;
           return asset1.symbol.localeCompare(asset2.symbol);
         });
 
