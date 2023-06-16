@@ -262,40 +262,42 @@ function updateData() {
         return;
       }
       const userBalances = JSON.parse(userBalancesResponse.body);
-      const assetsToSupply = markets.map((market, idx) => {
-        if (!isValid(userBalances[idx].decimals)) {
-          return;
-        }
-        const balanceRaw = Big(
-          market.symbol === "WETH"
-            ? state.ethBalance
-            : userBalances[idx].balance
-        ).div(Big(10).pow(userBalances[idx].decimals));
-        const balance = balanceRaw.toFixed(7, ROUND_DOWN);
-        const balanceInUSD = balanceRaw
-          .mul(market.marketReferencePriceInUsd)
-          .toFixed(3, ROUND_DOWN);
-        return {
-          ...userBalances[idx],
-          ...market,
-          balance,
-          balanceInUSD,
-          ...(market.symbol === "WETH"
-            ? {
-                symbol: "ETH",
-                name: "Ethereum",
-              }
-            : {}),
-        };
-      });
-
-      State.update({
-        assetsToSupply: assetsToSupply?.sort((asset1, asset2) => {
+      const assetsToSupply = markets
+        .map((market, idx) => {
+          if (!isValid(userBalances[idx].decimals)) {
+            return;
+          }
+          const balanceRaw = Big(
+            market.symbol === "WETH"
+              ? state.ethBalance
+              : userBalances[idx].balance
+          ).div(Big(10).pow(userBalances[idx].decimals));
+          const balance = balanceRaw.toFixed(7, ROUND_DOWN);
+          const balanceInUSD = balanceRaw
+            .mul(market.marketReferencePriceInUsd)
+            .toFixed(3, ROUND_DOWN);
+          return {
+            ...userBalances[idx],
+            ...market,
+            balance,
+            balanceInUSD,
+            ...(market.symbol === "WETH"
+              ? {
+                  symbol: "ETH",
+                  name: "Ethereum",
+                }
+              : {}),
+          };
+        })
+        .sort((asset1, asset2) => {
           const balance1 = Number(asset1.balance);
           const balance2 = Number(asset2.balance);
           if (balance1 !== balance2) return balance2 - balance1;
           return asset1.symbol.localeCompare(asset2.symbol);
-        }),
+        });
+
+      State.update({
+        assetsToSupply,
       });
     });
 
