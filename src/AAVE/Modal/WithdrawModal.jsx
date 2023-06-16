@@ -85,6 +85,11 @@ const Input = styled.input`
   }
 `;
 
+const Max = styled.span`
+  color: #8247e5;
+  cursor: pointer;
+`;
+
 State.init({
   amount: "",
   amountInUSD: "0.00",
@@ -211,6 +216,19 @@ function update() {
 
 update();
 
+const changeValue = (value) => {
+  if (isValid(value)) {
+    State.update({
+      amountInUSD: Big(value)
+        .mul(marketReferencePriceInUsd)
+        .toFixed(2, ROUND_DOWN),
+    });
+  } else {
+    State.update({ amountInUSD: "0.00" });
+  }
+  State.update({ amount: value });
+};
+
 return (
   <Widget
     src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
@@ -235,17 +253,7 @@ return (
                             type="number"
                             value={state.amount}
                             onChange={(e) => {
-                              const value = e.target.value;
-                              if (isValid(value)) {
-                                State.update({
-                                  amountInUSD: Big(value)
-                                    .mul(marketReferencePriceInUsd)
-                                    .toFixed(2, ROUND_DOWN),
-                                });
-                              } else {
-                                State.update({ amountInUSD: "0.00" });
-                              }
-                              State.update({ amount: value });
+                              changeValue(e.target.value);
                             }}
                             placeholder="0"
                           />
@@ -271,6 +279,13 @@ return (
                         <GrayTexture>
                           Supply Balance:{" "}
                           {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
+                          <Max
+                            onClick={() => {
+                              changeValue(underlyingBalance);
+                            }}
+                          >
+                            MAX
+                          </Max>
                         </GrayTexture>
                       ),
                     }}

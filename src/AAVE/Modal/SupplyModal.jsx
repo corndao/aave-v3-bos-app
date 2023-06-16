@@ -98,6 +98,11 @@ const Input = styled.input`
   }
 `;
 
+const Max = styled.span`
+  color: #8247e5;
+  cursor: pointer;
+`;
+
 State.init({
   amount: "",
   amountInUSD: "0.00",
@@ -249,6 +254,19 @@ function depositErc20(amount) {
     });
 }
 
+const changeValue = (value) => {
+  if (isValid(value)) {
+    State.update({
+      amountInUSD: Big(value)
+        .mul(marketReferencePriceInUsd)
+        .toFixed(2, ROUND_DOWN),
+    });
+  } else {
+    State.update({ amountInUSD: "0.00" });
+  }
+  State.update({ amount: value });
+};
+
 return (
   <>
     <Widget
@@ -274,17 +292,7 @@ return (
                               type="number"
                               value={state.amount}
                               onChange={(e) => {
-                                const value = e.target.value;
-                                if (isValid(value)) {
-                                  State.update({
-                                    amountInUSD: Big(value)
-                                      .mul(marketReferencePriceInUsd)
-                                      .toFixed(2, ROUND_DOWN),
-                                  });
-                                } else {
-                                  State.update({ amountInUSD: "0.00" });
-                                }
-                                State.update({ amount: value });
+                                changeValue(e.target.value);
                               }}
                               placeholder="0"
                             />
@@ -307,7 +315,16 @@ return (
                       props={{
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
-                          <GrayTexture>Wallet Balance: {balance}</GrayTexture>
+                          <GrayTexture>
+                            Wallet Balance: {balance}
+                            <Max
+                              onClick={() => {
+                                changeValue(balance);
+                              }}
+                            >
+                              MAX
+                            </Max>
+                          </GrayTexture>
                         ),
                       }}
                     />
