@@ -255,6 +255,9 @@ function depositErc20(amount) {
 }
 
 const changeValue = (value) => {
+  if (Number(value) > Number(balance)) {
+    value = balance;
+  }
   if (isValid(value)) {
     State.update({
       amountInUSD: Big(value)

@@ -217,6 +217,9 @@ function update() {
 update();
 
 const changeValue = (value) => {
+  if (Number(value) > Number(underlyingBalance)) {
+    value = underlyingBalance;
+  }
   if (isValid(value)) {
     State.update({
       amountInUSD: Big(value)
