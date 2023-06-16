@@ -290,7 +290,12 @@ function updateData() {
       });
 
       State.update({
-        assetsToSupply,
+        assetsToSupply: assetsToSupply?.sort((asset1, asset2) => {
+          const balance1 = Number(asset1.balance);
+          const balance2 = Number(asset2.balance);
+          if (balance1 !== balance2) return balance2 - balance1;
+          return asset1.symbol.localeCompare(asset2.symbol);
+        }),
       });
     });
 
