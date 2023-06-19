@@ -269,7 +269,8 @@ function depositErc20(amount) {
               console.log("tx failed", res);
             }
           });
-        });
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
