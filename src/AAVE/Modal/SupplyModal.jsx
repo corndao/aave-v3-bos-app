@@ -101,6 +101,7 @@ const Input = styled.input`
 State.init({
   amount: "",
   amountInUSD: "0.00",
+  loading: false,
 });
 
 function getNonce(tokenAddress, userAddress) {
@@ -184,6 +185,9 @@ function supplyWithPermit(user, reserve, amount, deadline, rawSig) {
 }
 
 function depositETH(amount) {
+  State.update({
+    loading: true,
+  });
   return Ethers.provider()
     .getSigner()
     .getAddress()
@@ -210,17 +214,29 @@ function depositETH(amount) {
             msg: `You supplied ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
-            callback: onRequestClose,
+            callback: () => {
+              onRequestClose();
+              State.update({
+                loading: false,
+              });
+            },
           });
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
+          State.update({
+            loading: false,
+          });
         }
       });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 function depositErc20(amount) {
+  State.update({
+    loading: true,
+  });
   const deadline = Math.floor(Date.now() / 1000 + 3600); // after an hour
   Ethers.provider()
     .getSigner()
@@ -238,15 +254,25 @@ function depositErc20(amount) {
                 msg: `You supplied ${Big(amount)
                   .div(Big(10).pow(decimals))
                   .toFixed(8)} ${symbol}`,
-                callback: onRequestClose,
+                callback: () => {
+                  onRequestClose();
+                  State.update({
+                    loading: false,
+                  });
+                },
               });
               console.log("tx succeeded", res);
             } else {
+              State.update({
+                loading: false,
+              });
               console.log("tx failed", res);
             }
           });
-        });
-    });
+        })
+        .catch(() => State.update({ loading: false }));
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 return (
@@ -351,7 +377,9 @@ return (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
+                config,
                 children: `Supply ${symbol}`,
+                loading: state.loading,
                 onClick: () => {
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))

@@ -90,6 +90,7 @@ return (
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                       props={{
+                        config,
                         children: "Supply",
                         onClick: () => {
                           State.update({ data: row });
@@ -185,6 +186,7 @@ return (
                               <Widget
                                 src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                                 props={{
+                                  config,
                                   children: "Supply",
                                   onClick: () => {
                                     State.update({ data: row });
