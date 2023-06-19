@@ -4,6 +4,7 @@ if (!data) {
   return;
 }
 
+const MIN_ETH_GAS_FEE = 0.001;
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -322,7 +323,13 @@ return (
                             Wallet Balance: {balance}
                             <Max
                               onClick={() => {
-                                changeValue(balance);
+                                changeValue(
+                                  symbol === "ETH" || symbol === "WETH"
+                                    ? Big(balance)
+                                        .minus(MIN_ETH_GAS_FEE)
+                                        .toFixed()
+                                    : balance
+                                );
                               }}
                             >
                               MAX
