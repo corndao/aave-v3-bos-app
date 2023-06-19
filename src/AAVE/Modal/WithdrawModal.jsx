@@ -137,7 +137,8 @@ function withdrawErc20(asset, amount) {
           });
         }
       });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 function withdrawETH(amount) {
@@ -183,7 +184,8 @@ function withdrawETH(amount) {
           });
         }
       });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 function approveForGateway(tokenAddress, amount) {
@@ -335,14 +337,16 @@ return (
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
-                  approveForGateway(aTokenAddress, amount).then((tx) => {
-                    tx.wait().then((res) => {
-                      const { status } = res;
-                      if (status === 1) {
-                        State.update({ needApprove: false, loading: false });
-                      }
-                    });
-                  });
+                  approveForGateway(aTokenAddress, amount)
+                    .then((tx) => {
+                      tx.wait().then((res) => {
+                        const { status } = res;
+                        if (status === 1) {
+                          State.update({ needApprove: false, loading: false });
+                        }
+                      });
+                    })
+                    .catch(() => State.update({ loading: false }));
                 },
               }}
             />

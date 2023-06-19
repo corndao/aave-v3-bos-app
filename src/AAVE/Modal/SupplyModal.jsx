@@ -229,7 +229,8 @@ function depositETH(amount) {
           });
         }
       });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 function depositErc20(amount) {
@@ -269,7 +270,8 @@ function depositErc20(amount) {
             }
           });
         });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 return (
