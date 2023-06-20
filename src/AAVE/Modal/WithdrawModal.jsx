@@ -90,6 +90,7 @@ State.init({
   amountInUSD: "0.00",
   allowanceAmount: 0,
   needApprove: false,
+  loading: false,
 });
 
 const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
@@ -98,6 +99,9 @@ const remainingSupply = isNaN(_remainingSupply)
   : Big(_remainingSupply).toFixed(2);
 
 function withdrawErc20(asset, amount) {
+  State.update({
+    loading: true,
+  });
   return Ethers.provider()
     .getSigner()
     .getAddress()
@@ -118,17 +122,29 @@ function withdrawErc20(asset, amount) {
             msg: `You withdraw ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
-            callback: onRequestClose,
+            callback: () => {
+              onRequestClose();
+              State.update({
+                loading: false,
+              });
+            },
           });
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
+          State.update({
+            loading: false,
+          });
         }
       });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 function withdrawETH(amount) {
+  State.update({
+    loading: true,
+  });
   return Ethers.provider()
     .getSigner()
     .getAddress()
@@ -153,14 +169,23 @@ function withdrawETH(amount) {
             msg: `You withdraw ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
-            callback: onRequestClose,
+            callback: () => {
+              onRequestClose();
+              State.update({
+                loading: false,
+              });
+            },
           });
           console.log("tx succeeded", res);
         } else {
           console.log("tx failed", res);
+          State.update({
+            loading: false,
+          });
         }
       });
-    });
+    })
+    .catch(() => State.update({ loading: false }));
 }
 
 function approveForGateway(tokenAddress, amount) {
@@ -183,7 +208,6 @@ function allowanceForGateway(tokenAddress) {
         config.erc20Abi.body,
         Ethers.provider().getSigner()
       );
-
       return token.allowance(address, config.wrappedTokenGatewayV3Address);
     });
 }
@@ -303,19 +327,26 @@ return (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
+                config,
+                loading: state.loading,
                 children: `Approve ${symbol}`,
                 onClick: () => {
+                  State.update({
+                    loading: true,
+                  });
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
-                  approveForGateway(aTokenAddress, amount).then((tx) => {
-                    tx.wait().then((res) => {
-                      const { status } = res;
-                      if (status === 1) {
-                        State.update({ needApprove: false });
-                      }
-                    });
-                  });
+                  approveForGateway(aTokenAddress, amount)
+                    .then((tx) => {
+                      tx.wait().then((res) => {
+                        const { status } = res;
+                        if (status === 1) {
+                          State.update({ needApprove: false, loading: false });
+                        }
+                      });
+                    })
+                    .catch(() => State.update({ loading: false }));
                 },
               }}
             />
@@ -324,6 +355,8 @@ return (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
+                config,
+                loading: state.loading,
                 children: "Withdraw",
                 onClick: () => {
                   const amount = Big(state.amount)

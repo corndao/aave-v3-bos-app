@@ -41,6 +41,7 @@ return (
           <Widget
             src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
             props={{
+              config,
               children: "Ok, Close",
               onClick: onRequestClose,
             }}

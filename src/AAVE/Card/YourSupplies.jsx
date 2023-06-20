@@ -101,6 +101,7 @@ return (
                             <Widget
                               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                               props={{
+                                config,
                                 children: "Withdraw",
                                 onClick: () => {
                                   State.update({ data: row });
@@ -149,6 +150,7 @@ return (
                       <Widget
                         src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                         props={{
+                          config,
                           children: "Withdraw",
                           onClick: () => {
                             State.update({ data: row });
