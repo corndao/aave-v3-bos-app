@@ -1,3 +1,5 @@
+const { config, select, setSelect } = props;
+
 const TabContainer = styled.div`
   background: #212233;
 
@@ -32,11 +34,26 @@ const TabItem = styled.div`
 
   font-size: 16px;
   font-weight: bold;
+
+  transition: all 0.3s ease-in-out;
+  ${(props) =>
+    !props.selected &&
+    `
+    cursor: pointer;
+    &:hover {
+      background: #8247E5;
+      opacity: 0.7;
+    }
+  `}
 `;
 
 return (
   <TabContainer>
-    <TabItem selected>Supply</TabItem>
-    <TabItem disabled>Borrow</TabItem>
+    <TabItem selected={select === "supply"} onClick={() => setSelect("supply")}>
+      Supply
+    </TabItem>
+    <TabItem selected={select === "borrow"} onClick={() => setSelect("borrow")}>
+      Borrow
+    </TabItem>
   </TabContainer>
 );

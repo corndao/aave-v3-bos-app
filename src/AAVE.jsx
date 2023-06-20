@@ -192,6 +192,7 @@ State.init({
   yourSupplies: undefined,
   address: undefined,
   ethBalance: undefined,
+  selectTab: "supply", // supply | borrow
 });
 
 const loading = !state.assetsToSupply || !state.yourSupplies;
@@ -399,31 +400,60 @@ const body = loading ? (
       </FlexContainer>
       <Widget
         src={`${config.ownerId}/widget/AAVE.TabSwitcher`}
-        props={{ config }}
-      />
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
         props={{
           config,
-          yourSupplies: state.yourSupplies,
-          showWithdrawModal: state.showWithdrawModal,
-          setShowWithdrawModal: (isShow) =>
-            State.update({ showWithdrawModal: isShow }),
-          onActionSuccess,
+          select: state.selectTab,
+          setSelect: (tabName) => State.update({ selectTab: tabName }),
         }}
       />
-      <Widget
-        src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
-        props={{
-          config,
-          chainId: state.chainId,
-          assetsToSupply: state.assetsToSupply,
-          showSupplyModal: state.showSupplyModal,
-          setShowSupplyModal: (isShow) =>
-            State.update({ showSupplyModal: isShow }),
-          onActionSuccess,
-        }}
-      />
+      {state.selectTab === "supply" && (
+        <>
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
+            props={{
+              config,
+              yourSupplies: state.yourSupplies,
+              showWithdrawModal: state.showWithdrawModal,
+              setShowWithdrawModal: (isShow) =>
+                State.update({ showWithdrawModal: isShow }),
+              onActionSuccess,
+            }}
+          />
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.Card.AssetsToSupply`}
+            props={{
+              config,
+              chainId: state.chainId,
+              assetsToSupply: state.assetsToSupply,
+              showSupplyModal: state.showSupplyModal,
+              setShowSupplyModal: (isShow) =>
+                State.update({ showSupplyModal: isShow }),
+              onActionSuccess,
+            }}
+          />
+        </>
+      )}
+      {state.selectTab === "borrow" && (
+        <>
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.Card.YourBorrows`}
+            props={{
+              config,
+              yourBorrows: state.yourSupplies,
+              onActionSuccess,
+            }}
+          />
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.Card.AssetsToBorrow`}
+            props={{
+              config,
+              chainId: state.chainId,
+              assetsToBorrow: state.assetsToSupply,
+              onActionSuccess,
+            }}
+          />
+        </>
+      )}
       {state.alertModalText && (
         <Widget
           src={`${config.ownerId}/widget/AAVE.Modal.AlertModal`}
