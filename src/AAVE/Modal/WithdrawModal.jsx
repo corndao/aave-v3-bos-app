@@ -20,7 +20,12 @@ const {
   underlyingBalanceUSD,
   marketReferencePriceInUsd,
   aTokenAddress,
+  availableLiquidity,
 } = data;
+
+const availableLiquidityAmount = Big(availableLiquidity)
+  .div(Big(10).pow(decimals))
+  .toFixed();
 
 const WithdrawContainer = styled.div`
   display: flex;
@@ -216,9 +221,17 @@ function update() {
 
 update();
 
+/**
+ * max value you can withdraw
+ */
+const maxValue = Math.min(
+  Number(underlyingBalance),
+  Number(availableLiquidityAmount)
+);
+
 const changeValue = (value) => {
-  if (Number(value) > Number(underlyingBalance)) {
-    value = underlyingBalance;
+  if (Number(value) > maxValue) {
+    value = maxValue;
   }
   if (isValid(value)) {
     State.update({
@@ -284,7 +297,7 @@ return (
                           {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
                           <Max
                             onClick={() => {
-                              changeValue(underlyingBalance);
+                              changeValue(maxValue);
                             }}
                           >
                             MAX
