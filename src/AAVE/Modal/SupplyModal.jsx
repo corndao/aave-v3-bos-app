@@ -255,9 +255,14 @@ function depositErc20(amount) {
     });
 }
 
+const maxValue =
+  symbol === "ETH" || symbol === "WETH"
+    ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed()
+    : balance;
+
 const changeValue = (value) => {
-  if (Number(value) > Number(balance)) {
-    value = balance;
+  if (Number(value) > Number(maxValue)) {
+    value = maxValue;
   }
   if (isValid(value)) {
     State.update({
@@ -323,13 +328,7 @@ return (
                             Wallet Balance: {balance}
                             <Max
                               onClick={() => {
-                                changeValue(
-                                  symbol === "ETH" || symbol === "WETH"
-                                    ? Big(balance)
-                                        .minus(MIN_ETH_GAS_FEE)
-                                        .toFixed()
-                                    : balance
-                                );
+                                changeValue(maxValue);
                               }}
                             >
                               MAX
