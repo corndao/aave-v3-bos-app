@@ -118,6 +118,11 @@ function isValid(a) {
 //   name: string,
 //   symbol: string,
 //   decimals: number,
+//   supplyAPY: string;
+//   marketReferencePriceInUsd: string;
+//   usageAsCollateralEnabled: boolean;
+//   aTokenAddress: string;
+//   variableBorrowAPY: string;
 // }
 // returns Market[]
 function getMarkets(chainId) {
@@ -157,6 +162,26 @@ function getUserDeposits(chainId, address) {
   );
 }
 
+// interface UserDebtSummary {
+//   healthFactor: string,
+//   netWorthUSD: string,
+//   availableBorrowsUSD: string,
+//   debts: UserDebt[],
+// }
+// interface UserDebt {
+//   underlyingAsset: string;
+//   name: string;
+//   symbol: string;
+//   usageAsCollateralEnabledOnUser: boolean,
+//   scaledVariableDebt: string,
+//   variableBorrows: string,
+//   variableBorrowsUSD: string,
+// }
+// returns UserDebtSummary
+function getUserDebts(chainId, address) {
+  return asyncFetch(`https://aave-api.pages.dev/${chainId}/debts/${address}`);
+}
+
 // App config
 function getConfig(network) {
   const chainId = state.chainId;
@@ -190,6 +215,8 @@ State.init({
   walletConnected: false,
   assetsToSupply: undefined,
   yourSupplies: undefined,
+  assetsToBorrow: undefined,
+  yourBorrows: undefined,
   address: undefined,
   ethBalance: undefined,
   selectTab: "supply", // supply | borrow
@@ -246,13 +273,17 @@ function updateData() {
   }
 
   const prevYourSupplies = state.yourSupplies;
+  const prevYourBorrows = state.yourBorrows;
 
   getMarkets(state.chainId).then((marketsResponse) => {
     if (!marketsResponse) {
       return;
     }
     const markets = JSON.parse(marketsResponse.body);
-
+    const marketsMapping = markets.reduce((prev, cur) => {
+      prev[cur.symbol] = cur;
+      return prev;
+    }, {});
     // get user balances
     getUserBalances(
       state.chainId,
@@ -312,10 +343,6 @@ function updateData() {
         const userDeposits = JSON.parse(userDepositsResponse.body).filter(
           (row) => Number(row.underlyingBalance) !== 0
         );
-        const marketsMapping = markets.reduce((prev, cur) => {
-          prev[cur.symbol] = cur;
-          return prev;
-        }, {});
         const yourSupplies = userDeposits.map((userDeposit) => {
           const market = marketsMapping[userDeposit.symbol];
           return {
@@ -340,6 +367,44 @@ function updateData() {
         }
       }
     );
+
+    getUserDebts(state.chainId, state.address).then((userDebtsResponse) => {
+      if (!userDebtsResponse) {
+        return;
+      }
+      const userDebts = JSON.parse(userDebtsResponse.body);
+      const assetsToBorrow = {
+        ...userDebts,
+        debts: userDebts.debts.map((userDebt) => {
+          const market = marketsMapping[userDebt.symbol];
+          return {
+            ...market,
+            ...userDebt,
+            ...(market.symbol === "WETH"
+              ? {
+                  symbol: "ETH",
+                  name: "Ethereum",
+                }
+              : {}),
+          };
+        }),
+      };
+      const yourBorrows = {
+        ...assetsToBorrow,
+        debts: assetsToBorrow.debts.filter(
+          (row) => Number(row.variableBorrowsUSD) !== 0
+        ),
+      };
+      State.update({
+        yourBorrows,
+        assetsToBorrow,
+      });
+
+      if (JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)) {
+        console.log("refresh again ...", prevYourBorrows, yourBorrows);
+        setTimeout(updateData, 500);
+      }
+    });
   });
 }
 
@@ -447,7 +512,7 @@ const body = loading ? (
             src={`${config.ownerId}/widget/AAVE.Card.YourBorrows`}
             props={{
               config,
-              yourBorrows: state.yourSupplies,
+              yourBorrows: state.yourBorrows,
               onActionSuccess,
             }}
           />
@@ -456,7 +521,7 @@ const body = loading ? (
             props={{
               config,
               chainId: state.chainId,
-              assetsToBorrow: state.assetsToSupply,
+              assetsToBorrow: state.assetsToBorrow,
               onActionSuccess,
             }}
           />
