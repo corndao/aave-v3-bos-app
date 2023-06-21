@@ -4,6 +4,7 @@ if (!data) {
   return;
 }
 
+const MIN_ETH_GAS_FEE = 0.001;
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -96,6 +97,11 @@ const Input = styled.input`
   &[type="number"] {
     -moz-appearance: textfield;
   }
+`;
+
+const Max = styled.span`
+  color: #8247e5;
+  cursor: pointer;
 `;
 
 State.init({
@@ -275,6 +281,30 @@ function depositErc20(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
+const maxValue =
+  symbol === "ETH" || symbol === "WETH"
+    ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed()
+    : balance;
+
+const changeValue = (value) => {
+  if (Number(value) > Number(maxValue)) {
+    value = maxValue;
+  }
+  if (Number(value) < 0) {
+    value = "0";
+  }
+  if (isValid(value)) {
+    State.update({
+      amountInUSD: Big(value)
+        .mul(marketReferencePriceInUsd)
+        .toFixed(2, ROUND_DOWN),
+    });
+  } else {
+    State.update({ amountInUSD: "0.00" });
+  }
+  State.update({ amount: value });
+};
+
 return (
   <>
     <Widget
@@ -300,17 +330,7 @@ return (
                               type="number"
                               value={state.amount}
                               onChange={(e) => {
-                                const value = e.target.value;
-                                if (isValid(value)) {
-                                  State.update({
-                                    amountInUSD: Big(value)
-                                      .mul(marketReferencePriceInUsd)
-                                      .toFixed(2, ROUND_DOWN),
-                                  });
-                                } else {
-                                  State.update({ amountInUSD: "0.00" });
-                                }
-                                State.update({ amount: value });
+                                changeValue(e.target.value);
                               }}
                               placeholder="0"
                             />
@@ -333,7 +353,16 @@ return (
                       props={{
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
-                          <GrayTexture>Wallet Balance: {balance}</GrayTexture>
+                          <GrayTexture>
+                            Wallet Balance: {balance}
+                            <Max
+                              onClick={() => {
+                                changeValue(maxValue);
+                              }}
+                            >
+                              MAX
+                            </Max>
+                          </GrayTexture>
                         ),
                       }}
                     />
