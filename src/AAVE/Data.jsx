@@ -83,6 +83,7 @@ exportFunctions({
   getMarkets,
   getUserDeposits,
   getUserBalances,
+  getUserDebts,
 });
 
 return <div style={{ display: "none" }} />;
