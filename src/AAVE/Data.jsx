@@ -4,6 +4,11 @@
 //   name: string,
 //   symbol: string,
 //   decimals: number,
+//   supplyAPY: string;
+//   marketReferencePriceInUsd: string;
+//   usageAsCollateralEnabled: boolean;
+//   aTokenAddress: string;
+//   variableBorrowAPY: string;
 // }
 // returns Market[]
 function getMarkets(chainId) {
@@ -41,6 +46,26 @@ function getUserDeposits(chainId, address) {
   return asyncFetch(
     `https://aave-api.pages.dev/${chainId}/deposits/${address}`
   );
+}
+
+// interface UserDebtSummary {
+//   healthFactor: string,
+//   netWorthUSD: string,
+//   availableBorrowsUSD: string,
+//   debts: UserDebt[],
+// }
+// interface UserDebt {
+//   underlyingAsset: string;
+//   name: string;
+//   symbol: string;
+//   usageAsCollateralEnabledOnUser: boolean,
+//   scaledVariableDebt: string,
+//   variableBorrows: string,
+//   variableBorrowsUSD: string,
+// }
+// returns UserDebtSummary
+function getUserDebts(chainId, address) {
+  return asyncFetch(`https://aave-api.pages.dev/${chainId}/debts/${address}`);
 }
 
 // --- End of functions definition ---
