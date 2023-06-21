@@ -230,6 +230,9 @@ const maxValue = Math.min(
 );
 
 const changeValue = (value) => {
+  if (Number(value) < 0) {
+    value = "0";
+  }
   if (Number(value) > maxValue) {
     value = maxValue;
   }

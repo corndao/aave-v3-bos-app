@@ -261,6 +261,9 @@ const maxValue =
     : balance;
 
 const changeValue = (value) => {
+  if (Number(value) < 0) {
+    value = "0";
+  }
   if (Number(value) > Number(maxValue)) {
     value = maxValue;
   }
