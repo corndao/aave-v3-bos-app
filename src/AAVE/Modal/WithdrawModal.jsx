@@ -20,7 +20,12 @@ const {
   underlyingBalanceUSD,
   marketReferencePriceInUsd,
   aTokenAddress,
+  availableLiquidity,
 } = data;
+
+const availableLiquidityAmount = Big(availableLiquidity)
+  .div(Big(10).pow(decimals))
+  .toFixed();
 
 const WithdrawContainer = styled.div`
   display: flex;
@@ -83,6 +88,11 @@ const Input = styled.input`
   &[type="number"] {
     -moz-appearance: textfield;
   }
+`;
+
+const Max = styled.span`
+  color: #8247e5;
+  cursor: pointer;
 `;
 
 State.init({
@@ -235,6 +245,33 @@ function update() {
 
 update();
 
+/**
+ * max value you can withdraw
+ */
+const maxValue = Math.min(
+  Number(underlyingBalance),
+  Number(availableLiquidityAmount)
+);
+
+const changeValue = (value) => {
+  if (Number(value) > maxValue) {
+    value = maxValue;
+  }
+  if (Number(value) < 0) {
+    value = "0";
+  }
+  if (isValid(value)) {
+    State.update({
+      amountInUSD: Big(value)
+        .mul(marketReferencePriceInUsd)
+        .toFixed(2, ROUND_DOWN),
+    });
+  } else {
+    State.update({ amountInUSD: "0.00" });
+  }
+  State.update({ amount: value });
+};
+
 return (
   <Widget
     src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
@@ -259,17 +296,7 @@ return (
                             type="number"
                             value={state.amount}
                             onChange={(e) => {
-                              const value = e.target.value;
-                              if (isValid(value)) {
-                                State.update({
-                                  amountInUSD: Big(value)
-                                    .mul(marketReferencePriceInUsd)
-                                    .toFixed(2, ROUND_DOWN),
-                                });
-                              } else {
-                                State.update({ amountInUSD: "0.00" });
-                              }
-                              State.update({ amount: value });
+                              changeValue(e.target.value);
                             }}
                             placeholder="0"
                           />
@@ -295,6 +322,13 @@ return (
                         <GrayTexture>
                           Supply Balance:{" "}
                           {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
+                          <Max
+                            onClick={() => {
+                              changeValue(maxValue);
+                            }}
+                          >
+                            MAX
+                          </Max>
                         </GrayTexture>
                       ),
                     }}
