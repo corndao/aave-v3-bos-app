@@ -43,6 +43,20 @@ function getUserDeposits(chainId, address) {
   );
 }
 
+/**
+ *
+ * @param {string} chainId
+ * @param {string} address user address
+ * @param {string} asset asset address
+ * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
+ * @param {string} amount amount in USD with 2 fixed decimals
+ * @returns
+ */
+function getNewHealthFactor(chainId, address, asset, action, amount) {
+  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
 // --- End of functions definition ---
 
 // Load functions through `onLoad` callback
@@ -58,6 +72,7 @@ exportFunctions({
   getMarkets,
   getUserDeposits,
   getUserBalances,
+  getNewHealthFactor,
 });
 
 return <div style={{ display: "none" }} />;
