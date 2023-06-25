@@ -16,13 +16,8 @@ function isValid(a) {
 
 const {
   symbol,
-  //   balance,
   marketReferencePriceInUsd,
-  //   supplyAPY,
-  //   usageAsCollateralEnabled,
-  //   decimals,
-  //   token,
-  //   name: tokenName,
+  healthFactor,
   availableBorrows,
   availableBorrowsUSD,
 } = data;
@@ -102,11 +97,36 @@ const Input = styled.input`
   }
 `;
 
+const Max = styled.span`
+  color: #8247e5;
+  cursor: pointer;
+`;
+
 State.init({
   amount: "",
   amountInUSD: "0.00",
   loading: false,
 });
+
+const maxValue = availableBorrows;
+const changeValue = (value) => {
+  if (Number(value) > Number(maxValue)) {
+    value = maxValue;
+  }
+  if (Number(value) < 0) {
+    value = "0";
+  }
+  if (isValid(value)) {
+    State.update({
+      amountInUSD: Big(value)
+        .mul(marketReferencePriceInUsd)
+        .toFixed(2, ROUND_DOWN),
+    });
+  } else {
+    State.update({ amountInUSD: "0.00" });
+  }
+  State.update({ amount: value });
+};
 
 return (
   <>
@@ -133,17 +153,7 @@ return (
                               type="number"
                               value={state.amount}
                               onChange={(e) => {
-                                const value = e.target.value;
-                                if (isValid(value)) {
-                                  State.update({
-                                    amountInUSD: Big(value)
-                                      .mul(marketReferencePriceInUsd)
-                                      .toFixed(2, ROUND_DOWN),
-                                  });
-                                } else {
-                                  State.update({ amountInUSD: "0.00" });
-                                }
-                                State.update({ amount: value });
+                                changeValue(e.target.value);
                               }}
                               placeholder="0"
                             />
@@ -168,6 +178,13 @@ return (
                         right: (
                           <GrayTexture>
                             Available Borrows: {availableBorrows}
+                            <Max
+                              onClick={() => {
+                                changeValue(maxValue);
+                              }}
+                            >
+                              MAX
+                            </Max>
                           </GrayTexture>
                         ),
                       }}
@@ -176,7 +193,7 @@ return (
                 ),
               }}
             />
-            {/* <Widget
+            <Widget
               src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
               props={{
                 title: "Transaction Overview",
@@ -186,22 +203,14 @@ return (
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                       props={{
-                        left: <PurpleTexture>Supply APY</PurpleTexture>,
+                        left: <PurpleTexture>Health factor</PurpleTexture>,
                         right: (
-                          <WhiteTexture>
-                            {(Number(supplyAPY) * 100).toFixed(2)}%
-                          </WhiteTexture>
-                        ),
-                      }}
-                    />
-                    <Widget
-                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
-                      props={{
-                        left: <PurpleTexture>Collateralization</PurpleTexture>,
-                        right: usageAsCollateralEnabled ? (
-                          <GreenTexture>Enabled</GreenTexture>
-                        ) : (
-                          <RedTexture>Disabled</RedTexture>
+                          <div style={{ textAlign: "right" }}>
+                            <GreenTexture>
+                              {healthFactor} -&gt; {"-"}
+                            </GreenTexture>
+                            <WhiteTexture>Liquidation at &lt; 1.0</WhiteTexture>
+                          </div>
                         ),
                       }}
                     />
@@ -219,7 +228,7 @@ return (
                   // borrow
                 },
               }}
-            /> */}
+            />
           </BorrowContainer>
         ),
         config,
