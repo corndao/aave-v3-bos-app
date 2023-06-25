@@ -11,6 +11,20 @@ State.init({
   data: undefined,
 });
 
+const SupplyButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Supply",
+      onClick: () => {
+        State.update({ data });
+        setShowSupplyModal(true);
+      },
+    }}
+  />
+);
+
 return (
   <>
     <Widget
@@ -87,17 +101,7 @@ return (
                         </>
                       )}
                     </div>,
-                    <Widget
-                      src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                      props={{
-                        config,
-                        children: "Supply",
-                        onClick: () => {
-                          State.update({ data: row });
-                          setShowSupplyModal(true);
-                        },
-                      }}
-                    />,
+                    <SupplyButton data={row} />,
                   ]),
                 }}
               />
@@ -183,17 +187,7 @@ return (
                                   ],
                                 }}
                               />,
-                              <Widget
-                                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                                props={{
-                                  config,
-                                  children: "Supply",
-                                  onClick: () => {
-                                    State.update({ data: row });
-                                    setShowSupplyModal(true);
-                                  },
-                                }}
-                              />,
+                              <SupplyButton data={row} />,
                             ],
                           }}
                         />,

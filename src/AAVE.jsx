@@ -212,6 +212,8 @@ State.init({
   chainId: undefined,
   showWithdrawModal: false,
   showSupplyModal: false,
+  showRepayModal: false,
+  showBorrowModal: false,
   walletConnected: false,
   assetsToSupply: undefined,
   yourSupplies: undefined,
@@ -250,6 +252,15 @@ function checkProvider() {
   } else {
     State.update({ walletConnected: false });
   }
+}
+
+function calculateAvailableBorrows({
+  availableBorrowsUSD,
+  marketReferencePriceInUsd,
+}) {
+  return isValid(availableBorrowsUSD) && isValid(marketReferencePriceInUsd)
+    ? Big(availableBorrowsUSD).div(marketReferencePriceInUsd).toFixed(7)
+    : Number(0).toFixed(7);
 }
 
 // update data in async manner
@@ -386,6 +397,10 @@ function updateData() {
                   name: "Ethereum",
                 }
               : {}),
+            availableBorrows: calculateAvailableBorrows({
+              availableBorrowsUSD: userDebts.availableBorrowsUSD,
+              marketReferencePriceInUsd: market.marketReferencePriceInUsd,
+            }),
           };
         }),
       };
@@ -522,6 +537,9 @@ const body = loading ? (
               config,
               chainId: state.chainId,
               assetsToBorrow: state.assetsToBorrow,
+              showBorrowModal: state.showBorrowModal,
+              setShowBorrowModal: (isShow) =>
+                State.update({ showBorrowModal: isShow }),
               onActionSuccess,
             }}
           />

@@ -9,6 +9,21 @@ const {
 State.init({
   data: undefined,
 });
+
+const WithdrawButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Withdraw",
+      onClick: () => {
+        State.update({ data });
+        setShowWithdrawModal(true);
+      },
+    }}
+  />
+);
+
 return (
   <>
     <Widget
@@ -98,17 +113,7 @@ return (
                                 ],
                               }}
                             />,
-                            <Widget
-                              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                              props={{
-                                config,
-                                children: "Withdraw",
-                                onClick: () => {
-                                  State.update({ data: row });
-                                  setShowWithdrawModal(true);
-                                },
-                              }}
-                            />,
+                            <WithdrawButton data={row} />,
                           ],
                         }}
                       />,
@@ -147,17 +152,7 @@ return (
                         </div>
                       </div>,
                       `${(Number(row.supplyAPY) * 100).toFixed(2)} %`,
-                      <Widget
-                        src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                        props={{
-                          config,
-                          children: "Withdraw",
-                          onClick: () => {
-                            State.update({ data: row });
-                            setShowWithdrawModal(true);
-                          },
-                        }}
-                      />,
+                      <WithdrawButton data={row} />,
                     ];
                   }),
                 }}

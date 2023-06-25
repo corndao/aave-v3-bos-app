@@ -1,4 +1,17 @@
-const { config, assetsToBorrow, chainId, onActionSuccess } = props;
+const {
+  config,
+  assetsToBorrow,
+  chainId,
+  onActionSuccess,
+  showBorrowModal,
+  setShowBorrowModal,
+} = props;
+
+if (!assetsToBorrow) {
+  return;
+}
+
+const { debts, ...assetsToBorrowCommonParams } = assetsToBorrow;
 
 function isValid(a) {
   if (!a) return false;
@@ -6,7 +19,24 @@ function isValid(a) {
   if (a === "") return false;
   return true;
 }
-console.log({ assetsToBorrow });
+State.init({
+  data: undefined,
+});
+
+const BorrowButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Borrow",
+      onClick: () => {
+        State.update({ data });
+        setShowBorrowModal(true);
+      },
+    }}
+  />
+);
+
 return (
   <>
     <Widget
@@ -19,9 +49,7 @@ return (
         title: "Assets to borrow",
         body: (
           <>
-            {!assetsToBorrow ||
-            !assetsToBorrow.debts ||
-            assetsToBorrow.debts.length === 0 ? (
+            {!debts || debts.length === 0 ? (
               <Widget
                 src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
                 props={{
@@ -32,7 +60,7 @@ return (
             ) : (
               <>
                 {/* mobile view */}
-                {assetsToBorrow.debts.map((row) => (
+                {debts.map((row) => (
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Card.CardContainer`}
                     props={{
@@ -95,14 +123,10 @@ return (
                                   ],
                                 }}
                               />,
-                              <Widget
-                                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                                props={{
-                                  config,
-                                  children: "Repay",
-                                  onClick: () => {
-                                    //
-                                  },
+                              <BorrowButton
+                                data={{
+                                  ...row,
+                                  ...assetsToBorrowCommonParams,
                                 }}
                               />,
                             ],
@@ -123,7 +147,7 @@ return (
                       "APY, variable",
                       "",
                     ],
-                    data: assetsToBorrow.debts.map((row) => {
+                    data: debts.map((row) => {
                       return [
                         <Widget
                           src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
@@ -142,14 +166,7 @@ return (
                           }}
                         />,
                         <div>
-                          <div>
-                            {isValid(assetsToBorrow.availableBorrowsUSD) &&
-                            isValid(row.marketReferencePriceInUsd)
-                              ? Big(assetsToBorrow.availableBorrowsUSD)
-                                  .div(row.marketReferencePriceInUsd)
-                                  .toFixed(7)
-                              : Number(0).toFixed(7)}
-                          </div>
+                          <div>{row.availableBorrows}</div>
                           <div>
                             ${" "}
                             {Number(assetsToBorrow.availableBorrowsUSD).toFixed(
@@ -158,14 +175,10 @@ return (
                           </div>
                         </div>,
                         `${(Number(row.variableBorrowAPY) * 100).toFixed(2)} %`,
-                        <Widget
-                          src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                          props={{
-                            config,
-                            children: "Repay",
-                            onClick: () => {
-                              //
-                            },
+                        <BorrowButton
+                          data={{
+                            ...row,
+                            ...assetsToBorrowCommonParams,
                           }}
                         />,
                       ];
@@ -178,5 +191,17 @@ return (
         ),
       }}
     />
+    {showBorrowModal && (
+      <Widget
+        src={`${config.ownerId}/widget/AAVE.Modal.BorrowModal`}
+        props={{
+          config,
+          onRequestClose: () => setShowBorrowModal(false),
+          data: state.data,
+          onActionSuccess,
+          chainId,
+        }}
+      />
+    )}
   </>
 );
