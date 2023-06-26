@@ -6,6 +6,7 @@ if (!data) {
 
 console.log({ data });
 
+const FIXED_LIQUIDATION_VALUE = "1.0";
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -138,7 +139,7 @@ const changeValue = (value) => {
       .mul(marketReferencePriceInUsd)
       .toFixed(2, ROUND_DOWN);
   }
-  State.update({ amount: value, amountInUSD });
+  State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
 
   Ethers.provider()
     .getSigner()
@@ -244,7 +245,9 @@ return (
                               />{" "}
                               {state.newHealthFactor}
                             </GreenTexture>
-                            <WhiteTexture>Liquidation at &lt; 1.0</WhiteTexture>
+                            <WhiteTexture>
+                              Liquidation at &lt; {FIXED_LIQUIDATION_VALUE}
+                            </WhiteTexture>
                           </div>
                         ),
                       }}
