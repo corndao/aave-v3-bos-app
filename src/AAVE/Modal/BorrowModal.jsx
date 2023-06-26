@@ -106,10 +106,27 @@ State.init({
   amount: "",
   amountInUSD: "0.00",
   loading: false,
+  newHealthFactor: "-",
 });
 
 const maxValue = availableBorrows;
+
+/**
+ *
+ * @param {string} chainId
+ * @param {string} address user address
+ * @param {string} asset asset address
+ * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
+ * @param {string} amount amount in USD with 2 fixed decimals
+ * @returns
+ */
+function getNewHealthFactor(chainId, address, asset, action, amount) {
+  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
 const changeValue = (value) => {
+  let amountInUSD = "0.00";
   if (Number(value) > Number(maxValue)) {
     value = maxValue;
   }
@@ -117,15 +134,27 @@ const changeValue = (value) => {
     value = "0";
   }
   if (isValid(value)) {
-    State.update({
-      amountInUSD: Big(value)
-        .mul(marketReferencePriceInUsd)
-        .toFixed(2, ROUND_DOWN),
-    });
-  } else {
-    State.update({ amountInUSD: "0.00" });
+    amountInUSD = Big(value)
+      .mul(marketReferencePriceInUsd)
+      .toFixed(2, ROUND_DOWN);
   }
-  State.update({ amount: value });
+  State.update({ amount: value, amountInUSD });
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "borrow",
+        amountInUSD
+      ).then((response) => {
+        const newHealthFactor = JSON.parse(response.body);
+        State.update({ newHealthFactor });
+      });
+    });
 };
 
 return (
@@ -207,7 +236,13 @@ return (
                         right: (
                           <div style={{ textAlign: "right" }}>
                             <GreenTexture>
-                              {healthFactor} -&gt; {"-"}
+                              {healthFactor}
+                              <img
+                                src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                                width={16}
+                                height={16}
+                              />{" "}
+                              {state.newHealthFactor}
                             </GreenTexture>
                             <WhiteTexture>Liquidation at &lt; 1.0</WhiteTexture>
                           </div>
