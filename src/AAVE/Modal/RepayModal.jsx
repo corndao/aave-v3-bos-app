@@ -160,6 +160,16 @@ const changeValue = (value) => {
     });
 };
 
+function getNonce(tokenAddress, userAddress) {
+  const token = new ethers.Contract(
+    tokenAddress,
+    config.erc20Abi.body,
+    Ethers.provider().getSigner()
+  );
+
+  return token.nonces(userAddress).then((nonce) => nonce.toNumber());
+}
+
 /**
  *
  * @param {string} user user address
@@ -170,7 +180,6 @@ const changeValue = (value) => {
  * @returns raw signature string will could be used in supplyWithPermit
  */
 function signERC20Approval(user, reserve, tokenName, amount, deadline) {
-  const chainId = 42161;
   return getNonce(reserve, user).then((nonce) => {
     const typeData = {
       types: {
@@ -197,7 +206,7 @@ function signERC20Approval(user, reserve, tokenName, amount, deadline) {
       },
       message: {
         owner: user,
-        spender: aavePoolV3Address,
+        spender: config.aavePoolV3Address,
         value: amount,
         nonce,
         deadline,
@@ -229,6 +238,14 @@ function repayERC20(amount) {
     .getSigner()
     .getAddress()
     .then((address) => {
+      console.log({
+        address,
+        asset,
+        tokenName,
+        amount,
+        deadline,
+        now: "111",
+      });
       return signERC20Approval(address, asset, tokenName, amount, deadline)
         .then((rawSig) => {
           const sig = ethers.utils.splitSignature(rawSig);
@@ -249,7 +266,30 @@ function repayERC20(amount) {
             sig.v,
             sig.r,
             sig.s
-          );
+          ).then((tx) => {
+            tx.wait().then((res) => {
+              const { status } = res;
+              if (status === 1) {
+                onActionSuccess({
+                  msg: `You repaied ${Big(amount)
+                    .div(Big(10).pow(decimals))
+                    .toFixed(8)} ${symbol}`,
+                  callback: () => {
+                    onRequestClose();
+                    State.update({
+                      loading: false,
+                    });
+                  },
+                });
+                console.log("tx succeeded", res);
+              } else {
+                State.update({
+                  loading: false,
+                });
+                console.log("tx failed", res);
+              }
+            });
+          });
         })
         .catch(() => State.update({ loading: false }));
     })

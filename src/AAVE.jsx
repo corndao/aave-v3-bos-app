@@ -527,6 +527,7 @@ const body = loading ? (
             src={`${config.ownerId}/widget/AAVE.Card.YourBorrows`}
             props={{
               config,
+              chainId: state.chainId,
               yourBorrows: state.yourBorrows,
               showRepayModal: state.showRepayModal,
               setShowRepayModal: (isShow) =>

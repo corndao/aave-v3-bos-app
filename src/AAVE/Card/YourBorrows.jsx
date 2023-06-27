@@ -4,6 +4,7 @@ const {
   showRepayModal,
   setShowRepayModal,
   onActionSuccess,
+  chainId,
 } = props;
 
 State.init({
