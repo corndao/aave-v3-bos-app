@@ -6,6 +6,11 @@ const CONTRACT_ABI = {
   aavePoolV3ABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
 };
+
+const vwethABI = fetch(
+  "https://gist.githubusercontent.com/danielwpz/21facb2ad9f8ccab27f9744e3f7889cb/raw/fbc45b76010d07561b513b5ae0bf54285b0b938d/vweth1.json"
+);
+
 const aavePoolV3ABI = fetch(CONTRACT_ABI.aavePoolV3ABI);
 const wrappedTokenGatewayV3ABI = fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI);
 const erc20Abi = fetch(CONTRACT_ABI.erc20Abi);
@@ -13,7 +18,12 @@ const wrappedTokenGatewayV3Address =
   "0xB5Ee21786D28c5Ba61661550879475976B707099";
 const aavePoolV3Address = "0x794a61358D6845594F94dc1DB02A252b5b4814aD";
 
-if (!aavePoolV3ABI.ok || !wrappedTokenGatewayV3ABI.ok || !erc20Abi.ok) {
+if (
+  !aavePoolV3ABI.ok ||
+  !wrappedTokenGatewayV3ABI.ok ||
+  !erc20Abi.ok ||
+  !vwethABI.ok
+) {
   return "loading";
 }
 
@@ -157,6 +167,36 @@ function repayETH(address, amount) {
   );
 }
 
+function approveDelegation(vwETHAddress) {
+  const vToken = new ethers.Contract(
+    vwETHAddress,
+    vwethABI.body,
+    Ethers.provider().getSigner()
+  );
+  const maxUint256 = ethers.BigNumber.from(
+    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  );
+
+  // TODO replace address
+  return vToken.approveDelegation(wrappedTokenGatewayV3Address, maxUint256);
+}
+
+/**
+ * @param {string} vwETHAddress
+ * @param {string} userAddress
+ * @returns {BigNumber}
+ */
+function borrowAllowance(vwETHAddress, userAddress) {
+  const vToken = new ethers.Contract(
+    vwETHAddress,
+    vwethABI.body,
+    Ethers.provider().getSigner()
+  );
+
+  // TODO replace address
+  return vToken.borrowAllowance(userAddress, wrappedTokenGatewayV3Address);
+}
+
 // borrowERC20(
 //   "0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C",
 //   "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
@@ -202,6 +242,17 @@ function repayETH(address, amount) {
 //   console.log('repayETH txn');
 //   console.log(txn);
 // });
+
+// approveDelegation("0x0c84331e39d6658cd6e6b9ba04736cc4c4734351")
+// .then(txn => {
+//   console.log('approve delegation txn');
+//   console.log(txn);
+// });
+
+// borrowAllowance("0x0c84331e39d6658cd6e6b9ba04736cc4c4734351", "0xF7175dC7D7D42Cd41fD7d19f10adE1EA84D99D0C")
+// .then(allowance => {
+//   console.log({ allowance });
+// })
 
 return (
   <div>
