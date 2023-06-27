@@ -21,6 +21,7 @@ const {
   availableBorrowsUSD,
   decimals,
   underlyingAsset,
+  variableDebtTokenAddress,
 } = data;
 
 const BorrowContainer = styled.div`
@@ -106,6 +107,7 @@ const Max = styled.span`
 State.init({
   amount: "",
   amountInUSD: "0.00",
+  allowanceAmount: 0,
   loading: false,
   newHealthFactor: "-",
 });
@@ -124,6 +126,40 @@ const maxValue = availableBorrows;
 function getNewHealthFactor(chainId, address, asset, action, amount) {
   const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
+/**
+ * @param {string} vwETHAddress
+ * @param {string} userAddress
+ * @returns {BigNumber}
+ */
+function borrowAllowance(vwETHAddress, userAddress) {
+  const vToken = new ethers.Contract(
+    vwETHAddress,
+    config.vwethABI.body,
+    Ethers.provider().getSigner()
+  );
+
+  // TODO replace address
+  return vToken.borrowAllowance(
+    userAddress,
+    config.wrappedTokenGatewayV3Address
+  );
+}
+
+function approveDelegation(vwETHAddress) {
+  const vToken = new ethers.Contract(
+    vwETHAddress,
+    config.vwethABI.body,
+    Ethers.provider().getSigner()
+  );
+  const maxUint256 = ethers.BigNumber.from(
+    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  );
+  return vToken.approveDelegation(
+    config.wrappedTokenGatewayV3Address,
+    maxUint256
+  );
 }
 
 const changeValue = (value) => {
@@ -246,6 +282,34 @@ function borrowETH(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
+function update() {
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      borrowAllowance(variableDebtTokenAddress, address)
+        .then((amountRaw) => amountRaw.toString())
+        .then((amount) => {
+          State.update({
+            allowanceAmount: Big(amount).div(Big(10).pow(decimals)).toNumber(),
+          });
+        });
+    });
+
+  if (
+    !isValid(state.amount) ||
+    !isValid(state.allowanceAmount) ||
+    Number(state.allowanceAmount) < Number(state.amount) ||
+    Number(state.amount) === 0
+  ) {
+    State.update({ needApprove: true });
+  } else {
+    State.update({ needApprove: false });
+  }
+}
+
+update();
+
 return (
   <>
     <Widget
@@ -346,26 +410,60 @@ return (
                 ),
               }}
             />
-            <Widget
-              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-              props={{
-                config,
-                children: `Borrow ${symbol}`,
-                loading: state.loading,
-                onClick: () => {
-                  const amount = Big(state.amount)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
-                  if (symbol === "ETH" || symbol === "WETH") {
-                    // borrow weth
-                    borrowETH(amount);
-                  } else {
-                    // borrow common
-                    borrowERC20(amount);
-                  }
-                },
-              }}
-            />
+            {state.needApprove && symbol === "ETH" && (
+              <Widget
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                props={{
+                  config,
+                  loading: state.loading,
+                  children: `Approve ${symbol}`,
+                  onClick: () => {
+                    State.update({
+                      loading: true,
+                    });
+                    const amount = Big(state.amount)
+                      .mul(Big(10).pow(decimals))
+                      .toFixed(0);
+
+                    approveDelegation(variableDebtTokenAddress)
+                      .then((tx) => {
+                        tx.wait().then((res) => {
+                          const { status } = res;
+                          if (status === 1) {
+                            State.update({
+                              needApprove: false,
+                              loading: false,
+                            });
+                          }
+                        });
+                      })
+                      .catch(() => State.update({ loading: false }));
+                  },
+                }}
+              />
+            )}
+            {!(state.needApprove && symbol === "ETH") && (
+              <Widget
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                props={{
+                  config,
+                  children: `Borrow ${symbol}`,
+                  loading: state.loading,
+                  onClick: () => {
+                    const amount = Big(state.amount)
+                      .mul(Big(10).pow(decimals))
+                      .toFixed(0);
+                    if (symbol === "ETH" || symbol === "WETH") {
+                      // borrow weth
+                      borrowETH(amount);
+                    } else {
+                      // borrow common
+                      borrowERC20(amount);
+                    }
+                  },
+                }}
+              />
+            )}
           </BorrowContainer>
         ),
         config,

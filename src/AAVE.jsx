@@ -6,6 +6,8 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/ERC20Permit.json",
   aavePoolV3ABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
+  vwethABI:
+    "https://gist.githubusercontent.com/danielwpz/21facb2ad9f8ccab27f9744e3f7889cb/raw/fbc45b76010d07561b513b5ae0bf54285b0b938d/vweth1.json",
 };
 const DEFAULT_CHAIN_ID = 1442;
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
@@ -17,6 +19,7 @@ function getNetworkConfig(chainId) {
     wrappedTokenGatewayV3ABI: fetch(CONTRACT_ABI.wrappedTokenGatewayV3ABI),
     erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
     aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
+    vwethABI: fetch(CONTRACT_ABI.vwethABI),
   };
 
   switch (chainId) {
@@ -370,7 +373,10 @@ function updateData() {
           yourSupplies,
         });
 
-        if (JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies)) {
+        if (
+          JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies) &&
+          JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)
+        ) {
           console.log("refresh again ...", prevYourSupplies, yourSupplies);
           setTimeout(updateData, 500);
         }
