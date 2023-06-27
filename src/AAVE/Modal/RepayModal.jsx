@@ -347,6 +347,7 @@ function repayETH(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
+console.log({ data });
 return (
   <>
     <Widget
@@ -419,6 +420,27 @@ return (
                 config,
                 children: (
                   <TransactionOverviewContainer>
+                    <Widget
+                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                      props={{
+                        left: <PurpleTexture>Debt</PurpleTexture>,
+                        right: (
+                          <WhiteTexture>
+                            {Number(variableBorrows).toFixed(2)}
+                            <img
+                              src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                              width={16}
+                              height={16}
+                            />{" "}
+                            {isValid(state.amount)
+                              ? Big(variableBorrows)
+                                  .minus(state.amount)
+                                  .toFixed(2)
+                              : "-"}
+                          </WhiteTexture>
+                        ),
+                      }}
+                    />
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                       props={{
