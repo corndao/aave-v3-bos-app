@@ -21,9 +21,11 @@ const {
   availableBorrowsUSD,
   decimals,
   underlyingAsset,
+  variableBorrows,
+  name: tokenName,
 } = data;
 
-const BorrowContainer = styled.div`
+const RepayContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -110,7 +112,7 @@ State.init({
   newHealthFactor: "-",
 });
 
-const maxValue = availableBorrows;
+const maxValue = variableBorrows;
 
 /**
  *
@@ -149,7 +151,7 @@ const changeValue = (value) => {
         chainId,
         address,
         data.underlyingAsset,
-        "borrow",
+        "repay",
         amountInUSD
       ).then((response) => {
         const newHealthFactor = JSON.parse(response.body);
@@ -158,11 +160,107 @@ const changeValue = (value) => {
     });
 };
 
-function borrowERC20(amount) {
+/**
+ *
+ * @param {string} user user address
+ * @param {string} reserve AAVE reserve address (token to supply)
+ * @param {string} tokenName token name
+ * @param {string} amount token amount in full decimals
+ * @param {number} deadline unix timestamp in SECONDS
+ * @returns raw signature string will could be used in supplyWithPermit
+ */
+function signERC20Approval(user, reserve, tokenName, amount, deadline) {
+  const chainId = 42161;
+  return getNonce(reserve, user).then((nonce) => {
+    const typeData = {
+      types: {
+        EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" },
+          { name: "verifyingContract", type: "address" },
+        ],
+        Permit: [
+          { name: "owner", type: "address" },
+          { name: "spender", type: "address" },
+          { name: "value", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      },
+      primaryType: "Permit",
+      domain: {
+        name: tokenName,
+        version: "1",
+        chainId,
+        verifyingContract: reserve,
+      },
+      message: {
+        owner: user,
+        spender: aavePoolV3Address,
+        value: amount,
+        nonce,
+        deadline,
+      },
+    };
+
+    const dataToSign = JSON.stringify(typeData);
+
+    return Ethers.provider().send("eth_signTypedData_v4", [user, dataToSign]);
+  });
+}
+
+/**
+ *
+ * @param {*} rawSig signature from signERC20Approval
+ * @param {string} address user address
+ * @param {string} asset asset address (e.g. USDT)
+ * @param {string} amount repay amount in full decimals
+ * @param {number} deadline UNIX timestamp in SECONDS
+ * @returns
+ */
+function repayERC20(amount) {
+  State.update({
+    loading: true,
+  });
+  const asset = underlyingAsset;
+  const deadline = Math.floor(Date.now() / 1000 + 3600); // after an hour
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      return signERC20Approval(address, asset, tokenName, amount, deadline)
+        .then((rawSig) => {
+          const sig = ethers.utils.splitSignature(rawSig);
+          const pool = new ethers.Contract(
+            config.aavePoolV3Address,
+            config.aavePoolV3ABI.body,
+            Ethers.provider().getSigner()
+          );
+
+          return pool[
+            "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)"
+          ](
+            asset,
+            amount,
+            2, // variable interest rate
+            address,
+            deadline,
+            sig.v,
+            sig.r,
+            sig.s
+          );
+        })
+        .catch(() => State.update({ loading: false }));
+    })
+    .catch(() => State.update({ loading: false }));
+}
+
+function repayETH(amount) {
   State.update({ loading: true });
-  const pool = new ethers.Contract(
-    config.aavePoolV3Address,
-    config.aavePoolV3ABI.body,
+  const wrappedTokenGateway = new ethers.Contract(
+    config.wrappedTokenGatewayV3Address,
+    config.wrappedTokenGatewayV3ABI.body,
     Ethers.provider().getSigner()
   );
 
@@ -170,78 +268,41 @@ function borrowERC20(amount) {
     .getSigner()
     .getAddress()
     .then((address) => {
-      return pool["borrow(address,uint256,uint256,uint16,address)"](
-        underlyingAsset,
-        amount,
-        2, // variable interest rate
-        0,
-        address
-      );
-    })
-    .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You borrowed ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
+      wrappedTokenGateway
+        .repayETH(
+          config.aavePoolV3Address,
+          amount,
+          2, // variable interest rate
+          address,
+          {
+            value: amount,
+          }
+        )
+        .then((tx) => {
+          tx.wait().then((res) => {
+            const { status } = res;
+            if (status === 1) {
+              onActionSuccess({
+                msg: `You repaied ${Big(amount)
+                  .div(Big(10).pow(decimals))
+                  .toFixed(8)} ${symbol}`,
+                callback: () => {
+                  onRequestClose();
+                  State.update({
+                    loading: false,
+                  });
+                },
+              });
+              console.log("tx succeeded", res);
+            } else {
               State.update({
                 loading: false,
               });
-            },
+              console.log("tx failed", res);
+            }
           });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
-    })
-    .catch(() => State.update({ loading: false }));
-}
-
-function borrowETH(amount) {
-  const wrappedTokenGateway = new ethers.Contract(
-    config.wrappedTokenGatewayV3Address,
-    config.wrappedTokenGatewayV3ABI.body,
-    Ethers.provider().getSigner()
-  );
-  State.update({ loading: true });
-  return wrappedTokenGateway
-    .borrowETH(
-      config.aavePoolV3Address,
-      amount,
-      2, // variable interest rate
-      0
-    )
-    .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You supplied ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -251,10 +312,10 @@ return (
     <Widget
       src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
       props={{
-        title: `Borrow ${symbol}`,
+        title: `Repay ${symbol}`,
         onRequestClose: onRequestClose,
         children: (
-          <BorrowContainer>
+          <RepayContainer>
             <Widget
               src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
               props={{
@@ -295,7 +356,7 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Available Borrows: {availableBorrows}
+                            Repay balance: {Number(variableBorrows).toFixed(7)}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);
@@ -350,23 +411,21 @@ return (
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
                 config,
-                children: `Borrow ${symbol}`,
+                children: `Repay ${symbol}`,
                 loading: state.loading,
                 onClick: () => {
                   const amount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
                   if (symbol === "ETH" || symbol === "WETH") {
-                    // borrow weth
-                    borrowETH(amount);
+                    repayETH(amount);
                   } else {
-                    // borrow common
-                    borrowERC20(amount);
+                    repayERC20(amount);
                   }
                 },
               }}
             />
-          </BorrowContainer>
+          </RepayContainer>
         ),
         config,
       }}

@@ -1,4 +1,34 @@
-const { config, yourBorrows } = props;
+const {
+  config,
+  yourBorrows,
+  showRepayModal,
+  setShowRepayModal,
+  onActionSuccess,
+} = props;
+
+State.init({
+  data: undefined,
+});
+
+const RepayButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Repay",
+      onClick: () => {
+        State.update({ data });
+        setShowRepayModal(true);
+      },
+    }}
+  />
+);
+
+if (!yourBorrows) {
+  return;
+}
+
+const { debts, ...yourBorrowsCommonParams } = yourBorrows;
 
 return (
   <>
@@ -12,9 +42,7 @@ return (
         title: "Your borrows",
         body: (
           <>
-            {!yourBorrows ||
-            !yourBorrows.debts ||
-            yourBorrows.debts.length === 0 ? (
+            {!debts || debts.length === 0 ? (
               <Widget
                 src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
                 props={{
@@ -25,7 +53,7 @@ return (
             ) : (
               <>
                 {/* mobile view */}
-                {yourBorrows.debts.map((row) => (
+                {debts.map((row) => (
                   <Widget
                     src={`${config.ownerId}/widget/AAVE.Card.CardContainer`}
                     props={{
@@ -88,15 +116,8 @@ return (
                                   ],
                                 }}
                               />,
-                              <Widget
-                                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                                props={{
-                                  config,
-                                  children: "Repay",
-                                  onClick: () => {
-                                    //
-                                  },
-                                }}
+                              <RepayButton
+                                data={{ ...row, ...yourBorrowsCommonParams }}
                               />,
                             ],
                           }}
@@ -111,7 +132,7 @@ return (
                   props={{
                     config,
                     headers: ["Asset", "Debt", "APY", ""],
-                    data: yourBorrows.debts.map((row) => {
+                    data: debts.map((row) => {
                       return [
                         <Widget
                           src={`${config.ownerId}/widget/AAVE.Card.TokenWrapper`}
@@ -136,15 +157,8 @@ return (
                           </div>
                         </div>,
                         `${(Number(row.variableBorrowAPY) * 100).toFixed(2)} %`,
-                        <Widget
-                          src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                          props={{
-                            config,
-                            children: "Repay",
-                            onClick: () => {
-                              //
-                            },
-                          }}
+                        <RepayButton
+                          data={{ ...row, ...yourBorrowsCommonParams }}
                         />,
                       ];
                     }),
@@ -156,5 +170,17 @@ return (
         ),
       }}
     />
+    {showRepayModal && (
+      <Widget
+        src={`${config.ownerId}/widget/AAVE.Modal.RepayModal`}
+        props={{
+          config,
+          onRequestClose: () => setShowRepayModal(false),
+          data: state.data,
+          onActionSuccess,
+          chainId,
+        }}
+      />
+    )}
   </>
 );

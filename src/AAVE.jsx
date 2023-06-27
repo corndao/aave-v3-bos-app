@@ -97,10 +97,8 @@ if (
     .getNetwork()
     .then((data) => {
       const chainId = data?.chainId;
-      if (chainId && chainId === DEFAULT_CHAIN_ID) {
+      if (chainId) {
         State.update({ chainId });
-      } else {
-        switchEthereumChain(DEFAULT_CHAIN_ID);
       }
     });
 }
@@ -407,7 +405,9 @@ function updateData() {
       const yourBorrows = {
         ...assetsToBorrow,
         debts: assetsToBorrow.debts.filter(
-          (row) => Number(row.variableBorrowsUSD) !== 0
+          (row) =>
+            !isNaN(Number(row.variableBorrowsUSD)) &&
+            Number(row.variableBorrowsUSD) >= 0.01
         ),
       };
       State.update({
@@ -482,7 +482,7 @@ const body = loading ? (
             switchNetwork: (chainId) => {
               switchEthereumChain(chainId);
             },
-            disabled: true,
+            // disabled: true,
           }}
         />
       </FlexContainer>
@@ -528,6 +528,9 @@ const body = loading ? (
             props={{
               config,
               yourBorrows: state.yourBorrows,
+              showRepayModal: state.showRepayModal,
+              setShowRepayModal: (isShow) =>
+                State.update({ showRepayModal: isShow }),
               onActionSuccess,
             }}
           />
