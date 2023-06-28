@@ -438,25 +438,27 @@ return (
                                 : "-"}
                             </WhiteTexture>
                             <WhiteTexture>
-                              {"$ " + isValid(variableBorrows) &&
+                              {isValid(variableBorrows) &&
                               isValid(marketReferencePriceInUsd)
-                                ? Big(variableBorrows)
+                                ? "$ " +
+                                  Big(variableBorrows)
                                     .times(marketReferencePriceInUsd)
                                     .toFixed(2)
-                                : "-"}
+                                : "$ -"}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                                 width={16}
                                 height={16}
                               />{" "}
-                              {"$ " + isValid(state.amount) &&
+                              {isValid(state.amount) &&
                               isValid(state.amount) &&
                               isValid(marketReferencePriceInUsd)
-                                ? Big(variableBorrows)
+                                ? "$ " +
+                                  Big(variableBorrows)
                                     .minus(state.amount)
                                     .times(marketReferencePriceInUsd)
                                     .toFixed(2)
-                                : "-"}
+                                : "$ -"}
                             </WhiteTexture>
                           </div>
                         ),
