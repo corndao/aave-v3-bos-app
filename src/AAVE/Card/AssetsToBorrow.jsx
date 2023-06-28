@@ -168,10 +168,7 @@ return (
                         <div>
                           <div>{row.availableBorrows}</div>
                           <div>
-                            ${" "}
-                            {Number(assetsToBorrow.availableBorrowsUSD).toFixed(
-                              2
-                            )}
+                            $ {Number(row.availableBorrowsUSD).toFixed(2)}
                           </div>
                         </div>,
                         `${(Number(row.variableBorrowAPY) * 100).toFixed(2)} %`,

@@ -405,21 +405,34 @@ function updateData() {
           }
           const { availableLiquidityUSD } = market;
 
-          if (
-            !isValid(userDebt.availableBorrowsUSD) ||
-            !isValid(availableLiquidityUSD)
-          ) {
-            console.log({
-              availableBorrowsUSD: userDebts.availableBorrowsUSD,
-              availableLiquidityUSD,
-            });
-          }
-
           const availableBorrowsUSD = Big(userDebts.availableBorrowsUSD).gt(
             availableLiquidityUSD
           )
             ? availableLiquidityUSD
             : userDebts.availableBorrowsUSD;
+          console.log({
+            symbol: userDebt.symbol,
+            availableBorrowsUSD: userDebts.availableBorrowsUSD,
+            availableLiquidityUSD,
+            calculatedMin: availableBorrowsUSD,
+          });
+          console.log({
+            data: {
+              ...market,
+              ...userDebt,
+              ...(market.symbol === "WETH"
+                ? {
+                    symbol: "ETH",
+                    name: "Ethereum",
+                  }
+                : {}),
+              availableBorrows: calculateAvailableBorrows({
+                availableBorrowsUSD,
+                marketReferencePriceInUsd: market.marketReferencePriceInUsd,
+              }),
+              availableBorrowsUSD,
+            },
+          });
           return {
             ...market,
             ...userDebt,
