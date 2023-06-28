@@ -461,6 +461,9 @@ const FlexContainer = styled.div`
   align-items: center;
   flex-direction: column;
 `;
+console.log({
+  commonData: state.assetsToBorrow,
+});
 // Component body
 const body = loading ? (
   <>
@@ -489,6 +492,25 @@ const body = loading ? (
               switchEthereumChain(chainId);
             },
             // disabled: true,
+          }}
+        />
+        <Widget
+          src={`${config.ownerId}/widget/AAVE.HeroData`}
+          props={{
+            config,
+            netWorth: `$ ${
+              state.assetsToBorrow?.netWorthUSD
+                ? Big(state.assetsToBorrow.netWorthUSD).toFixed(2)
+                : "-"
+            }`,
+            netApy: `${
+              state.assetsToBorrow?.netAPY
+                ? Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
+                : "-"
+            }%`,
+            healthFactor: state.assetsToBorrow?.healthFactor
+              ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
+              : "-",
           }}
         />
       </FlexContainer>

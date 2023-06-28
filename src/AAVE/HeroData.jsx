@@ -1,0 +1,84 @@
+const { netWorth, netApy, healthFactor } = props;
+
+if (!netWorth || !netApy || !healthFactor) {
+  return;
+}
+
+const HeroDataContainer = styled.div`
+  margin-top: 40px;
+  width: 100%;
+  gap: 20px;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 640px) {
+    width: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 90px;
+  }
+`;
+
+const KVData = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  @media (min-width: 640px) {
+    width: auto;
+    display: block;
+  }
+
+  .key {
+    font-size: 14px;
+    font-weight: 500;
+    @media (min-width: 640px) {
+      font-size: 14px;
+    }
+  }
+  .value {
+    font-size: 14px;
+    font-weight: 700;
+    @media (min-width: 640px) {
+      font-size: 22px;
+    }
+  }
+  .text-green {
+    color: #2cffa7;
+  }
+`;
+
+const heroData = [
+  {
+    name: "Net worth",
+    value: netWorth,
+  },
+  {
+    name: "Net APY",
+    value: netApy,
+  },
+  {
+    name: "Health factor",
+    value: healthFactor,
+  },
+];
+
+return (
+  <HeroDataContainer>
+    {heroData.map((row) => (
+      <KVData key={row.name}>
+        <div className="key">{row.name}</div>
+        <div
+          className={[
+            "value",
+            row.value === "Health factor" ? "text-green" : undefined,
+          ]
+            .filter((value) => !!value)
+            .join(" ")}
+        >
+          {row.value}
+        </div>
+      </KVData>
+    ))}
+  </HeroDataContainer>
+);
