@@ -425,7 +425,8 @@ return (
                         right: (
                           <div style={{ textAlign: "right" }}>
                             <WhiteTexture>
-                              {Number(variableBorrows).toFixed(7)}
+                              {Number(variableBorrows).toFixed(7) +
+                                ` ${symbol}`}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                                 width={16}
@@ -434,8 +435,8 @@ return (
                               {isValid(state.amount)
                                 ? Big(variableBorrows)
                                     .minus(state.amount)
-                                    .toFixed(7)
-                                : "-"}
+                                    .toFixed(7) + ` ${symbol}`
+                                : `- ${symbol}`}
                             </WhiteTexture>
                             <WhiteTexture>
                               {isValid(variableBorrows) &&
