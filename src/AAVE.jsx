@@ -400,6 +400,26 @@ function updateData() {
         ...userDebts,
         debts: userDebts.debts.map((userDebt) => {
           const market = marketsMapping[userDebt.symbol];
+          if (!market) {
+            throw new Error("Fatal error: Market not found");
+          }
+          const { availableLiquidityUSD } = market;
+
+          if (
+            !isValid(userDebt.availableBorrowsUSD) ||
+            !isValid(availableLiquidityUSD)
+          ) {
+            console.log({
+              availableBorrowsUSD: userDebts.availableBorrowsUSD,
+              availableLiquidityUSD,
+            });
+          }
+
+          const availableBorrowsUSD = Big(userDebts.availableBorrowsUSD).gt(
+            availableLiquidityUSD
+          )
+            ? availableLiquidityUSD
+            : userDebts.availableBorrowsUSD;
           return {
             ...market,
             ...userDebt,
@@ -410,9 +430,10 @@ function updateData() {
                 }
               : {}),
             availableBorrows: calculateAvailableBorrows({
-              availableBorrowsUSD: userDebts.availableBorrowsUSD,
+              availableBorrowsUSD,
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
+            availableBorrowsUSD,
           };
         }),
       };
