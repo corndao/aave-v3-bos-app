@@ -22,6 +22,10 @@ function getNetworkConfig(chainId) {
     vwethABI: fetch(CONTRACT_ABI.vwethABI),
   };
 
+  const constants = {
+    FIXED_LIQUIDATION_VALUE: "1.0",
+  };
+
   switch (chainId) {
     case 1: // ethereum mainnet
       return {
@@ -32,6 +36,7 @@ function getNetworkConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
         ...abis,
+        ...constants,
       };
     case 42161: // arbitrum one
       return {
@@ -42,6 +47,7 @@ function getNetworkConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
         ...abis,
+        ...constants,
       };
     case 137: // polygon mainnet
       return {
@@ -52,6 +58,7 @@ function getNetworkConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
         ...abis,
+        ...constants,
       };
     case 1442: // zkevm testnet
       return {
@@ -62,6 +69,7 @@ function getNetworkConfig(chainId) {
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
         ...abis,
+        ...constants,
       };
     default:
       throw new Error("unknown chain id");
@@ -461,9 +469,6 @@ const FlexContainer = styled.div`
   align-items: center;
   flex-direction: column;
 `;
-console.log({
-  commonData: state.assetsToBorrow,
-});
 // Component body
 const body = loading ? (
   <>
@@ -528,11 +533,15 @@ const body = loading ? (
             src={`${config.ownerId}/widget/AAVE.Card.YourSupplies`}
             props={{
               config,
+              chainId: state.chainId,
               yourSupplies: state.yourSupplies,
               showWithdrawModal: state.showWithdrawModal,
               setShowWithdrawModal: (isShow) =>
                 State.update({ showWithdrawModal: isShow }),
               onActionSuccess,
+              healthFactor: state.assetsToBorrow?.healthFactor
+                ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
+                : "-",
             }}
           />
           <Widget
@@ -545,6 +554,9 @@ const body = loading ? (
               setShowSupplyModal: (isShow) =>
                 State.update({ showSupplyModal: isShow }),
               onActionSuccess,
+              healthFactor: state.assetsToBorrow?.healthFactor
+                ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
+                : "-",
             }}
           />
         </>

@@ -1,9 +1,11 @@
 const {
   config,
+  chainId,
   yourSupplies,
   onActionSuccess,
   showWithdrawModal,
   setShowWithdrawModal,
+  healthFactor,
 } = props;
 
 State.init({
@@ -166,7 +168,11 @@ return (
         src={`${config.ownerId}/widget/AAVE.Modal.WithdrawModal`}
         props={{
           config,
-          data: state.data,
+          chainId,
+          data: {
+            ...state.data,
+            healthFactor,
+          },
           onActionSuccess,
           onRequestClose: () => setShowWithdrawModal(false),
         }}

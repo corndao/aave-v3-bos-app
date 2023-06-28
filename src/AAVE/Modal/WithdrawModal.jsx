@@ -1,4 +1,4 @@
-const { config, data, onRequestClose, onActionSuccess } = props;
+const { config, data, onRequestClose, onActionSuccess, chainId } = props;
 
 if (!data) {
   return;
@@ -21,6 +21,7 @@ const {
   marketReferencePriceInUsd,
   aTokenAddress,
   availableLiquidity,
+  healthFactor,
 } = data;
 
 const availableLiquidityAmount = Big(availableLiquidity)
@@ -63,6 +64,13 @@ const WhiteTexture = styled.div`
   font-weight: bold;
   color: white;
 `;
+
+const GreenTexture = styled.div`
+  font-size: 14px;
+  font-weight: bold;
+  color: #2cffa7;
+`;
+
 const TransactionOverviewContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -101,6 +109,7 @@ State.init({
   allowanceAmount: 0,
   needApprove: false,
   loading: false,
+  newHealthFactor: "-",
 });
 
 const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
@@ -222,6 +231,20 @@ function allowanceForGateway(tokenAddress) {
     });
 }
 
+/**
+ *
+ * @param {string} chainId
+ * @param {string} address user address
+ * @param {string} asset asset address
+ * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
+ * @param {string} amount amount in USD with 2 fixed decimals
+ * @returns
+ */
+function getNewHealthFactor(chainId, address, asset, action, amount) {
+  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
 function update() {
   allowanceForGateway(aTokenAddress)
     .then((amount) => Number(amount.toString()))
@@ -261,13 +284,33 @@ const changeValue = (value) => {
     value = "0";
   }
   if (isValid(value)) {
+    const amountInUSD = Big(value)
+      .mul(marketReferencePriceInUsd)
+      .toFixed(2, ROUND_DOWN);
     State.update({
-      amountInUSD: Big(value)
-        .mul(marketReferencePriceInUsd)
-        .toFixed(2, ROUND_DOWN),
+      amountInUSD,
+      newHealthFactor: "-",
     });
+    Ethers.provider()
+      .getSigner()
+      .getAddress()
+      .then((address) => {
+        getNewHealthFactor(
+          chainId,
+          address,
+          underlyingAsset,
+          "deposit",
+          amountInUSD
+        ).then((response) => {
+          const newHealthFactor = JSON.parse(response.body);
+          State.update({ newHealthFactor });
+        });
+      });
   } else {
-    State.update({ amountInUSD: "0.00" });
+    State.update({
+      amountInUSD: "0.00",
+      newHealthFactor: "-",
+    });
   }
   State.update({ amount: value });
 };
@@ -350,6 +393,35 @@ return (
                       left: <PurpleTexture>Remaining Supply</PurpleTexture>,
                       right: (
                         <WhiteTexture>{remainingSupply} USDT</WhiteTexture>
+                      ),
+                    }}
+                  />
+                  <Widget
+                    src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                    props={{
+                      left: <PurpleTexture>Health factor</PurpleTexture>,
+                      right: (
+                        <div style={{ textAlign: "right" }}>
+                          <GreenTexture>
+                            {healthFactor === "-"
+                              ? "-"
+                              : Big(healthFactor).toFixed(2, ROUND_DOWN)}
+                            <img
+                              src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                              width={16}
+                              height={16}
+                            />{" "}
+                            {state.newHealthFactor === "-"
+                              ? "-"
+                              : Big(state.newHealthFactor).toFixed(
+                                  2,
+                                  ROUND_DOWN
+                                )}
+                          </GreenTexture>
+                          <WhiteTexture>
+                            Liquidation at &lt; {config.FIXED_LIQUIDATION_VALUE}
+                          </WhiteTexture>
+                        </div>
                       ),
                     }}
                   />

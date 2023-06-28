@@ -5,6 +5,7 @@ const {
   setShowSupplyModal,
   onActionSuccess,
   chainId,
+  healthFactor,
 } = props;
 
 State.init({
@@ -210,7 +211,10 @@ return (
         props={{
           config,
           onRequestClose: () => setShowSupplyModal(false),
-          data: state.data,
+          data: {
+            ...state.data,
+            healthFactor,
+          },
           onActionSuccess,
           chainId,
         }}

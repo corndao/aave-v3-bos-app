@@ -22,6 +22,7 @@ const {
   decimals,
   token,
   name: tokenName,
+  healthFactor,
 } = data;
 
 const WithdrawContainer = styled.div`
@@ -108,6 +109,7 @@ State.init({
   amount: "",
   amountInUSD: "0.00",
   loading: false,
+  newHealthFactor: "-",
 });
 
 function getNonce(tokenAddress, userAddress) {
@@ -281,6 +283,20 @@ function depositErc20(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
+/**
+ *
+ * @param {string} chainId
+ * @param {string} address user address
+ * @param {string} asset asset address
+ * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
+ * @param {string} amount amount in USD with 2 fixed decimals
+ * @returns
+ */
+function getNewHealthFactor(chainId, address, asset, action, amount) {
+  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
 const maxValue =
   symbol === "ETH" || symbol === "WETH"
     ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed()
@@ -294,13 +310,33 @@ const changeValue = (value) => {
     value = "0";
   }
   if (isValid(value)) {
+    const amountInUSD = Big(value)
+      .mul(marketReferencePriceInUsd)
+      .toFixed(2, ROUND_DOWN);
     State.update({
-      amountInUSD: Big(value)
-        .mul(marketReferencePriceInUsd)
-        .toFixed(2, ROUND_DOWN),
+      amountInUSD,
+      newHealthFactor: "-",
     });
+    Ethers.provider()
+      .getSigner()
+      .getAddress()
+      .then((address) => {
+        getNewHealthFactor(
+          chainId,
+          address,
+          token,
+          "deposit",
+          amountInUSD
+        ).then((response) => {
+          const newHealthFactor = JSON.parse(response.body);
+          State.update({ newHealthFactor });
+        });
+      });
   } else {
-    State.update({ amountInUSD: "0.00" });
+    State.update({
+      amountInUSD: "0.00",
+      newHealthFactor: "-",
+    });
   }
   State.update({ amount: value });
 };
@@ -396,6 +432,36 @@ return (
                           <GreenTexture>Enabled</GreenTexture>
                         ) : (
                           <RedTexture>Disabled</RedTexture>
+                        ),
+                      }}
+                    />
+                    <Widget
+                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                      props={{
+                        left: <PurpleTexture>Health factor</PurpleTexture>,
+                        right: (
+                          <div style={{ textAlign: "right" }}>
+                            <GreenTexture>
+                              {healthFactor === "-"
+                                ? "-"
+                                : Big(healthFactor).toFixed(2, ROUND_DOWN)}
+                              <img
+                                src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                                width={16}
+                                height={16}
+                              />{" "}
+                              {state.newHealthFactor === "-"
+                                ? "-"
+                                : Big(state.newHealthFactor).toFixed(
+                                    2,
+                                    ROUND_DOWN
+                                  )}
+                            </GreenTexture>
+                            <WhiteTexture>
+                              Liquidation at &lt;{" "}
+                              {config.FIXED_LIQUIDATION_VALUE}
+                            </WhiteTexture>
+                          </div>
                         ),
                       }}
                     />

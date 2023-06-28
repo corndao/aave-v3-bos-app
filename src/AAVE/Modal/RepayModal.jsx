@@ -4,7 +4,6 @@ if (!data) {
   return;
 }
 
-const FIXED_LIQUIDATION_VALUE = "1.0";
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -347,7 +346,6 @@ function repayETH(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
-console.log({ data });
 return (
   <>
     <Widget
@@ -459,7 +457,8 @@ return (
                                 : Number(state.newHealthFactor).toFixed(2)}
                             </GreenTexture>
                             <WhiteTexture>
-                              Liquidation at &lt; {FIXED_LIQUIDATION_VALUE}
+                              Liquidation at &lt;{" "}
+                              {config.FIXED_LIQUIDATION_VALUE}
                             </WhiteTexture>
                           </div>
                         ),
