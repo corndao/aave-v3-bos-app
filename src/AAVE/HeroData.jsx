@@ -16,6 +16,7 @@ const HeroDataContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 90px;
+    text-align: center;
   }
 `;
 

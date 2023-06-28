@@ -531,7 +531,11 @@ const body = loading ? (
             }`,
             netApy: `${
               state.assetsToBorrow?.netAPY
-                ? Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
+                ? Number(
+                    Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
+                  ) === 0
+                  ? "0.00"
+                  : Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
                 : "-"
             }%`,
             healthFactor: state.assetsToBorrow?.healthFactor
