@@ -299,7 +299,7 @@ const changeValue = (value) => {
           chainId,
           address,
           underlyingAsset,
-          "deposit",
+          "withdraw",
           amountInUSD
         ).then((response) => {
           const newHealthFactor = JSON.parse(response.body);
