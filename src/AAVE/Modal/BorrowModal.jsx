@@ -389,15 +389,18 @@ return (
                         right: (
                           <div style={{ textAlign: "right" }}>
                             <GreenTexture>
-                              {Number(healthFactor).toFixed(2)}
+                              {Big(healthFactor).toFixed(2, ROUND_DOWN)}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                                 width={16}
                                 height={16}
                               />{" "}
                               {state.newHealthFactor === "-"
-                                ? state.newHealthFactor
-                                : Number(state.newHealthFactor).toFixed(2)}
+                                ? "-"
+                                : Big(state.newHealthFactor).toFixed(
+                                    2,
+                                    ROUND_DOWN
+                                  )}
                             </GreenTexture>
                             <WhiteTexture>
                               Liquidation at &lt; {FIXED_LIQUIDATION_VALUE}
