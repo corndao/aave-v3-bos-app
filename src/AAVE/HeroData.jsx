@@ -51,7 +51,7 @@ const KVData = styled.div`
 
 const heroData = [
   {
-    name: "Net worth",
+    name: "Net Worth",
     value: netWorth,
   },
   {
