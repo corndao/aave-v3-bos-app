@@ -126,13 +126,29 @@ function bigMin(_a, _b) {
   return a.gt(b) ? b : a;
 }
 
+function getBalanceForCalculate() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    const newBalance = Number(balance) - 0.01;
+    if (newBalance <= 0) {
+      return 0;
+    } else {
+      return newBalance;
+    }
+  } else {
+    return balance;
+  }
+}
+
 const actualMaxValue =
   isValid(balance) && isValid(variableBorrows)
-    ? bigMin(balance, Big(variableBorrows).times(1.01).toNumber()).toFixed()
+    ? bigMin(
+        getBalanceForCalculate(),
+        Big(variableBorrows).times(1.01).toNumber()
+      ).toFixed()
     : "0";
 const shownMaxValue =
   isValid(balance) && isValid(variableBorrows)
-    ? bigMin(balance, variableBorrows).toFixed()
+    ? bigMin(getBalanceForCalculate(), variableBorrows).toFixed()
     : "0";
 
 /**
