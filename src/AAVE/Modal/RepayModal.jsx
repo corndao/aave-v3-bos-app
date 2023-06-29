@@ -22,6 +22,7 @@ const {
   underlyingAsset,
   variableBorrows,
   name: tokenName,
+  balance,
 } = data;
 
 const RepayContainer = styled.div`
@@ -111,7 +112,16 @@ State.init({
   newHealthFactor: "-",
 });
 
-const maxValue = variableBorrows;
+function bigMin(_a, _b) {
+  const a = Big(_a);
+  const b = Big(_b);
+  return a.gt(b) ? b : a;
+}
+
+const maxValue =
+  isValid(balance) && isValid(variableBorrows)
+    ? bigMin(balance, Big(variableBorrows).times(1.01).toNumber()).toFixed()
+    : "0";
 
 /**
  *
@@ -237,14 +247,6 @@ function repayERC20(amount) {
     .getSigner()
     .getAddress()
     .then((address) => {
-      console.log({
-        address,
-        asset,
-        tokenName,
-        amount,
-        deadline,
-        now: "111",
-      });
       return signERC20Approval(address, asset, tokenName, amount, deadline)
         .then((rawSig) => {
           const sig = ethers.utils.splitSignature(rawSig);
@@ -395,7 +397,7 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Repay balance: {Number(variableBorrows).toFixed(7)}
+                            Wallet balance: {Number(balance).toFixed(7)}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);
