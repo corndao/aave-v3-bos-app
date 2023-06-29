@@ -342,9 +342,9 @@ function updateData() {
             balanceInUSD,
             ...(market.symbol === "WETH"
               ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
+                symbol: "ETH",
+                name: "Ethereum",
+              }
               : {}),
           };
         })
@@ -377,9 +377,9 @@ function updateData() {
             ...userDeposit,
             ...(market.symbol === "WETH"
               ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
+                symbol: "ETH",
+                name: "Ethereum",
+              }
               : {}),
           };
         });
@@ -429,9 +429,9 @@ function updateData() {
             ...userDebt,
             ...(market.symbol === "WETH"
               ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
+                symbol: "ETH",
+                name: "Ethereum",
+              }
               : {}),
             availableBorrows: calculateAvailableBorrows({
               availableBorrowsUSD,
@@ -504,9 +504,8 @@ const body = loading ? (
       {state.walletConnected
         ? state.chainId === DEFAULT_CHAIN_ID
           ? "Loading..."
-          : `Please switch network to ${
-              getNetworkConfig(DEFAULT_CHAIN_ID).chainName
-            }`
+          : `Please switch network to ${getNetworkConfig(DEFAULT_CHAIN_ID).chainName
+          }`
         : "Need to connect wallet first."}
     </Body>
   </>
@@ -530,20 +529,18 @@ const body = loading ? (
           src={`${config.ownerId}/widget/AAVE.HeroData`}
           props={{
             config,
-            netWorth: `$ ${
-              state.assetsToBorrow?.netWorthUSD
+            netWorth: `$ ${state.assetsToBorrow?.netWorthUSD
                 ? Big(state.assetsToBorrow.netWorthUSD).toFixed(2)
                 : "-"
-            }`,
-            netApy: `${
-              state.assetsToBorrow?.netAPY
+              }`,
+            netApy: `${state.assetsToBorrow?.netAPY
                 ? Number(
-                    Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
-                  ) === 0
+                  Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
+                ) === 0
                   ? "0.00"
                   : Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
                 : "-"
-            }%`,
+              }%`,
             healthFactor: state.assetsToBorrow?.healthFactor
               ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
               : "-",
