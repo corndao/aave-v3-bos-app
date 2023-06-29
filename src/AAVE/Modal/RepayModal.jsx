@@ -1,4 +1,11 @@
-const { config, data, onRequestClose, onActionSuccess, chainId } = props;
+const {
+  config,
+  data,
+  onRequestClose,
+  onActionSuccess,
+  chainId,
+  onlyOneBorrow,
+} = props;
 
 if (!data) {
   return;
@@ -152,21 +159,25 @@ const changeValue = (value) => {
   }
   State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
 
-  Ethers.provider()
-    .getSigner()
-    .getAddress()
-    .then((address) => {
-      getNewHealthFactor(
-        chainId,
-        address,
-        data.underlyingAsset,
-        "repay",
-        amountInUSD
-      ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
-        State.update({ newHealthFactor });
+  if (onlyOneBorrow && maxValue === value) {
+    State.update({ newHealthFactor: "∞" });
+  } else {
+    Ethers.provider()
+      .getSigner()
+      .getAddress()
+      .then((address) => {
+        getNewHealthFactor(
+          chainId,
+          address,
+          data.underlyingAsset,
+          "repay",
+          amountInUSD
+        ).then((response) => {
+          const newHealthFactor = JSON.parse(response.body);
+          State.update({ newHealthFactor });
+        });
       });
-    });
+  }
 };
 
 function getNonce(tokenAddress, userAddress) {
@@ -480,7 +491,8 @@ return (
                                 width={16}
                                 height={16}
                               />{" "}
-                              {state.newHealthFactor === "-"
+                              {!isValid(state.newHealthFactor) ||
+                              state.newHealthFactor === ""
                                 ? state.newHealthFactor
                                 : Number(state.newHealthFactor).toFixed(2)}
                             </GreenTexture>
