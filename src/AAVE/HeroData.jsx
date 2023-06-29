@@ -59,7 +59,7 @@ const heroData = [
     value: netApy,
   },
   {
-    name: "Health factor",
+    name: "Health Factor",
     value: healthFactor,
   },
 ];
