@@ -31,6 +31,7 @@ const {
   name: tokenName,
   balance,
 } = data;
+console.log({ balance });
 
 const RepayContainer = styled.div`
   display: flex;
@@ -125,9 +126,13 @@ function bigMin(_a, _b) {
   return a.gt(b) ? b : a;
 }
 
-const maxValue =
+const actualMaxValue =
   isValid(balance) && isValid(variableBorrows)
     ? bigMin(balance, Big(variableBorrows).times(1.01).toNumber()).toFixed()
+    : "0";
+const shownMaxValue =
+  isValid(balance) && isValid(variableBorrows)
+    ? bigMin(balance, variableBorrows).toFixed()
     : "0";
 
 /**
@@ -146,8 +151,8 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
 
 const changeValue = (value) => {
   let amountInUSD = "0.00";
-  if (Number(value) > Number(maxValue)) {
-    value = maxValue;
+  if (Number(value) > Number(shownMaxValue)) {
+    value = shownMaxValue;
   }
   if (Number(value) < 0) {
     value = "0";
@@ -159,7 +164,7 @@ const changeValue = (value) => {
   }
   State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
 
-  if (onlyOneBorrow && maxValue === value) {
+  if (onlyOneBorrow && shownMaxValue === value) {
     State.update({ newHealthFactor: "∞" });
   } else {
     Ethers.provider()
@@ -248,7 +253,7 @@ function signERC20Approval(user, reserve, tokenName, amount, deadline) {
  * @param {number} deadline UNIX timestamp in SECONDS
  * @returns
  */
-function repayERC20(amount) {
+function repayERC20(shownAmount, actualAmount) {
   State.update({
     loading: true,
   });
@@ -258,7 +263,13 @@ function repayERC20(amount) {
     .getSigner()
     .getAddress()
     .then((address) => {
-      return signERC20Approval(address, asset, tokenName, amount, deadline)
+      return signERC20Approval(
+        address,
+        asset,
+        tokenName,
+        actualAmount,
+        deadline
+      )
         .then((rawSig) => {
           const sig = ethers.utils.splitSignature(rawSig);
           const pool = new ethers.Contract(
@@ -271,7 +282,7 @@ function repayERC20(amount) {
             "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)"
           ](
             asset,
-            amount,
+            actualAmount,
             2, // variable interest rate
             address,
             deadline,
@@ -308,7 +319,7 @@ function repayERC20(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
-function repayETH(amount) {
+function repayETH(shownAmount, actualAmount) {
   State.update({ loading: true });
   const wrappedTokenGateway = new ethers.Contract(
     config.wrappedTokenGatewayV3Address,
@@ -323,11 +334,11 @@ function repayETH(amount) {
       wrappedTokenGateway
         .repayETH(
           config.aavePoolV3Address,
-          amount,
+          actualAmount,
           2, // variable interest rate
           address,
           {
-            value: amount,
+            value: actualAmount,
           }
         )
         .then((tx) => {
@@ -411,7 +422,7 @@ return (
                             Wallet balance: {Number(balance).toFixed(7)}
                             <Max
                               onClick={() => {
-                                changeValue(maxValue);
+                                changeValue(shownMaxValue);
                               }}
                             >
                               MAX
@@ -447,17 +458,17 @@ return (
                               />{" "}
                               {isValid(state.amount)
                                 ? Big(variableBorrows)
-                                    .minus(state.amount)
-                                    .toFixed(7) + ` ${symbol}`
+                                  .minus(state.amount)
+                                  .toFixed(7) + ` ${symbol}`
                                 : `- ${symbol}`}
                             </WhiteTexture>
                             <WhiteTexture>
                               {isValid(variableBorrows) &&
-                              isValid(marketReferencePriceInUsd)
+                                isValid(marketReferencePriceInUsd)
                                 ? "$ " +
-                                  Big(variableBorrows)
-                                    .times(marketReferencePriceInUsd)
-                                    .toFixed(2)
+                                Big(variableBorrows)
+                                  .times(marketReferencePriceInUsd)
+                                  .toFixed(2)
                                 : "$ -"}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
@@ -465,13 +476,13 @@ return (
                                 height={16}
                               />{" "}
                               {isValid(state.amount) &&
-                              isValid(state.amount) &&
-                              isValid(marketReferencePriceInUsd)
+                                isValid(state.amount) &&
+                                isValid(marketReferencePriceInUsd)
                                 ? "$ " +
-                                  Big(variableBorrows)
-                                    .minus(state.amount)
-                                    .times(marketReferencePriceInUsd)
-                                    .toFixed(2)
+                                Big(variableBorrows)
+                                  .minus(state.amount)
+                                  .times(marketReferencePriceInUsd)
+                                  .toFixed(2)
                                 : "$ -"}
                             </WhiteTexture>
                           </div>
@@ -492,7 +503,7 @@ return (
                                 height={16}
                               />{" "}
                               {!isValid(state.newHealthFactor) ||
-                              state.newHealthFactor === ""
+                                state.newHealthFactor === ""
                                 ? state.newHealthFactor
                                 : Number(state.newHealthFactor).toFixed(2)}
                             </GreenTexture>
@@ -515,13 +526,24 @@ return (
                 children: `Repay ${symbol}`,
                 loading: state.loading,
                 onClick: () => {
-                  const amount = Big(state.amount)
+                  const actualAmount = Big(
+                    state.amount === shownMaxValue
+                      ? actualMaxValue
+                      : state.amount
+                  )
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                  const shownAmount = Big(
+                    state.amount === shownMaxValue
+                      ? shownMaxValue
+                      : state.amount
+                  )
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
                   if (symbol === "ETH" || symbol === "WETH") {
-                    repayETH(amount);
+                    repayETH(shownAmount, actualAmount);
                   } else {
-                    repayERC20(amount);
+                    repayERC20(shownAmount, actualAmount);
                   }
                 },
               }}
