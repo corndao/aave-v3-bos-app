@@ -139,7 +139,6 @@ function borrowAllowance(vwETHAddress, userAddress) {
     Ethers.provider().getSigner()
   );
 
-  // TODO replace address
   return vToken.borrowAllowance(
     userAddress,
     config.wrappedTokenGatewayV3Address
