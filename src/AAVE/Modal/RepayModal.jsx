@@ -180,25 +180,26 @@ const changeValue = (value) => {
   }
   State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
 
-  if (onlyOneBorrow && shownMaxValue === value) {
-    State.update({ newHealthFactor: "∞" });
-  } else {
-    Ethers.provider()
-      .getSigner()
-      .getAddress()
-      .then((address) => {
-        getNewHealthFactor(
-          chainId,
-          address,
-          data.underlyingAsset,
-          "repay",
-          amountInUSD
-        ).then((response) => {
-          const newHealthFactor = JSON.parse(response.body);
-          State.update({ newHealthFactor });
-        });
+  // TODO: need to support ∞ later
+  // if (onlyOneBorrow && shownMaxValue === value) {
+  //   State.update({ newHealthFactor: "∞" });
+  // } else {
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "repay",
+        amountInUSD
+      ).then((response) => {
+        const newHealthFactor = JSON.parse(response.body);
+        State.update({ newHealthFactor });
       });
-  }
+    });
+  // }
 };
 
 function getNonce(tokenAddress, userAddress) {
