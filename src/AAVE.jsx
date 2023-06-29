@@ -398,6 +398,13 @@ function updateData() {
       }
     );
 
+    if (!state.assetsToSupply) {
+      return;
+    }
+    const assetsToSupplyMap = state.assetsToSupply.reduce((prev, cur) => {
+      prev[cur.symbol] = cur;
+      return prev;
+    }, {}); // userDebts need the balance of assetsToSupply
     getUserDebts(state.chainId, state.address).then((userDebtsResponse) => {
       if (!userDebtsResponse) {
         return;
@@ -415,29 +422,6 @@ function updateData() {
             Number(userDebts.availableBorrowsUSD) * ACTUAL_BORROW_AMOUNT_RATE,
             availableLiquidityUSD
           ).toFixed();
-          console.log({
-            symbol: userDebt.symbol,
-            availableBorrowsUSD: userDebts.availableBorrowsUSD,
-            availableLiquidityUSD,
-            calculatedMin: availableBorrowsUSD,
-          });
-          console.log({
-            data: {
-              ...market,
-              ...userDebt,
-              ...(market.symbol === "WETH"
-                ? {
-                    symbol: "ETH",
-                    name: "Ethereum",
-                  }
-                : {}),
-              availableBorrows: calculateAvailableBorrows({
-                availableBorrowsUSD,
-                marketReferencePriceInUsd: market.marketReferencePriceInUsd,
-              }),
-              availableBorrowsUSD,
-            },
-          });
           return {
             ...market,
             ...userDebt,
@@ -452,6 +436,8 @@ function updateData() {
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
             availableBorrowsUSD,
+            balance: assetsToSupplyMap[userDebt.symbol].balance,
+            balanceInUSD: assetsToSupplyMap[userDebt.symbol].balanceInUSD,
           };
         }),
       };
