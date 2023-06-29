@@ -25,6 +25,9 @@ function getNetworkConfig(chainId) {
 
   const constants = {
     FIXED_LIQUIDATION_VALUE: "1.0",
+    MAX_UINT_256: ethers.BigNumber.from(
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    ).toString(),
   };
 
   switch (chainId) {
@@ -438,8 +441,14 @@ function updateData() {
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
             availableBorrowsUSD,
-            balance: assetsToSupplyMap[userDebt.symbol].balance,
-            balanceInUSD: assetsToSupplyMap[userDebt.symbol].balanceInUSD,
+            balance:
+              assetsToSupplyMap[
+                userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
+              ].balance,
+            balanceInUSD:
+              assetsToSupplyMap[
+                userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
+              ].balanceInUSD,
           };
         }),
       };
