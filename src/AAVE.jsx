@@ -412,9 +412,11 @@ function updateData() {
           }
           const { availableLiquidityUSD } = market;
           const availableBorrowsUSD = bigMin(
-            Number(userDebts.availableBorrowsUSD) * ACTUAL_BORROW_AMOUNT_RATE,
+            userDebts.availableBorrowsUSD,
             availableLiquidityUSD
-          ).toFixed();
+          )
+            .times(ACTUAL_BORROW_AMOUNT_RATE)
+            .toFixed();
           console.log({
             symbol: userDebt.symbol,
             availableBorrowsUSD: userDebts.availableBorrowsUSD,
