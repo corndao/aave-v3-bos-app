@@ -456,6 +456,7 @@ return (
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
+                    console.log({ amount });
                     if (symbol === "ETH" || symbol === "WETH") {
                       // borrow weth
                       borrowETH(amount);
