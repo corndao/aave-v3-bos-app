@@ -12,6 +12,7 @@ const CONTRACT_ABI = {
 const DEFAULT_CHAIN_ID = 1442;
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
 const MATIC_TOKEN = { name: "Matic", symbol: "MATIC", decimals: 18 };
+const ACTUAL_BORROW_AMOUNT_RATE = 0.99;
 
 // Get AAVE network config by chain id
 function getNetworkConfig(chainId) {
@@ -272,6 +273,12 @@ function calculateAvailableBorrows({
     : Number(0).toFixed(7);
 }
 
+function bigMin(_a, _b) {
+  const a = Big(_a);
+  const b = Big(_b);
+  return a.gt(b) ? b : a;
+}
+
 // update data in async manner
 function updateData() {
   const provider = Ethers.provider();
@@ -404,12 +411,10 @@ function updateData() {
             throw new Error("Fatal error: Market not found");
           }
           const { availableLiquidityUSD } = market;
-
-          const availableBorrowsUSD = Big(userDebts.availableBorrowsUSD).gt(
+          const availableBorrowsUSD = bigMin(
+            Number(userDebts.availableBorrowsUSD) * ACTUAL_BORROW_AMOUNT_RATE,
             availableLiquidityUSD
-          )
-            ? availableLiquidityUSD
-            : userDebts.availableBorrowsUSD;
+          ).toFixed();
           console.log({
             symbol: userDebt.symbol,
             availableBorrowsUSD: userDebts.availableBorrowsUSD,
