@@ -72,7 +72,7 @@ return (
         <div
           className={[
             "value",
-            row.value === "Health factor" ? "text-green" : undefined,
+            row.value === "Health Factor" ? "text-green" : undefined,
           ]
             .filter((value) => !!value)
             .join(" ")}
