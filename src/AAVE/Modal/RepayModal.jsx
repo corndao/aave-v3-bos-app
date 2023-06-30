@@ -310,7 +310,7 @@ function repayERC20(shownAmount, actualAmount) {
               const { status } = res;
               if (status === 1) {
                 onActionSuccess({
-                  msg: `You repaid ${Big(amount)
+                  msg: `You repaid ${Big(shownAmount)
                     .div(Big(10).pow(decimals))
                     .toFixed(8)} ${symbol}`,
                   callback: () => {
