@@ -117,7 +117,7 @@ const remainingSupply = isNaN(_remainingSupply)
   ? underlyingBalance
   : Big(_remainingSupply).toFixed(2);
 
-function withdrawErc20(asset, amount) {
+function withdrawErc20(asset, actualAmount, shownAmount) {
   State.update({
     loading: true,
   });
@@ -131,14 +131,18 @@ function withdrawErc20(asset, amount) {
         Ethers.provider().getSigner()
       );
 
-      return pool["withdraw(address,uint256,address)"](asset, amount, address);
+      return pool["withdraw(address,uint256,address)"](
+        asset,
+        actualAmount,
+        address
+      );
     })
     .then((tx) => {
       tx.wait().then((res) => {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You withdraw ${Big(amount)
+            msg: `You withdraw ${Big(shownAmount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
             callback: () => {
@@ -160,7 +164,7 @@ function withdrawErc20(asset, amount) {
     .catch(() => State.update({ loading: false }));
 }
 
-function withdrawETH(amount) {
+function withdrawETH(actualAmount, shownAmount) {
   State.update({
     loading: true,
   });
@@ -176,7 +180,7 @@ function withdrawETH(amount) {
 
       return wrappedTokenGateway.withdrawETH(
         config.aavePoolV3Address,
-        amount,
+        actualAmount,
         address
       );
     })
@@ -185,7 +189,7 @@ function withdrawETH(amount) {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You withdraw ${Big(amount)
+            msg: `You withdraw ${Big(shownAmount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
             callback: () => {
@@ -268,17 +272,32 @@ function update() {
 
 update();
 
-/**
- * max value you can withdraw
- */
-const maxValue = Math.min(
-  Number(underlyingBalance),
-  Number(availableLiquidityAmount)
-);
+function bigMin(_a, _b) {
+  const a = Big(_a);
+  const b = Big(_b);
+  return a.gt(b) ? b : a;
+}
 
+const actualMaxValue =
+  isValid(underlyingBalance) && isValid(availableLiquidityAmount)
+    ? Big(underlyingBalance).lt(availableLiquidityAmount)
+      ? config.MAX_UINT_256
+      : availableLiquidityAmount
+    : "0";
+const shownMaxValue =
+  isValid(underlyingBalance) && isValid(availableLiquidityAmount)
+    ? bigMin(underlyingBalance, availableLiquidityAmount).toFixed()
+    : "0";
+
+console.log({
+  shownMaxValue,
+  actualMaxValue: actualMaxValue.toString(),
+  underlyingBalance,
+  availableLiquidity,
+});
 const changeValue = (value) => {
-  if (Number(value) > maxValue) {
-    value = maxValue;
+  if (Number(value) > shownMaxValue) {
+    value = shownMaxValue;
   }
   if (Number(value) < 0) {
     value = "0";
@@ -367,7 +386,7 @@ return (
                           {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
                           <Max
                             onClick={() => {
-                              changeValue(maxValue);
+                              changeValue(shownMaxValue);
                             }}
                           >
                             MAX
@@ -465,15 +484,23 @@ return (
                 loading: state.loading,
                 children: "Withdraw",
                 onClick: () => {
-                  const amount = Big(state.amount)
+                  const actualAmount =
+                    state.amount === shownMaxValue
+                      ? actualMaxValue
+                      : Big(state.amount).mul(Big(10).pow(decimals)).toFixed(0);
+                  const shownAmount = Big(
+                    state.amount === shownMaxValue
+                      ? shownMaxValue
+                      : state.amount
+                  )
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
                   if (symbol === "ETH" || symbol === "WETH") {
                     // supply weth
-                    withdrawETH(amount);
+                    withdrawETH(actualAmount, shownAmount);
                   } else {
                     // supply common
-                    withdrawErc20(underlyingAsset, amount);
+                    withdrawErc20(underlyingAsset, actualAmount, shownAmount);
                   }
                 },
               }}

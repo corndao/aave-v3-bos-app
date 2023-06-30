@@ -25,9 +25,8 @@ function getNetworkConfig(chainId) {
 
   const constants = {
     FIXED_LIQUIDATION_VALUE: "1.0",
-    MAX_UINT_256: ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    ).toString(),
+    MAX_UINT_256:
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
   };
 
   switch (chainId) {
