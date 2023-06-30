@@ -1,7 +1,7 @@
 const { config, data, onRequestClose, onActionSuccess, chainId } = props;
 
 if (!data) {
-  return;
+  return <div />;
 }
 
 const MIN_ETH_GAS_FEE = 0.001;

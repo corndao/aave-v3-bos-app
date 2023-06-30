@@ -1,7 +1,7 @@
 const { config, data, onRequestClose, onActionSuccess, chainId } = props;
 
 if (!data) {
-  return;
+  return <div />;
 }
 
 const ROUND_DOWN = 0;

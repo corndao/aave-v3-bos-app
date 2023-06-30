@@ -8,7 +8,7 @@ const {
 } = props;
 
 if (!data) {
-  return;
+  return <div />;
 }
 
 const ROUND_DOWN = 0;
@@ -31,7 +31,6 @@ const {
   name: tokenName,
   balance,
 } = data;
-console.log({ balance });
 
 const RepayContainer = styled.div`
   display: flex;
@@ -436,7 +435,10 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Wallet balance: {Number(balance).toFixed(7)}
+                            Wallet balance:{" "}
+                            {balance === "" || !isValid(balance)
+                              ? "-"
+                              : Number(balance).toFixed(7)}
                             <Max
                               onClick={() => {
                                 changeValue(shownMaxValue);

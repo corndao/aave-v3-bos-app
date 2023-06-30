@@ -1,7 +1,7 @@
 const { netWorth, netApy, healthFactor } = props;
 
 if (!netWorth || !netApy || !healthFactor) {
-  return;
+  return <div />;
 }
 
 const HeroDataContainer = styled.div`

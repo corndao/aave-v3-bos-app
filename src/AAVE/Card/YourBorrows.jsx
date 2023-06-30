@@ -26,7 +26,7 @@ const RepayButton = ({ data }) => (
 );
 
 if (!yourBorrows) {
-  return;
+  return <div />;
 }
 
 const { debts, ...yourBorrowsCommonParams } = yourBorrows;
