@@ -282,7 +282,9 @@ const actualMaxValue =
   isValid(underlyingBalance) && isValid(availableLiquidityAmount)
     ? Big(underlyingBalance).lt(availableLiquidityAmount)
       ? config.MAX_UINT_256
-      : availableLiquidityAmount
+      : Big(availableLiquidityAmount)
+          .mul(Big(10).pow(decimals))
+          .toFixed(0, ROUND_DOWN)
     : "0";
 const shownMaxValue =
   isValid(underlyingBalance) && isValid(availableLiquidityAmount)
