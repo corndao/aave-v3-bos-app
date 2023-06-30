@@ -460,7 +460,8 @@ return (
                 disabled:
                   !isValid(state.newHealthFactor) ||
                   state.newHealthFactor === "" ||
-                  Big(state.newHealthFactor).lt(1),
+                  (Big(state.newHealthFactor).lt(1) &&
+                    !Big(state.newHealthFactor).eq(-1)),
                 onClick: () => {
                   State.update({
                     loading: true,
