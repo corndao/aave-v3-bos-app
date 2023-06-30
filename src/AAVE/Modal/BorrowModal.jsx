@@ -258,7 +258,7 @@ function borrowETH(amount) {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You supplied ${Big(amount)
+            msg: `You borrowed ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
             callback: () => {
