@@ -411,7 +411,9 @@ return (
                     props={{
                       left: <PurpleTexture>Remaining Supply</PurpleTexture>,
                       right: (
-                        <WhiteTexture>{remainingSupply} USDT</WhiteTexture>
+                        <WhiteTexture>
+                          {remainingSupply} {symbol}
+                        </WhiteTexture>
                       ),
                     }}
                   />
