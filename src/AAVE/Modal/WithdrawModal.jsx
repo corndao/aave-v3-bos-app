@@ -499,7 +499,9 @@ return (
                   const actualAmount =
                     state.amount === shownMaxValue
                       ? actualMaxValue
-                      : Big(state.amount).mul(Big(10).pow(decimals)).toFixed(0);
+                      : Big(state.amount)
+                          .mul(Big(10).pow(decimals))
+                          .toFixed(0, ROUND_DOWN);
                   const shownAmount = Big(
                     state.amount === shownMaxValue
                       ? shownMaxValue
@@ -507,6 +509,13 @@ return (
                   )
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
+                  console.log({
+                    final: {
+                      actualAmount,
+                      shownAmount,
+                      symbol,
+                    },
+                  });
                   if (symbol === "ETH" || symbol === "WETH") {
                     // supply weth
                     withdrawETH(actualAmount, shownAmount);
