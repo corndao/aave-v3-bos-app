@@ -457,6 +457,10 @@ return (
                 config,
                 loading: state.loading,
                 children: `Approve ${symbol}`,
+                disabled:
+                  !isValid(state.newHealthFactor) ||
+                  state.newHealthFactor === "" ||
+                  Big(state.newHealthFactor).lt(1),
                 onClick: () => {
                   State.update({
                     loading: true,
@@ -485,6 +489,10 @@ return (
                 config,
                 loading: state.loading,
                 children: "Withdraw",
+                disabled:
+                  !isValid(state.newHealthFactor) ||
+                  state.newHealthFactor === "" ||
+                  Big(state.newHealthFactor).lt(1),
                 onClick: () => {
                   const actualAmount =
                     state.amount === shownMaxValue
