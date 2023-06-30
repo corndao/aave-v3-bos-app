@@ -553,7 +553,7 @@ const body = loading ? (
                 : "-"
             }%`,
             healthFactor: state.assetsToBorrow?.healthFactor
-              ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
+              ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
               : "-",
           }}
         />
@@ -579,7 +579,7 @@ const body = loading ? (
                 State.update({ showWithdrawModal: isShow }),
               onActionSuccess,
               healthFactor: state.assetsToBorrow?.healthFactor
-                ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
+                ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
                 : "-",
             }}
           />
@@ -594,7 +594,7 @@ const body = loading ? (
                 State.update({ showSupplyModal: isShow }),
               onActionSuccess,
               healthFactor: state.assetsToBorrow?.healthFactor
-                ? Big(state.assetsToBorrow.healthFactor).toFixed(2)
+                ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
                 : "-",
             }}
           />

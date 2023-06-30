@@ -515,7 +515,7 @@ return (
                         right: (
                           <div style={{ textAlign: "right" }}>
                             <GreenTexture>
-                              {Number(healthFactor).toFixed(2)}
+                              {Big(healthFactor).toFixed(2, ROUND_DOWN)}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                                 width={16}
