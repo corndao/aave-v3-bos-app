@@ -496,19 +496,12 @@ return (
                   (Big(state.newHealthFactor).lt(1) &&
                     !Big(state.newHealthFactor).eq(-1)),
                 onClick: () => {
-                  const actualAmount = (function () {
-                    if (state.amount === shownMaxValue) {
-                      return state.amount === config.MAX_UINT_256
-                        ? config.MAX_UINT_256
-                        : Big(actualMaxValue)
-                            .mul(Big(10).pow(decimals))
-                            .toFixed(0, ROUND_DOWN);
-                    } else {
-                      return Big(state.amount)
-                        .mul(Big(10).pow(decimals))
-                        .toFixed(0, ROUND_DOWN);
-                    }
-                  })();
+                  const actualAmount =
+                    state.amount === shownMaxValue
+                      ? actualMaxValue
+                      : Big(state.amount)
+                          .mul(Big(10).pow(decimals))
+                          .toFixed(0, ROUND_DOWN);
                   const shownAmount = Big(
                     state.amount === shownMaxValue
                       ? shownMaxValue
