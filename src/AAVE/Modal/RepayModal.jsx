@@ -363,7 +363,7 @@ function repayETH(shownAmount, actualAmount) {
             const { status } = res;
             if (status === 1) {
               onActionSuccess({
-                msg: `You repaid ${Big(amount)
+                msg: `You repaied ${Big(shownAmount)
                   .div(Big(10).pow(decimals))
                   .toFixed(8)} ${symbol}`,
                 callback: () => {
@@ -475,17 +475,17 @@ return (
                               />{" "}
                               {isValid(state.amount)
                                 ? Big(variableBorrows)
-                                  .minus(state.amount)
-                                  .toFixed(7) + ` ${symbol}`
+                                    .minus(state.amount)
+                                    .toFixed(7) + ` ${symbol}`
                                 : `- ${symbol}`}
                             </WhiteTexture>
                             <WhiteTexture>
                               {isValid(variableBorrows) &&
-                                isValid(marketReferencePriceInUsd)
+                              isValid(marketReferencePriceInUsd)
                                 ? "$ " +
-                                Big(variableBorrows)
-                                  .times(marketReferencePriceInUsd)
-                                  .toFixed(2)
+                                  Big(variableBorrows)
+                                    .times(marketReferencePriceInUsd)
+                                    .toFixed(2)
                                 : "$ -"}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
@@ -493,13 +493,13 @@ return (
                                 height={16}
                               />{" "}
                               {isValid(state.amount) &&
-                                isValid(state.amount) &&
-                                isValid(marketReferencePriceInUsd)
+                              isValid(state.amount) &&
+                              isValid(marketReferencePriceInUsd)
                                 ? "$ " +
-                                Big(variableBorrows)
-                                  .minus(state.amount)
-                                  .times(marketReferencePriceInUsd)
-                                  .toFixed(2)
+                                  Big(variableBorrows)
+                                    .minus(state.amount)
+                                    .times(marketReferencePriceInUsd)
+                                    .toFixed(2)
                                 : "$ -"}
                             </WhiteTexture>
                           </div>
@@ -520,7 +520,7 @@ return (
                                 height={16}
                               />{" "}
                               {!isValid(state.newHealthFactor) ||
-                                state.newHealthFactor === ""
+                              state.newHealthFactor === ""
                                 ? state.newHealthFactor
                                 : Number(state.newHealthFactor).toFixed(2)}
                             </GreenTexture>
