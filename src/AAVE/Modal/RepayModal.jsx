@@ -1,7 +1,14 @@
-const { config, data, onRequestClose, onActionSuccess, chainId } = props;
+const {
+  config,
+  data,
+  onRequestClose,
+  onActionSuccess,
+  chainId,
+  onlyOneBorrow,
+} = props;
 
 if (!data) {
-  return;
+  return <div />;
 }
 
 const ROUND_DOWN = 0;
@@ -22,6 +29,7 @@ const {
   underlyingAsset,
   variableBorrows,
   name: tokenName,
+  balance,
 } = data;
 
 const RepayContainer = styled.div`
@@ -111,7 +119,36 @@ State.init({
   newHealthFactor: "-",
 });
 
-const maxValue = variableBorrows;
+function bigMin(_a, _b) {
+  const a = Big(_a);
+  const b = Big(_b);
+  return a.gt(b) ? b : a;
+}
+
+function getAvailableBalance() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    const newBalance = Number(balance) - 0.01;
+    if (newBalance <= 0) {
+      return 0;
+    } else {
+      return newBalance;
+    }
+  } else {
+    return balance;
+  }
+}
+
+const actualMaxValue =
+  isValid(balance) && isValid(variableBorrows)
+    ? bigMin(
+        getAvailableBalance(),
+        Big(variableBorrows).times(1.01).toNumber()
+      ).toFixed()
+    : "0";
+const shownMaxValue =
+  isValid(balance) && isValid(variableBorrows)
+    ? bigMin(getAvailableBalance(), variableBorrows).toFixed()
+    : "0";
 
 /**
  *
@@ -129,8 +166,8 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
 
 const changeValue = (value) => {
   let amountInUSD = "0.00";
-  if (Number(value) > Number(maxValue)) {
-    value = maxValue;
+  if (Number(value) > Number(shownMaxValue)) {
+    value = shownMaxValue;
   }
   if (Number(value) < 0) {
     value = "0";
@@ -142,6 +179,10 @@ const changeValue = (value) => {
   }
   State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
 
+  // TODO: need to support ∞ later
+  // if (onlyOneBorrow && shownMaxValue === value) {
+  //   State.update({ newHealthFactor: "∞" });
+  // } else {
   Ethers.provider()
     .getSigner()
     .getAddress()
@@ -157,6 +198,7 @@ const changeValue = (value) => {
         State.update({ newHealthFactor });
       });
     });
+  // }
 };
 
 function getNonce(tokenAddress, userAddress) {
@@ -227,7 +269,7 @@ function signERC20Approval(user, reserve, tokenName, amount, deadline) {
  * @param {number} deadline UNIX timestamp in SECONDS
  * @returns
  */
-function repayERC20(amount) {
+function repayERC20(shownAmount, actualAmount) {
   State.update({
     loading: true,
   });
@@ -237,15 +279,13 @@ function repayERC20(amount) {
     .getSigner()
     .getAddress()
     .then((address) => {
-      console.log({
+      return signERC20Approval(
         address,
         asset,
         tokenName,
-        amount,
-        deadline,
-        now: "111",
-      });
-      return signERC20Approval(address, asset, tokenName, amount, deadline)
+        actualAmount,
+        deadline
+      )
         .then((rawSig) => {
           const sig = ethers.utils.splitSignature(rawSig);
           const pool = new ethers.Contract(
@@ -258,7 +298,7 @@ function repayERC20(amount) {
             "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)"
           ](
             asset,
-            amount,
+            actualAmount,
             2, // variable interest rate
             address,
             deadline,
@@ -270,9 +310,7 @@ function repayERC20(amount) {
               const { status } = res;
               if (status === 1) {
                 onActionSuccess({
-                  msg: `You repaid ${Big(amount)
-                    .div(Big(10).pow(decimals))
-                    .toFixed(8)} ${symbol}`,
+                  msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
                   callback: () => {
                     onRequestClose();
                     State.update({
@@ -295,7 +333,7 @@ function repayERC20(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
-function repayETH(amount) {
+function repayETH(shownAmount, actualAmount) {
   State.update({ loading: true });
   const wrappedTokenGateway = new ethers.Contract(
     config.wrappedTokenGatewayV3Address,
@@ -310,11 +348,11 @@ function repayETH(amount) {
       wrappedTokenGateway
         .repayETH(
           config.aavePoolV3Address,
-          amount,
+          actualAmount,
           2, // variable interest rate
           address,
           {
-            value: amount,
+            value: actualAmount,
           }
         )
         .then((tx) => {
@@ -322,9 +360,7 @@ function repayETH(amount) {
             const { status } = res;
             if (status === 1) {
               onActionSuccess({
-                msg: `You repaid ${Big(amount)
-                  .div(Big(10).pow(decimals))
-                  .toFixed(8)} ${symbol}`,
+                msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
                 callback: () => {
                   onRequestClose();
                   State.update({
@@ -395,10 +431,13 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Repay balance: {Number(variableBorrows).toFixed(7)}
+                            Wallet balance:{" "}
+                            {balance === "" || !isValid(balance)
+                              ? "-"
+                              : Number(balance).toFixed(7)}
                             <Max
                               onClick={() => {
-                                changeValue(maxValue);
+                                changeValue(shownMaxValue);
                               }}
                             >
                               MAX
@@ -472,13 +511,14 @@ return (
                         right: (
                           <div style={{ textAlign: "right" }}>
                             <GreenTexture>
-                              {Number(healthFactor).toFixed(2)}
+                              {Big(healthFactor).toFixed(2, ROUND_DOWN)}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                                 width={16}
                                 height={16}
                               />{" "}
-                              {state.newHealthFactor === "-"
+                              {!isValid(state.newHealthFactor) ||
+                              state.newHealthFactor === ""
                                 ? state.newHealthFactor
                                 : Number(state.newHealthFactor).toFixed(2)}
                             </GreenTexture>
@@ -501,13 +541,18 @@ return (
                 children: `Repay ${symbol}`,
                 loading: state.loading,
                 onClick: () => {
-                  const amount = Big(state.amount)
+                  const actualAmount = Big(
+                    state.amount === shownMaxValue
+                      ? actualMaxValue
+                      : state.amount
+                  )
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
+                  const shownAmount = state.amount;
                   if (symbol === "ETH" || symbol === "WETH") {
-                    repayETH(amount);
+                    repayETH(shownAmount, actualAmount);
                   } else {
-                    repayERC20(amount);
+                    repayERC20(shownAmount, actualAmount);
                   }
                 },
               }}

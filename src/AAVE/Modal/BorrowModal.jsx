@@ -1,7 +1,7 @@
 const { config, data, onRequestClose, onActionSuccess, chainId } = props;
 
 if (!data) {
-  return;
+  return <div />;
 }
 
 const ROUND_DOWN = 0;
@@ -258,7 +258,7 @@ function borrowETH(amount) {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You supplied ${Big(amount)
+            msg: `You borrowed ${Big(amount)
               .div(Big(10).pow(decimals))
               .toFixed(8)} ${symbol}`,
             callback: () => {

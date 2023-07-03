@@ -8,7 +8,7 @@ const {
 } = props;
 
 if (!assetsToBorrow) {
-  return;
+  return <div />;
 }
 
 const { debts, ...assetsToBorrowCommonParams } = assetsToBorrow;

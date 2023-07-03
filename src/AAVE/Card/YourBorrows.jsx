@@ -26,7 +26,7 @@ const RepayButton = ({ data }) => (
 );
 
 if (!yourBorrows) {
-  return;
+  return <div />;
 }
 
 const { debts, ...yourBorrowsCommonParams } = yourBorrows;
@@ -179,6 +179,7 @@ return (
           onRequestClose: () => setShowRepayModal(false),
           data: state.data,
           onActionSuccess,
+          onlyOneBorrow: debts.length === 1,
           chainId,
         }}
       />
