@@ -310,9 +310,7 @@ function repayERC20(shownAmount, actualAmount) {
               const { status } = res;
               if (status === 1) {
                 onActionSuccess({
-                  msg: `You repaid ${Big(shownAmount)
-                    .div(Big(10).pow(decimals))
-                    .toFixed(8)} ${symbol}`,
+                  msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
                   callback: () => {
                     onRequestClose();
                     State.update({
@@ -362,9 +360,7 @@ function repayETH(shownAmount, actualAmount) {
             const { status } = res;
             if (status === 1) {
               onActionSuccess({
-                msg: `You repaied ${Big(shownAmount)
-                  .div(Big(10).pow(decimals))
-                  .toFixed(8)} ${symbol}`,
+                msg: `You repaied ${Big(shownAmount).toFixed(8)} ${symbol}`,
                 callback: () => {
                   onRequestClose();
                   State.update({
@@ -552,9 +548,7 @@ return (
                   )
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
-                  const shownAmount = Big(state.amount)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
+                  const shownAmount = state.amount;
                   if (symbol === "ETH" || symbol === "WETH") {
                     repayETH(shownAmount, actualAmount);
                   } else {

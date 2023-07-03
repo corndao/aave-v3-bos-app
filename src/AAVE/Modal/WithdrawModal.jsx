@@ -142,9 +142,7 @@ function withdrawErc20(asset, actualAmount, shownAmount) {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You withdraw ${Big(shownAmount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
+            msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
             callback: () => {
               onRequestClose();
               State.update({
@@ -189,9 +187,7 @@ function withdrawETH(actualAmount, shownAmount) {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You withdraw ${Big(shownAmount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
+            msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
             callback: () => {
               onRequestClose();
               State.update({
@@ -498,9 +494,7 @@ return (
                       : Big(state.amount)
                           .mul(Big(10).pow(decimals))
                           .toFixed(0, ROUND_DOWN);
-                  const shownAmount = Big(state.amount)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
+                  const shownAmount = state.amount;
                   if (symbol === "ETH" || symbol === "WETH") {
                     // supply weth
                     withdrawETH(actualAmount, shownAmount);
