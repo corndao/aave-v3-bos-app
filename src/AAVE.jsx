@@ -27,6 +27,7 @@ function getNetworkConfig(chainId) {
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    MAX_HEALTH_FACTOR_VALUE: "10000",
   };
 
   switch (chainId) {

@@ -179,10 +179,6 @@ const changeValue = (value) => {
   }
   State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
 
-  // TODO: need to support ∞ later
-  // if (onlyOneBorrow && shownMaxValue === value) {
-  //   State.update({ newHealthFactor: "∞" });
-  // } else {
   Ethers.provider()
     .getSigner()
     .getAddress()
@@ -195,10 +191,13 @@ const changeValue = (value) => {
         amountInUSD
       ).then((response) => {
         const newHealthFactor = JSON.parse(response.body);
-        State.update({ newHealthFactor });
+        if (Big(newHealthFactor).gt(config.MAX_HEALTH_FACTOR_VALUE)) {
+          State.update({ newHealthFactor: "∞" });
+        } else {
+          State.update({ newHealthFactor });
+        }
       });
     });
-  // }
 };
 
 function getNonce(tokenAddress, userAddress) {
