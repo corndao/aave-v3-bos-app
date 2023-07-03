@@ -498,11 +498,7 @@ return (
                       : Big(state.amount)
                           .mul(Big(10).pow(decimals))
                           .toFixed(0, ROUND_DOWN);
-                  const shownAmount = Big(
-                    state.amount === shownMaxValue
-                      ? shownMaxValue
-                      : state.amount
-                  )
+                  const shownAmount = Big(state.amount)
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
                   if (symbol === "ETH" || symbol === "WETH") {
