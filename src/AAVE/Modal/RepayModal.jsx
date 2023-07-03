@@ -360,7 +360,7 @@ function repayETH(shownAmount, actualAmount) {
             const { status } = res;
             if (status === 1) {
               onActionSuccess({
-                msg: `You repaied ${Big(shownAmount).toFixed(8)} ${symbol}`,
+                msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
                 callback: () => {
                   onRequestClose();
                   State.update({
