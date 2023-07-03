@@ -2,7 +2,9 @@ const {
   config,
   yourBorrows,
   showRepayModal,
+  showBorrowModal,
   setShowRepayModal,
+  setShowBorrowModal,
   onActionSuccess,
   chainId,
 } = props;
@@ -10,6 +12,30 @@ const {
 State.init({
   data: undefined,
 });
+
+const ButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+  }
+`;
+
+const BorrowButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Borrow",
+      onClick: () => {
+        State.update({ data });
+        setShowBorrowModal(true);
+      },
+    }}
+  />
+);
 
 const RepayButton = ({ data }) => (
   <Widget
@@ -117,9 +143,17 @@ return (
                                   ],
                                 }}
                               />,
-                              <RepayButton
-                                data={{ ...row, ...yourBorrowsCommonParams }}
-                              />,
+                              <ButtonGroup>
+                                <RepayButton
+                                  data={{ ...row, ...yourBorrowsCommonParams }}
+                                />
+                                <BorrowButton
+                                  data={{
+                                    ...row,
+                                    ...yourBorrowsCommonParams,
+                                  }}
+                                />
+                              </ButtonGroup>,
                             ],
                           }}
                         />,
@@ -158,9 +192,17 @@ return (
                           </div>
                         </div>,
                         `${(Number(row.variableBorrowAPY) * 100).toFixed(2)} %`,
-                        <RepayButton
-                          data={{ ...row, ...yourBorrowsCommonParams }}
-                        />,
+                        <ButtonGroup>
+                          <RepayButton
+                            data={{ ...row, ...yourBorrowsCommonParams }}
+                          />
+                          <BorrowButton
+                            data={{
+                              ...row,
+                              ...yourBorrowsCommonParams,
+                            }}
+                          />
+                        </ButtonGroup>,
                       ];
                     }),
                   }}
@@ -180,6 +222,18 @@ return (
           data: state.data,
           onActionSuccess,
           onlyOneBorrow: debts.length === 1,
+          chainId,
+        }}
+      />
+    )}
+    {showBorrowModal && (
+      <Widget
+        src={`${config.ownerId}/widget/AAVE.Modal.BorrowModal`}
+        props={{
+          config,
+          onRequestClose: () => setShowBorrowModal(false),
+          data: state.data,
+          onActionSuccess,
           chainId,
         }}
       />
