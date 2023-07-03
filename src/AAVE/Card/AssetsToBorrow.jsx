@@ -54,7 +54,7 @@ return (
                 src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
                 props={{
                   config,
-                  children: "Nothing borrows yet",
+                  children: "Nothing borrowed yet",
                 }}
               />
             ) : (
