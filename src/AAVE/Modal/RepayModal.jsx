@@ -125,7 +125,7 @@ function bigMin(_a, _b) {
   return a.gt(b) ? b : a;
 }
 
-function getBalanceForCalculate() {
+function getAvailableBalance() {
   if (["ETH", "WETH"].includes(symbol)) {
     const newBalance = Number(balance) - 0.01;
     if (newBalance <= 0) {
@@ -141,13 +141,13 @@ function getBalanceForCalculate() {
 const actualMaxValue =
   isValid(balance) && isValid(variableBorrows)
     ? bigMin(
-        getBalanceForCalculate(),
+        getAvailableBalance(),
         Big(variableBorrows).times(1.01).toNumber()
       ).toFixed()
     : "0";
 const shownMaxValue =
   isValid(balance) && isValid(variableBorrows)
-    ? bigMin(getBalanceForCalculate(), variableBorrows).toFixed()
+    ? bigMin(getAvailableBalance(), variableBorrows).toFixed()
     : "0";
 
 /**
