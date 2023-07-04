@@ -54,7 +54,8 @@ return (
                 src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
                 props={{
                   config,
-                  children: "Nothing borrows yet",
+                  children:
+                    "To borrow you need to supply any asset to be used as collateral.",
                 }}
               />
             ) : (
