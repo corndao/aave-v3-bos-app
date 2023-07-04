@@ -413,7 +413,6 @@ function updateData() {
         return;
       }
       const userDebts = JSON.parse(userDebtsResponse.body);
-      console.log({ config });
       const assetsToBorrow = {
         ...userDebts,
         debts: userDebts.debts
