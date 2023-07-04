@@ -611,6 +611,9 @@ const body = loading ? (
               showRepayModal: state.showRepayModal,
               setShowRepayModal: (isShow) =>
                 State.update({ showRepayModal: isShow }),
+              showBorrowModal: state.showBorrowModal,
+              setShowBorrowModal: (isShow) =>
+                State.update({ showBorrowModal: isShow }),
               onActionSuccess,
             }}
           />
