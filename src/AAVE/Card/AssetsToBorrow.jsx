@@ -5,6 +5,7 @@ const {
   onActionSuccess,
   showBorrowModal,
   setShowBorrowModal,
+  yourSupplies,
 } = props;
 
 if (!assetsToBorrow) {
@@ -37,6 +38,29 @@ const BorrowButton = ({ data }) => (
   />
 );
 
+const showAlert = yourSupplies && yourSupplies.length === 0;
+
+const AlertContainer = styled.div`
+  display: flex;
+  border-radius: 8px;
+  background: rgba(255, 0, 0, 0.12);
+
+  padding: 12px;
+  margin: 12px;
+
+  font-size: 12px;
+
+  @media (min-width: 640px) {
+    font-size: 16px;
+  }
+
+  img {
+    margin-right: 8px;
+    @media (min-width: 640px) {
+      margin-top: 4px;
+    }
+  }
+`;
 return (
   <>
     <Widget
@@ -49,6 +73,25 @@ return (
         title: "Assets to borrow",
         body: (
           <>
+            {showAlert && (
+              <>
+                <Widget
+                  src={`${config.ownerId}/widget/AAVE.Card.Divider`}
+                  props={{ config }}
+                />
+                <AlertContainer>
+                  <img
+                    src={`${config.ipfsPrefix}/bafkreih3npgn6ydscd7mzjrxredamembxhlmdxnw5l4izpfru2rbucvdly`}
+                    width={16}
+                    height={16}
+                  />
+                  <div>
+                    To borrow you need to supply any asset to be used as
+                    collateral.
+                  </div>
+                </AlertContainer>
+              </>
+            )}
             {!debts || debts.length === 0 ? (
               <Widget
                 src={`${config.ownerId}/widget/AAVE.Card.CardEmpty`}
