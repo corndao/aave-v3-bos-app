@@ -470,7 +470,7 @@ function updateData() {
         debts: assetsToBorrow.debts.filter(
           (row) =>
             !isNaN(Number(row.variableBorrowsUSD)) &&
-            Number(row.variableBorrowsUSD) >= 0.01
+            Number(row.variableBorrowsUSD) > 0
         ),
       };
       State.update({
@@ -625,6 +625,9 @@ const body = loading ? (
               showRepayModal: state.showRepayModal,
               setShowRepayModal: (isShow) =>
                 State.update({ showRepayModal: isShow }),
+              showBorrowModal: state.showBorrowModal,
+              setShowBorrowModal: (isShow) =>
+                State.update({ showBorrowModal: isShow }),
               onActionSuccess,
             }}
           />
