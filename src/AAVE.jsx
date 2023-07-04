@@ -456,7 +456,7 @@ function updateData() {
         debts: assetsToBorrow.debts.filter(
           (row) =>
             !isNaN(Number(row.variableBorrowsUSD)) &&
-            Number(row.variableBorrowsUSD) >= 0.01
+            Number(row.variableBorrowsUSD) > 0
         ),
       };
       State.update({
