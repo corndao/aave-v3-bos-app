@@ -71,6 +71,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
+        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -414,42 +415,55 @@ function updateData() {
       const userDebts = JSON.parse(userDebtsResponse.body);
       const assetsToBorrow = {
         ...userDebts,
-        debts: userDebts.debts.map((userDebt) => {
-          const market = marketsMapping[userDebt.symbol];
-          if (!market) {
-            throw new Error("Fatal error: Market not found");
-          }
-          const { availableLiquidityUSD } = market;
-          const availableBorrowsUSD = bigMin(
-            userDebts.availableBorrowsUSD,
-            availableLiquidityUSD
-          )
-            .times(ACTUAL_BORROW_AMOUNT_RATE)
-            .toFixed();
-          return {
-            ...market,
-            ...userDebt,
-            ...(market.symbol === "WETH"
-              ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
-              : {}),
-            availableBorrows: calculateAvailableBorrows({
+        debts: userDebts.debts
+          .map((userDebt) => {
+            const market = marketsMapping[userDebt.symbol];
+            if (!market) {
+              throw new Error("Fatal error: Market not found");
+            }
+            const { availableLiquidityUSD } = market;
+            const availableBorrowsUSD = bigMin(
+              userDebts.availableBorrowsUSD,
+              availableLiquidityUSD
+            )
+              .times(ACTUAL_BORROW_AMOUNT_RATE)
+              .toFixed();
+            return {
+              ...market,
+              ...userDebt,
+              ...(market.symbol === "WETH"
+                ? {
+                    symbol: "ETH",
+                    name: "Ethereum",
+                  }
+                : {}),
+              availableBorrows: calculateAvailableBorrows({
+                availableBorrowsUSD,
+                marketReferencePriceInUsd: market.marketReferencePriceInUsd,
+              }),
               availableBorrowsUSD,
-              marketReferencePriceInUsd: market.marketReferencePriceInUsd,
-            }),
-            availableBorrowsUSD,
-            balance:
-              assetsToSupplyMap[
-                userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
-              ].balance,
-            balanceInUSD:
-              assetsToSupplyMap[
-                userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
-              ].balanceInUSD,
-          };
-        }),
+              balance:
+                assetsToSupplyMap[
+                  userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
+                ].balance,
+              balanceInUSD:
+                assetsToSupplyMap[
+                  userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
+                ].balanceInUSD,
+            };
+          })
+          .sort((asset1, asset2) => {
+            const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
+            const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
+            if (availableBorrowsUSD1 !== availableBorrowsUSD2)
+              return availableBorrowsUSD2 - availableBorrowsUSD1;
+            return asset1.symbol.localeCompare(asset2.symbol);
+          })
+          .filter(
+            (asset) =>
+              !config.borrowBlackListToken ||
+              !config.borrowBlackListToken.includes(asset.symbol)
+          ),
       };
       const yourBorrows = {
         ...assetsToBorrow,
