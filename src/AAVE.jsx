@@ -453,6 +453,14 @@ function updateData() {
                 ].balanceInUSD,
             };
           })
+          .sort((asset1, asset2) => {
+            const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
+            const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
+            console.log({ asset1 });
+            if (availableBorrowsUSD1 !== availableBorrowsUSD2)
+              return availableBorrowsUSD2 - availableBorrowsUSD1;
+            return asset1.symbol.localeCompare(asset2.symbol);
+          })
           .filter((asset) => !config.BLACKLIST_TOKEN.includes(asset.symbol)),
       };
       const yourBorrows = {
