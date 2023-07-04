@@ -459,14 +459,11 @@ function updateData() {
               return availableBorrowsUSD2 - availableBorrowsUSD1;
             return asset1.symbol.localeCompare(asset2.symbol);
           })
-          .filter((asset) => {
-            const { borrowBlackListToken } = config;
-            if (!borrowBlackListToken) {
-              return true;
-            } else {
-              return !borrowBlackListToken.includes(asset.symbol);
-            }
-          }),
+          .filter(
+            (asset) =>
+              !config.borrowBlackListToken ||
+              !config.borrowBlackListToken.includes(asset.symbol)
+          ),
       };
       const yourBorrows = {
         ...assetsToBorrow,
