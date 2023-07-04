@@ -24,7 +24,6 @@ function getNetworkConfig(chainId) {
   };
 
   const constants = {
-    BLACKLIST_TOKEN: ["AAVE"],
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -72,6 +71,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
+        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -357,8 +357,7 @@ function updateData() {
           if (balanceInUSD1 !== balanceInUSD2)
             return balanceInUSD2 - balanceInUSD1;
           return asset1.symbol.localeCompare(asset2.symbol);
-        })
-        .filter((asset) => !config.BLACKLIST_TOKEN.includes(asset.symbol));
+        });
 
       State.update({
         assetsToSupply,
@@ -414,6 +413,7 @@ function updateData() {
         return;
       }
       const userDebts = JSON.parse(userDebtsResponse.body);
+      console.log({ config });
       const assetsToBorrow = {
         ...userDebts,
         debts: userDebts.debts
@@ -456,12 +456,18 @@ function updateData() {
           .sort((asset1, asset2) => {
             const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
             const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
-            console.log({ asset1 });
             if (availableBorrowsUSD1 !== availableBorrowsUSD2)
               return availableBorrowsUSD2 - availableBorrowsUSD1;
             return asset1.symbol.localeCompare(asset2.symbol);
           })
-          .filter((asset) => !config.BLACKLIST_TOKEN.includes(asset.symbol)),
+          .filter((asset) => {
+            const { borrowBlackListToken } = config;
+            if (!borrowBlackListToken) {
+              return true;
+            } else {
+              return !borrowBlackListToken.includes(asset.symbol);
+            }
+          }),
       };
       const yourBorrows = {
         ...assetsToBorrow,
