@@ -24,6 +24,7 @@ function getNetworkConfig(chainId) {
   };
 
   const constants = {
+    BLACKLIST_TOKEN: ["AAVE"],
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -356,7 +357,8 @@ function updateData() {
           if (balanceInUSD1 !== balanceInUSD2)
             return balanceInUSD2 - balanceInUSD1;
           return asset1.symbol.localeCompare(asset2.symbol);
-        });
+        })
+        .filter((asset) => !config.BLACKLIST_TOKEN.includes(asset.symbol));
 
       State.update({
         assetsToSupply,
@@ -414,42 +416,44 @@ function updateData() {
       const userDebts = JSON.parse(userDebtsResponse.body);
       const assetsToBorrow = {
         ...userDebts,
-        debts: userDebts.debts.map((userDebt) => {
-          const market = marketsMapping[userDebt.symbol];
-          if (!market) {
-            throw new Error("Fatal error: Market not found");
-          }
-          const { availableLiquidityUSD } = market;
-          const availableBorrowsUSD = bigMin(
-            userDebts.availableBorrowsUSD,
-            availableLiquidityUSD
-          )
-            .times(ACTUAL_BORROW_AMOUNT_RATE)
-            .toFixed();
-          return {
-            ...market,
-            ...userDebt,
-            ...(market.symbol === "WETH"
-              ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
-              : {}),
-            availableBorrows: calculateAvailableBorrows({
+        debts: userDebts.debts
+          .map((userDebt) => {
+            const market = marketsMapping[userDebt.symbol];
+            if (!market) {
+              throw new Error("Fatal error: Market not found");
+            }
+            const { availableLiquidityUSD } = market;
+            const availableBorrowsUSD = bigMin(
+              userDebts.availableBorrowsUSD,
+              availableLiquidityUSD
+            )
+              .times(ACTUAL_BORROW_AMOUNT_RATE)
+              .toFixed();
+            return {
+              ...market,
+              ...userDebt,
+              ...(market.symbol === "WETH"
+                ? {
+                    symbol: "ETH",
+                    name: "Ethereum",
+                  }
+                : {}),
+              availableBorrows: calculateAvailableBorrows({
+                availableBorrowsUSD,
+                marketReferencePriceInUsd: market.marketReferencePriceInUsd,
+              }),
               availableBorrowsUSD,
-              marketReferencePriceInUsd: market.marketReferencePriceInUsd,
-            }),
-            availableBorrowsUSD,
-            balance:
-              assetsToSupplyMap[
-                userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
-              ].balance,
-            balanceInUSD:
-              assetsToSupplyMap[
-                userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
-              ].balanceInUSD,
-          };
-        }),
+              balance:
+                assetsToSupplyMap[
+                  userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
+                ].balance,
+              balanceInUSD:
+                assetsToSupplyMap[
+                  userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
+                ].balanceInUSD,
+            };
+          })
+          .filter((asset) => !config.BLACKLIST_TOKEN.includes(asset.symbol)),
       };
       const yourBorrows = {
         ...assetsToBorrow,
