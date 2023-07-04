@@ -99,23 +99,27 @@ return (
                                 props={{
                                   children: [
                                     <div className="card-data-row">
-                                      <div className="card-data-key">Debt</div>
+                                      <div className="card-data-key">
+                                        Available to borrow
+                                      </div>
                                       <div className="card-data-value">
                                         <div>
-                                          {Number(row.variableBorrows).toFixed(
+                                          {Number(row.availableBorrows).toFixed(
                                             7
                                           )}
                                         </div>
                                         <div>
                                           ${" "}
                                           {Number(
-                                            row.variableBorrowsUSD
+                                            row.availableBorrowsUSD
                                           ).toFixed(2)}
                                         </div>
                                       </div>
                                     </div>,
                                     <div className="card-data-row">
-                                      <div className="card-data-key">APY</div>
+                                      <div className="card-data-key">
+                                        APY, variable
+                                      </div>
                                       <div className="card-data-value">{`${(
                                         Number(row.variableBorrowAPY) * 100
                                       ).toFixed(2)} %`}</div>
