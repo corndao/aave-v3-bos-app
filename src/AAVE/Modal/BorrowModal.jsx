@@ -357,7 +357,7 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Available Borrows: {availableBorrows}
+                            Available: {availableBorrows}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);

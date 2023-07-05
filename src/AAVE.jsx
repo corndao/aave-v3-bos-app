@@ -638,6 +638,7 @@ const body = loading ? (
               chainId: state.chainId,
               assetsToBorrow: state.assetsToBorrow,
               showBorrowModal: state.showBorrowModal,
+              yourSupplies: state.yourSupplies,
               setShowBorrowModal: (isShow) =>
                 State.update({ showBorrowModal: isShow }),
               onActionSuccess,
