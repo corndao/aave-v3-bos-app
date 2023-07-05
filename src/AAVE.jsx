@@ -112,8 +112,10 @@ if (
     .getNetwork()
     .then((data) => {
       const chainId = data?.chainId;
-      if (chainId) {
+      if (chainId && chainId === DEFAULT_CHAIN_ID) {
         State.update({ chainId });
+      } else {
+        switchEthereumChain(DEFAULT_CHAIN_ID);
       }
     });
 }
@@ -689,7 +691,7 @@ const body = loading ? (
             switchNetwork: (chainId) => {
               switchEthereumChain(chainId);
             },
-            // disabled: true,
+            disabled: true,
           }}
         />
         <Widget
