@@ -125,7 +125,7 @@ function isValid(a) {
   return true;
 }
 
-const gasLimitRecommendations = {
+const GAS_LIMIT_RECOMMENDATIONS = {
   default: {
     limit: "210000",
     recommended: "210000",
@@ -228,7 +228,7 @@ function gasEstimation(action) {
   const { marketReferencePriceInUsd: ethPrice, decimals: ethDecimals } =
     ethAsset;
   return getGasPrice().then((gasPrice) => {
-    const gasLimit = gasLimitRecommendations[action].limit;
+    const gasLimit = GAS_LIMIT_RECOMMENDATIONS[action].limit;
     return Big(gasPrice.toString())
       .mul(gasLimit)
       .div(Big(10).pow(ethDecimals))
