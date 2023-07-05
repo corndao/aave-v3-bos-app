@@ -7,6 +7,7 @@ const {
   onlyOneBorrow,
   repayETHGas,
   repayERC20Gas,
+  formatHealthFactor,
 } = props;
 
 if (!data) {
@@ -206,7 +207,7 @@ const updateNewHealthFactor = debounce(() => {
         "repay",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
+        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
         State.update({ newHealthFactor });
       });
     });
@@ -545,10 +546,7 @@ return (
                                 width={16}
                                 height={16}
                               />{" "}
-                              {!isValid(state.newHealthFactor) ||
-                              state.newHealthFactor === ""
-                                ? state.newHealthFactor
-                                : Number(state.newHealthFactor).toFixed(2)}
+                              {state.newHealthFactor}
                             </GreenTexture>
                             <WhiteTexture>
                               Liquidation at &lt;{" "}

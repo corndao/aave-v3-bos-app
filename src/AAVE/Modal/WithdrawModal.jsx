@@ -6,6 +6,7 @@ const {
   chainId,
   withdrawETHGas,
   withdrawERC20Gas,
+  formatHealthFactor,
 } = props;
 
 if (!data) {
@@ -334,7 +335,7 @@ const updateNewHealthFactor = debounce(() => {
         "withdraw",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
+        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
         State.update({ newHealthFactor });
       });
     });
@@ -462,12 +463,7 @@ return (
                               width={16}
                               height={16}
                             />{" "}
-                            {state.newHealthFactor === "-"
-                              ? "-"
-                              : Big(state.newHealthFactor).toFixed(
-                                  2,
-                                  ROUND_DOWN
-                                )}
+                            {state.newHealthFactor}
                           </GreenTexture>
                           <WhiteTexture>
                             Liquidation at &lt; {config.FIXED_LIQUIDATION_VALUE}
