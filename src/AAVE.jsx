@@ -217,9 +217,23 @@ function getGasPrice() {
 }
 
 function gasEstimation(action) {
+  const assetsToSupply = state.assetsToSupply;
+  if (!assetsToSupply) {
+    return "-";
+  }
+  const ethAsset = assetsToSupply.find((asset) => asset.symbol === "ETH");
+  if (!ethAsset) {
+    return "-";
+  }
+  const { marketReferencePriceInUsd: ethPrice, decimals: ethDecimals } =
+    ethAsset;
   return getGasPrice().then((gasPrice) => {
     const gasLimit = gasLimitRecommendations[action].limit;
-    return gasPrice.mul(gasLimit);
+    return Big(gasPrice.toString())
+      .mul(gasLimit)
+      .div(Big(10).pow(ethDecimals))
+      .mul(ethPrice)
+      .toFixed(2);
   });
 }
 

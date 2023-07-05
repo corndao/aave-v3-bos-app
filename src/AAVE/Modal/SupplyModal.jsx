@@ -124,13 +124,11 @@ State.init({
 function updateGas() {
   if (["ETH", "WETH"].includes(symbol)) {
     depositETHGas().then((value) => {
-      console.log("update ETH", value.toString());
-      State.update({ gas: value.toString() });
+      State.update({ gas: value });
     });
   } else {
     depositERC20Gas().then((value) => {
-      console.log("update WERC20", value.toString());
-      State.update({ gas: value.toString() });
+      State.update({ gas: value });
     });
   }
 }
