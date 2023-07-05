@@ -1,4 +1,12 @@
-const { config, data, onRequestClose, onActionSuccess, chainId } = props;
+const {
+  config,
+  data,
+  onRequestClose,
+  onActionSuccess,
+  chainId,
+  borrowETHGas,
+  borrowERC20Gas,
+} = props;
 
 if (!data) {
   return <div />;
@@ -109,7 +117,24 @@ State.init({
   allowanceAmount: 0,
   loading: false,
   newHealthFactor: "-",
+  gas: "-",
 });
+
+function updateGas() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    borrowETHGas().then((value) => {
+      console.log("update ETH", value.toString());
+      State.update({ gas: value.toString() });
+    });
+  } else {
+    borrowERC20Gas().then((value) => {
+      console.log("update WERC20", value.toString());
+      State.update({ gas: value.toString() });
+    });
+  }
+}
+
+updateGas();
 
 const maxValue = availableBorrows;
 
@@ -411,6 +436,10 @@ return (
                   </TransactionOverviewContainer>
                 ),
               }}
+            />
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.GasEstimation`}
+              props={{ gas: state.gas, config }}
             />
             {state.needApprove && symbol === "ETH" && (
               <Widget
