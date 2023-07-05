@@ -160,6 +160,37 @@ function approveDelegation(vwETHAddress) {
   );
 }
 
+function debounce(fn, wait) {
+  let timer = state.timer;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn();
+    }, wait);
+    State.update({ timer });
+  };
+}
+
+const updateNewHealthFactor = debounce(() => {
+  State.update({ newHealthFactor: "-" });
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "borrow",
+        state.amountInUSD
+      ).then((response) => {
+        const newHealthFactor = JSON.parse(response.body);
+        State.update({ newHealthFactor });
+      });
+    });
+}, 1000);
+
 const changeValue = (value) => {
   let amountInUSD = "0.00";
   if (Number(value) > Number(maxValue)) {
@@ -173,23 +204,8 @@ const changeValue = (value) => {
       .mul(marketReferencePriceInUsd)
       .toFixed(2, ROUND_DOWN);
   }
-  State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
-
-  Ethers.provider()
-    .getSigner()
-    .getAddress()
-    .then((address) => {
-      getNewHealthFactor(
-        chainId,
-        address,
-        data.underlyingAsset,
-        "borrow",
-        amountInUSD
-      ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
-        State.update({ newHealthFactor });
-      });
-    });
+  State.update({ amount: value, amountInUSD });
+  updateNewHealthFactor();
 };
 
 function borrowERC20(amount) {

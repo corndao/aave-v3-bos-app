@@ -302,6 +302,37 @@ const maxValue =
     ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed()
     : balance;
 
+function debounce(fn, wait) {
+  let timer = state.timer;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn();
+    }, wait);
+    State.update({ timer });
+  };
+}
+
+const updateNewHealthFactor = debounce(() => {
+  State.update({ newHealthFactor: "-" });
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "deposit",
+        state.amountInUSD
+      ).then((response) => {
+        const newHealthFactor = JSON.parse(response.body);
+        State.update({ newHealthFactor });
+      });
+    });
+}, 1000);
+
 const changeValue = (value) => {
   if (Number(value) > Number(maxValue)) {
     value = maxValue;
@@ -315,23 +346,8 @@ const changeValue = (value) => {
       .toFixed(2, ROUND_DOWN);
     State.update({
       amountInUSD,
-      newHealthFactor: "-",
     });
-    Ethers.provider()
-      .getSigner()
-      .getAddress()
-      .then((address) => {
-        getNewHealthFactor(
-          chainId,
-          address,
-          token,
-          "deposit",
-          amountInUSD
-        ).then((response) => {
-          const newHealthFactor = JSON.parse(response.body);
-          State.update({ newHealthFactor });
-        });
-      });
+    updateNewHealthFactor();
   } else {
     State.update({
       amountInUSD: "0.00",

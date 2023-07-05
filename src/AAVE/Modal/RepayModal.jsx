@@ -164,6 +164,37 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
 }
 
+function debounce(fn, wait) {
+  let timer = state.timer;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn();
+    }, wait);
+    State.update({ timer });
+  };
+}
+
+const updateNewHealthFactor = debounce(() => {
+  State.update({ newHealthFactor: "-" });
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "repay",
+        state.amountInUSD
+      ).then((response) => {
+        const newHealthFactor = JSON.parse(response.body);
+        State.update({ newHealthFactor });
+      });
+    });
+}, 1000);
+
 const changeValue = (value) => {
   let amountInUSD = "0.00";
   if (Number(value) > Number(shownMaxValue)) {
@@ -177,28 +208,8 @@ const changeValue = (value) => {
       .mul(marketReferencePriceInUsd)
       .toFixed(2, ROUND_DOWN);
   }
-  State.update({ amount: value, amountInUSD, newHealthFactor: "-" });
-
-  // TODO: need to support ∞ later
-  // if (onlyOneBorrow && shownMaxValue === value) {
-  //   State.update({ newHealthFactor: "∞" });
-  // } else {
-  Ethers.provider()
-    .getSigner()
-    .getAddress()
-    .then((address) => {
-      getNewHealthFactor(
-        chainId,
-        address,
-        data.underlyingAsset,
-        "repay",
-        amountInUSD
-      ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
-        State.update({ newHealthFactor });
-      });
-    });
-  // }
+  State.update({ amount: value, amountInUSD });
+  updateNewHealthFactor();
 };
 
 function getNonce(tokenAddress, userAddress) {
