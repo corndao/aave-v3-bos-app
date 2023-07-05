@@ -1,9 +1,16 @@
-const { config, data, onRequestClose, onActionSuccess, chainId } = props;
+const {
+  config,
+  data,
+  onRequestClose,
+  onActionSuccess,
+  chainId,
+  withdrawETHGas,
+  withdrawERC20Gas,
+} = props;
 
 if (!data) {
   return <div />;
 }
-
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -110,7 +117,22 @@ State.init({
   needApprove: false,
   loading: false,
   newHealthFactor: "-",
+  gas: "-",
 });
+
+function updateGas() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    withdrawETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    withdrawERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
+}
+
+updateGas();
 
 const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
 const remainingSupply = isNaN(_remainingSupply)
@@ -457,6 +479,10 @@ return (
                 </TransactionOverviewContainer>
               ),
             }}
+          />
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.GasEstimation`}
+            props={{ gas: state.gas, config }}
           />
           {state.needApprove && symbol === "ETH" && (
             <Widget

@@ -7,6 +7,10 @@ const {
   setShowBorrowModal,
   onActionSuccess,
   chainId,
+  repayETHGas,
+  repayERC20Gas,
+  borrowETHGas,
+  borrowERC20Gas,
 } = props;
 
 State.init({
@@ -223,6 +227,8 @@ return (
           onActionSuccess,
           onlyOneBorrow: debts.length === 1,
           chainId,
+          repayETHGas,
+          repayERC20Gas,
         }}
       />
     )}
@@ -235,6 +241,8 @@ return (
           data: state.data,
           onActionSuccess,
           chainId,
+          borrowETHGas,
+          borrowERC20Gas,
         }}
       />
     )}

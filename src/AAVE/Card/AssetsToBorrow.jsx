@@ -6,6 +6,8 @@ const {
   showBorrowModal,
   setShowBorrowModal,
   yourSupplies,
+  borrowETHGas,
+  borrowERC20Gas,
 } = props;
 
 if (!assetsToBorrow) {
@@ -244,6 +246,8 @@ return (
           data: state.data,
           onActionSuccess,
           chainId,
+          borrowETHGas,
+          borrowERC20Gas,
         }}
       />
     )}

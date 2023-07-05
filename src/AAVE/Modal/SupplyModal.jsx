@@ -1,4 +1,12 @@
-const { config, data, onRequestClose, onActionSuccess, chainId } = props;
+const {
+  config,
+  data,
+  onRequestClose,
+  onActionSuccess,
+  chainId,
+  depositETHGas,
+  depositERC20Gas,
+} = props;
 
 if (!data) {
   return <div />;
@@ -110,7 +118,22 @@ State.init({
   amountInUSD: "0.00",
   loading: false,
   newHealthFactor: "-",
+  gas: "-",
 });
+
+function updateGas() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    depositETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    depositERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
+}
+
+updateGas();
 
 function getNonce(tokenAddress, userAddress) {
   const token = new ethers.Contract(
@@ -484,6 +507,10 @@ return (
                   </TransactionOverviewContainer>
                 ),
               }}
+            />
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.GasEstimation`}
+              props={{ gas: state.gas, config }}
             />
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}

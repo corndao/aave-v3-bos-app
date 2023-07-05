@@ -6,6 +6,8 @@ const {
   onActionSuccess,
   chainId,
   healthFactor,
+  depositETHGas,
+  depositERC20Gas,
 } = props;
 
 State.init({
@@ -217,6 +219,8 @@ return (
           },
           onActionSuccess,
           chainId,
+          depositETHGas,
+          depositERC20Gas,
         }}
       />
     )}

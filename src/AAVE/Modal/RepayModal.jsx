@@ -5,6 +5,8 @@ const {
   onActionSuccess,
   chainId,
   onlyOneBorrow,
+  repayETHGas,
+  repayERC20Gas,
 } = props;
 
 if (!data) {
@@ -117,7 +119,22 @@ State.init({
   amountInUSD: "0.00",
   loading: false,
   newHealthFactor: "-",
+  gas: "-",
 });
+
+function updateGas() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    repayETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    repayERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
+}
+
+updateGas();
 
 function bigMin(_a, _b) {
   const a = Big(_a);
@@ -544,6 +561,10 @@ return (
                   </TransactionOverviewContainer>
                 ),
               }}
+            />
+            <Widget
+              src={`${config.ownerId}/widget/AAVE.GasEstimation`}
+              props={{ gas: state.gas, config }}
             />
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
