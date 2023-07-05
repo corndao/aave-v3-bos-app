@@ -1,4 +1,4 @@
-const { netWorth, netApy, healthFactor } = props;
+const { netWorth, netApy, healthFactor, showHealthFactor } = props;
 
 if (!netWorth || !netApy || !healthFactor) {
   return <div />;
@@ -58,11 +58,13 @@ const heroData = [
     name: "Net APY",
     value: netApy,
   },
-  {
-    name: "Health Factor",
-    value: healthFactor,
-  },
-];
+  showHealthFactor
+    ? {
+        name: "Health Factor",
+        value: healthFactor,
+      }
+    : undefined,
+].filter((element) => !!element);
 
 return (
   <HeroDataContainer>

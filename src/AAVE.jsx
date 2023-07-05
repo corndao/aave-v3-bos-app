@@ -715,6 +715,10 @@ const body = loading ? (
             healthFactor: state.assetsToBorrow?.healthFactor
               ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
               : "-",
+            showHealthFactor:
+              state.yourBorrows &&
+              state.yourBorrows.debts &&
+              state.yourBorrows.debts.length > 0,
           }}
         />
       </FlexContainer>
