@@ -159,7 +159,7 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
 function borrowAllowance(vwETHAddress, userAddress) {
   const vToken = new ethers.Contract(
     vwETHAddress,
-    config.vwethABI.body,
+    config.variableDebtTokenABI.body,
     Ethers.provider().getSigner()
   );
 
@@ -172,7 +172,7 @@ function borrowAllowance(vwETHAddress, userAddress) {
 function approveDelegation(vwETHAddress) {
   const vToken = new ethers.Contract(
     vwETHAddress,
-    config.vwethABI.body,
+    config.variableDebtTokenABI.body,
     Ethers.provider().getSigner()
   );
   const maxUint256 = ethers.BigNumber.from(
