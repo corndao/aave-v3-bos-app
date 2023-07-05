@@ -429,11 +429,8 @@ function bigMin(_a, _b) {
 }
 
 function formatHealthFactor(healthFactor) {
-  console.log({ healthFactor });
   if (!healthFactor || !isValid(healthFactor)) return "-";
-  console.log({ healthFactor, status: "before" });
   if (Number(healthFactor) === -1) return "∞";
-  console.log("after infinity");
   return Big(healthFactor).toFixed(2, ROUND_DOWN);
 }
 
