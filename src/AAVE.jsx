@@ -448,9 +448,6 @@ function updateData() {
     return;
   }
 
-  const prevYourSupplies = state.yourSupplies;
-  const prevYourBorrows = state.yourBorrows;
-
   getMarkets(state.chainId).then((marketsResponse) => {
     if (!marketsResponse) {
       return;
@@ -460,6 +457,7 @@ function updateData() {
       prev[cur.symbol] = cur;
       return prev;
     }, {});
+
     // get user balances
     getUserBalances(
       state.chainId,
@@ -508,127 +506,132 @@ function updateData() {
       State.update({
         assetsToSupply,
       });
+
+      // get user borrow data
+      updateUserDebts(marketsMapping, assetsToSupply);
     });
 
     // get user supplies
-    getUserDeposits(state.chainId, state.address).then(
-      (userDepositsResponse) => {
-        if (!userDepositsResponse) {
-          return;
-        }
-        const userDeposits = JSON.parse(userDepositsResponse.body).filter(
-          (row) => Number(row.underlyingBalance) !== 0
-        );
-        const yourSupplies = userDeposits.map((userDeposit) => {
-          const market = marketsMapping[userDeposit.symbol];
+    updateUserSupplies(marketsMapping);
+  });
+}
+
+function updateUserSupplies(marketsMapping) {
+  const prevYourSupplies = state.yourSupplies;
+  getUserDeposits(state.chainId, state.address).then((userDepositsResponse) => {
+    if (!userDepositsResponse) {
+      return;
+    }
+    const userDeposits = JSON.parse(userDepositsResponse.body).filter(
+      (row) => Number(row.underlyingBalance) !== 0
+    );
+    const yourSupplies = userDeposits.map((userDeposit) => {
+      const market = marketsMapping[userDeposit.symbol];
+      return {
+        ...market,
+        ...userDeposit,
+        ...(market.symbol === "WETH"
+          ? {
+              symbol: "ETH",
+              name: "Ethereum",
+            }
+          : {}),
+      };
+    });
+
+    State.update({
+      yourSupplies,
+    });
+
+    if (JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies)) {
+      console.log("refresh supplies again ...", prevYourSupplies, yourSupplies);
+      setTimeout(updateData, 500);
+    }
+  });
+}
+
+function updateUserDebts(marketsMapping, assetsToSupply) {
+  if (!marketsMapping || !assetsToSupply) {
+    return;
+  }
+
+  const prevYourBorrows = state.yourBorrows;
+  // userDebts depends on the balance from assetsToSupply
+  const assetsToSupplyMap = assetsToSupply.reduce((prev, cur) => {
+    prev[cur.symbol] = cur;
+    return prev;
+  }, {});
+
+  getUserDebts(state.chainId, state.address).then((userDebtsResponse) => {
+    if (!userDebtsResponse) {
+      return;
+    }
+    const userDebts = JSON.parse(userDebtsResponse.body);
+    const assetsToBorrow = {
+      ...userDebts,
+      debts: userDebts.debts
+        .map((userDebt) => {
+          const market = marketsMapping[userDebt.symbol];
+          if (!market) {
+            throw new Error("Fatal error: Market not found");
+          }
+          const { availableLiquidityUSD } = market;
+          const availableBorrowsUSD = bigMin(
+            userDebts.availableBorrowsUSD,
+            availableLiquidityUSD
+          )
+            .times(ACTUAL_BORROW_AMOUNT_RATE)
+            .toFixed();
+          const symbol = userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol;
           return {
             ...market,
-            ...userDeposit,
+            ...userDebt,
             ...(market.symbol === "WETH"
               ? {
                   symbol: "ETH",
                   name: "Ethereum",
                 }
               : {}),
-          };
-        });
-
-        State.update({
-          yourSupplies,
-        });
-
-        if (
-          JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies) &&
-          JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)
-        ) {
-          console.log("refresh again ...", prevYourSupplies, yourSupplies);
-          setTimeout(updateData, 500);
-        }
-      }
-    );
-
-    if (!state.assetsToSupply) {
-      return;
-    }
-    const assetsToSupplyMap = state.assetsToSupply.reduce((prev, cur) => {
-      prev[cur.symbol] = cur;
-      return prev;
-    }, {}); // userDebts need the balance of assetsToSupply
-    getUserDebts(state.chainId, state.address).then((userDebtsResponse) => {
-      if (!userDebtsResponse) {
-        return;
-      }
-      const userDebts = JSON.parse(userDebtsResponse.body);
-      const assetsToBorrow = {
-        ...userDebts,
-        debts: userDebts.debts
-          .map((userDebt) => {
-            const market = marketsMapping[userDebt.symbol];
-            if (!market) {
-              throw new Error("Fatal error: Market not found");
-            }
-            const { availableLiquidityUSD } = market;
-            const availableBorrowsUSD = bigMin(
-              userDebts.availableBorrowsUSD,
-              availableLiquidityUSD
-            )
-              .times(ACTUAL_BORROW_AMOUNT_RATE)
-              .toFixed();
-            return {
-              ...market,
-              ...userDebt,
-              ...(market.symbol === "WETH"
-                ? {
-                    symbol: "ETH",
-                    name: "Ethereum",
-                  }
-                : {}),
-              availableBorrows: calculateAvailableBorrows({
-                availableBorrowsUSD,
-                marketReferencePriceInUsd: market.marketReferencePriceInUsd,
-              }),
+            availableBorrows: calculateAvailableBorrows({
               availableBorrowsUSD,
-              balance:
-                assetsToSupplyMap[
-                  userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
-                ].balance,
-              balanceInUSD:
-                assetsToSupplyMap[
-                  userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol
-                ].balanceInUSD,
-            };
-          })
-          .sort((asset1, asset2) => {
-            const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
-            const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
-            if (availableBorrowsUSD1 !== availableBorrowsUSD2)
-              return availableBorrowsUSD2 - availableBorrowsUSD1;
-            return asset1.symbol.localeCompare(asset2.symbol);
-          })
-          .filter(
-            (asset) =>
-              !config.borrowBlackListToken ||
-              !config.borrowBlackListToken.includes(asset.symbol)
-          ),
-      };
-      const yourBorrows = {
-        ...assetsToBorrow,
-        debts: assetsToBorrow.debts.filter(
-          (row) =>
-            !isNaN(Number(row.variableBorrowsUSD)) &&
-            Number(row.variableBorrowsUSD) > 0
+              marketReferencePriceInUsd: market.marketReferencePriceInUsd,
+            }),
+            availableBorrowsUSD,
+            balance: assetsToSupplyMap[symbol].balance,
+            balanceInUSD: assetsToSupplyMap[symbol].balanceInUSD,
+          };
+        })
+        .sort((asset1, asset2) => {
+          const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
+          const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
+          if (availableBorrowsUSD1 !== availableBorrowsUSD2)
+            return availableBorrowsUSD2 - availableBorrowsUSD1;
+          return asset1.symbol.localeCompare(asset2.symbol);
+        })
+        .filter(
+          (asset) =>
+            !config.borrowBlackListToken ||
+            !config.borrowBlackListToken.includes(asset.symbol)
         ),
-      };
-      State.update({
-        yourBorrows,
-        assetsToBorrow,
-      });
+    };
+    const yourBorrows = {
+      ...assetsToBorrow,
+      debts: assetsToBorrow.debts.filter(
+        (row) =>
+          !isNaN(Number(row.variableBorrowsUSD)) &&
+          Number(row.variableBorrowsUSD) > 0
+      ),
+    };
 
-      if (JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)) {
-        console.log("refresh again ...", prevYourBorrows, yourBorrows);
-        setTimeout(updateData, 500);
-      }
+    State.update({
+      yourBorrows,
+      assetsToBorrow,
     });
+
+    if (JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)) {
+      console.log("refresh borrows again ...", prevYourBorrows, yourBorrows);
+      setTimeout(updateData, 500);
+    }
   });
 }
 
