@@ -14,7 +14,7 @@ const HeroDataContainer = styled.div`
   @media (min-width: 640px) {
     width: auto;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr ${showHealthFactor ? "1fr" : ""};
     gap: 90px;
     text-align: center;
   }
