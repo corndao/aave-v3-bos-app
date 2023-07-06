@@ -492,10 +492,10 @@ return (
                 loading: state.loading,
                 children: `Approve ${symbol}`,
                 disabled:
-                  !isValid(state.newHealthFactor) ||
-                  state.newHealthFactor === "" ||
-                  (Big(state.newHealthFactor).lt(1) &&
-                    !Big(state.newHealthFactor).eq(-1)),
+                  state.newHealthFactor !== "∞" &&
+                  (!isValid(state.newHealthFactor) ||
+                    state.newHealthFactor === "" ||
+                    Big(state.newHealthFactor).lt(1)),
                 onClick: () => {
                   State.update({
                     loading: true,
