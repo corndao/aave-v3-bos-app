@@ -576,6 +576,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
     const userDebts = JSON.parse(userDebtsResponse.body);
     const assetsToBorrow = {
       ...userDebts,
+      healthFactor: formatHealthFactor(userDebts.healthFactor),
       debts: userDebts.debts
         .map((userDebt) => {
           const market = marketsMapping[userDebt.symbol];
