@@ -11,6 +11,7 @@ const {
   repayERC20Gas,
   borrowETHGas,
   borrowERC20Gas,
+  formatHealthFactor,
 } = props;
 
 State.init({
@@ -243,6 +244,7 @@ return (
           chainId,
           borrowETHGas,
           borrowERC20Gas,
+          formatHealthFactor,
         }}
       />
     )}

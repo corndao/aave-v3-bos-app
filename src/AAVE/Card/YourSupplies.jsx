@@ -8,6 +8,7 @@ const {
   healthFactor,
   withdrawETHGas,
   withdrawERC20Gas,
+  formatHealthFactor,
 } = props;
 
 State.init({
@@ -178,6 +179,7 @@ return (
           onActionSuccess,
           withdrawETHGas,
           withdrawERC20Gas,
+          formatHealthFactor,
           onRequestClose: () => setShowWithdrawModal(false),
         }}
       />

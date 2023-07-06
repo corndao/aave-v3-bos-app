@@ -6,6 +6,7 @@ const {
   chainId,
   borrowETHGas,
   borrowERC20Gas,
+  formatHealthFactor,
 } = props;
 
 if (!data) {
@@ -208,7 +209,7 @@ const updateNewHealthFactor = debounce(() => {
         "borrow",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
+        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
         State.update({ newHealthFactor });
       });
     });
@@ -426,18 +427,13 @@ return (
                         right: (
                           <div style={{ textAlign: "right" }}>
                             <GreenTexture>
-                              {Big(healthFactor).toFixed(2, ROUND_DOWN)}
+                              {healthFactor}
                               <img
                                 src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                                 width={16}
                                 height={16}
                               />{" "}
-                              {state.newHealthFactor === "-"
-                                ? "-"
-                                : Big(state.newHealthFactor).toFixed(
-                                    2,
-                                    ROUND_DOWN
-                                  )}
+                              {state.newHealthFactor}
                             </GreenTexture>
                             <WhiteTexture>
                               Liquidation at &lt;{" "}
@@ -498,7 +494,6 @@ return (
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
-                    console.log({ amount });
                     if (symbol === "ETH" || symbol === "WETH") {
                       // borrow weth
                       borrowETH(amount);

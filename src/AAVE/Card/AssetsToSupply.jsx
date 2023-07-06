@@ -6,6 +6,7 @@ const {
   onActionSuccess,
   chainId,
   healthFactor,
+  formatHealthFactor,
   depositETHGas,
   depositERC20Gas,
 } = props;
@@ -221,6 +222,7 @@ return (
           chainId,
           depositETHGas,
           depositERC20Gas,
+          formatHealthFactor,
         }}
       />
     )}

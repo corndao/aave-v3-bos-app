@@ -428,6 +428,13 @@ function bigMin(_a, _b) {
   return a.gt(b) ? b : a;
 }
 
+function formatHealthFactor(healthFactor) {
+  if (healthFactor === "∞") return healthFactor;
+  if (!healthFactor || !isValid(healthFactor)) return "-";
+  if (Number(healthFactor) === -1) return "∞";
+  return Big(healthFactor).toFixed(2, ROUND_DOWN);
+}
+
 // update data in async manner
 function updateData() {
   const provider = Ethers.provider();
@@ -569,6 +576,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
     const userDebts = JSON.parse(userDebtsResponse.body);
     const assetsToBorrow = {
       ...userDebts,
+      healthFactor: formatHealthFactor(userDebts.healthFactor),
       debts: userDebts.debts
         .map((userDebt) => {
           const market = marketsMapping[userDebt.symbol];
@@ -715,9 +723,11 @@ const body = loading ? (
                   : Big(state.assetsToBorrow.netAPY).times(100).toFixed(2)
                 : "-"
             }%`,
-            healthFactor: state.assetsToBorrow?.healthFactor
-              ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
-              : "-",
+            healthFactor: formatHealthFactor(state.assetsToBorrow.healthFactor),
+            showHealthFactor:
+              state.yourBorrows &&
+              state.yourBorrows.debts &&
+              state.yourBorrows.debts.length > 0,
           }}
         />
       </FlexContainer>
@@ -741,9 +751,10 @@ const body = loading ? (
               setShowWithdrawModal: (isShow) =>
                 State.update({ showWithdrawModal: isShow }),
               onActionSuccess,
-              healthFactor: state.assetsToBorrow?.healthFactor
-                ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
-                : "-",
+              healthFactor: formatHealthFactor(
+                state.assetsToBorrow.healthFactor
+              ),
+              formatHealthFactor,
               withdrawETHGas,
               withdrawERC20Gas,
             }}
@@ -758,9 +769,10 @@ const body = loading ? (
               setShowSupplyModal: (isShow) =>
                 State.update({ showSupplyModal: isShow }),
               onActionSuccess,
-              healthFactor: state.assetsToBorrow?.healthFactor
-                ? Big(state.assetsToBorrow.healthFactor).toFixed(2, ROUND_DOWN)
-                : "-",
+              healthFactor: formatHealthFactor(
+                state.assetsToBorrow.healthFactor
+              ),
+              formatHealthFactor,
               depositETHGas,
               depositERC20Gas,
             }}
@@ -781,6 +793,7 @@ const body = loading ? (
               showBorrowModal: state.showBorrowModal,
               setShowBorrowModal: (isShow) =>
                 State.update({ showBorrowModal: isShow }),
+              formatHealthFactor,
               onActionSuccess,
               repayETHGas,
               repayERC20Gas,
@@ -798,6 +811,7 @@ const body = loading ? (
               yourSupplies: state.yourSupplies,
               setShowBorrowModal: (isShow) =>
                 State.update({ showBorrowModal: isShow }),
+              formatHealthFactor,
               onActionSuccess,
               borrowETHGas,
               borrowERC20Gas,

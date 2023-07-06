@@ -8,6 +8,7 @@ const {
   yourSupplies,
   borrowETHGas,
   borrowERC20Gas,
+  formatHealthFactor,
 } = props;
 
 if (!assetsToBorrow) {
@@ -248,6 +249,7 @@ return (
           chainId,
           borrowETHGas,
           borrowERC20Gas,
+          formatHealthFactor,
         }}
       />
     )}

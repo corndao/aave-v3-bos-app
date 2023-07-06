@@ -6,6 +6,7 @@ const {
   chainId,
   withdrawETHGas,
   withdrawERC20Gas,
+  formatHealthFactor,
 } = props;
 
 if (!data) {
@@ -334,7 +335,7 @@ const updateNewHealthFactor = debounce(() => {
         "withdraw",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = JSON.parse(response.body);
+        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
         State.update({ newHealthFactor });
       });
     });
@@ -363,6 +364,12 @@ const changeValue = (value) => {
   }
   State.update({ amount: value });
 };
+
+const disabled =
+  state.newHealthFactor !== "∞" &&
+  (!isValid(state.newHealthFactor) ||
+    state.newHealthFactor === "" ||
+    Big(state.newHealthFactor).lt(1));
 
 return (
   <Widget
@@ -454,20 +461,13 @@ return (
                       right: (
                         <div style={{ textAlign: "right" }}>
                           <GreenTexture>
-                            {healthFactor === "-"
-                              ? "-"
-                              : Big(healthFactor).toFixed(2, ROUND_DOWN)}
+                            {healthFactor}
                             <img
                               src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
                               width={16}
                               height={16}
                             />{" "}
-                            {state.newHealthFactor === "-"
-                              ? "-"
-                              : Big(state.newHealthFactor).toFixed(
-                                  2,
-                                  ROUND_DOWN
-                                )}
+                            {state.newHealthFactor}
                           </GreenTexture>
                           <WhiteTexture>
                             Liquidation at &lt; {config.FIXED_LIQUIDATION_VALUE}
@@ -491,11 +491,7 @@ return (
                 config,
                 loading: state.loading,
                 children: `Approve ${symbol}`,
-                disabled:
-                  !isValid(state.newHealthFactor) ||
-                  state.newHealthFactor === "" ||
-                  (Big(state.newHealthFactor).lt(1) &&
-                    !Big(state.newHealthFactor).eq(-1)),
+                disabled,
                 onClick: () => {
                   State.update({
                     loading: true,
@@ -524,11 +520,7 @@ return (
                 config,
                 loading: state.loading,
                 children: "Withdraw",
-                disabled:
-                  !isValid(state.newHealthFactor) ||
-                  state.newHealthFactor === "" ||
-                  (Big(state.newHealthFactor).lt(1) &&
-                    !Big(state.newHealthFactor).eq(-1)),
+                disabled,
                 onClick: () => {
                   const actualAmount =
                     state.amount === shownMaxValue
