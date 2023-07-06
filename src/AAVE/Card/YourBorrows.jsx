@@ -230,6 +230,7 @@ return (
           chainId,
           repayETHGas,
           repayERC20Gas,
+          formatHealthFactor,
         }}
       />
     )}
