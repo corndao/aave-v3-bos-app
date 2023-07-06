@@ -1,14 +1,34 @@
 const {
   config,
+  chainId,
   yourSupplies,
   onActionSuccess,
   showWithdrawModal,
   setShowWithdrawModal,
+  healthFactor,
+  withdrawETHGas,
+  withdrawERC20Gas,
+  formatHealthFactor,
 } = props;
 
 State.init({
   data: undefined,
 });
+
+const WithdrawButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Withdraw",
+      onClick: () => {
+        State.update({ data });
+        setShowWithdrawModal(true);
+      },
+    }}
+  />
+);
+
 return (
   <>
     <Widget
@@ -98,17 +118,7 @@ return (
                                 ],
                               }}
                             />,
-                            <Widget
-                              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                              props={{
-                                config,
-                                children: "Withdraw",
-                                onClick: () => {
-                                  State.update({ data: row });
-                                  setShowWithdrawModal(true);
-                                },
-                              }}
-                            />,
+                            <WithdrawButton data={row} />,
                           ],
                         }}
                       />,
@@ -147,17 +157,7 @@ return (
                         </div>
                       </div>,
                       `${(Number(row.supplyAPY) * 100).toFixed(2)} %`,
-                      <Widget
-                        src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                        props={{
-                          config,
-                          children: "Withdraw",
-                          onClick: () => {
-                            State.update({ data: row });
-                            setShowWithdrawModal(true);
-                          },
-                        }}
-                      />,
+                      <WithdrawButton data={row} />,
                     ];
                   }),
                 }}
@@ -171,8 +171,15 @@ return (
         src={`${config.ownerId}/widget/AAVE.Modal.WithdrawModal`}
         props={{
           config,
-          data: state.data,
+          chainId,
+          data: {
+            ...state.data,
+            healthFactor,
+          },
           onActionSuccess,
+          withdrawETHGas,
+          withdrawERC20Gas,
+          formatHealthFactor,
           onRequestClose: () => setShowWithdrawModal(false),
         }}
       />

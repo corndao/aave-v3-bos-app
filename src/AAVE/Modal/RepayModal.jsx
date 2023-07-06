@@ -4,8 +4,9 @@ const {
   onRequestClose,
   onActionSuccess,
   chainId,
-  depositETHGas,
-  depositERC20Gas,
+  onlyOneBorrow,
+  repayETHGas,
+  repayERC20Gas,
   formatHealthFactor,
 } = props;
 
@@ -13,7 +14,6 @@ if (!data) {
   return <div />;
 }
 
-const MIN_ETH_GAS_FEE = 0.001;
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -24,17 +24,18 @@ function isValid(a) {
 
 const {
   symbol,
-  balance,
   marketReferencePriceInUsd,
-  supplyAPY,
-  usageAsCollateralEnabled,
-  decimals,
-  token,
-  name: tokenName,
   healthFactor,
+  availableBorrows,
+  availableBorrowsUSD,
+  decimals,
+  underlyingAsset,
+  variableBorrows,
+  name: tokenName,
+  balance,
 } = data;
 
-const WithdrawContainer = styled.div`
+const RepayContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -124,17 +125,110 @@ State.init({
 
 function updateGas() {
   if (["ETH", "WETH"].includes(symbol)) {
-    depositETHGas().then((value) => {
+    repayETHGas().then((value) => {
       State.update({ gas: value });
     });
   } else {
-    depositERC20Gas().then((value) => {
+    repayERC20Gas().then((value) => {
       State.update({ gas: value });
     });
   }
 }
 
 updateGas();
+
+function bigMin(_a, _b) {
+  const a = Big(_a);
+  const b = Big(_b);
+  return a.gt(b) ? b : a;
+}
+
+function getAvailableBalance() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    const newBalance = Number(balance) - 0.01;
+    if (newBalance <= 0) {
+      return 0;
+    } else {
+      return newBalance;
+    }
+  } else {
+    return balance;
+  }
+}
+
+const actualMaxValue =
+  isValid(balance) && isValid(variableBorrows)
+    ? bigMin(
+        getAvailableBalance(),
+        Big(variableBorrows).times(1.01).toNumber()
+      ).toFixed()
+    : "0";
+const shownMaxValue =
+  isValid(balance) && isValid(variableBorrows)
+    ? bigMin(getAvailableBalance(), variableBorrows).toFixed()
+    : "0";
+
+/**
+ *
+ * @param {string} chainId
+ * @param {string} address user address
+ * @param {string} asset asset address
+ * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
+ * @param {string} amount amount in USD with 2 fixed decimals
+ * @returns
+ */
+function getNewHealthFactor(chainId, address, asset, action, amount) {
+  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
+function debounce(fn, wait) {
+  let timer = state.timer;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn();
+    }, wait);
+    State.update({ timer });
+  };
+}
+
+const updateNewHealthFactor = debounce(() => {
+  State.update({ newHealthFactor: "-" });
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "repay",
+        state.amountInUSD
+      ).then((response) => {
+        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
+        State.update({ newHealthFactor });
+      });
+    });
+}, 1000);
+
+const changeValue = (value) => {
+  let amountInUSD = "0.00";
+  if (Number(value) > Number(shownMaxValue)) {
+    value = shownMaxValue;
+  }
+  if (Number(value) < 0) {
+    value = "0";
+  }
+  if (isValid(value)) {
+    amountInUSD = Big(value)
+      .mul(marketReferencePriceInUsd)
+      .toFixed(2, ROUND_DOWN);
+  }
+  State.update({ amount: value, amountInUSD });
+  updateNewHealthFactor();
+};
 
 function getNonce(tokenAddress, userAddress) {
   const token = new ethers.Contract(
@@ -197,95 +291,105 @@ function signERC20Approval(user, reserve, tokenName, amount, deadline) {
 
 /**
  *
- * @param {string} user user address
- * @param {string} reserve AAVE reserve address (token to supply)
- * @param {string} amount token amount in full decimals
- * @param {number} deadline unix timestamp in SECONDS
- * @param {string} rawSig signature from signERC20Approval
- * @returns txn object
+ * @param {*} rawSig signature from signERC20Approval
+ * @param {string} address user address
+ * @param {string} asset asset address (e.g. USDT)
+ * @param {string} amount repay amount in full decimals
+ * @param {number} deadline UNIX timestamp in SECONDS
+ * @returns
  */
-function supplyWithPermit(user, reserve, amount, deadline, rawSig) {
-  const sig = ethers.utils.splitSignature(rawSig);
-  const pool = new ethers.Contract(
-    config.aavePoolV3Address,
-    config.aavePoolV3ABI.body,
-    Ethers.provider().getSigner()
-  );
-  return pool[
-    "supplyWithPermit(address,uint256,address,uint16,uint256,uint8,bytes32,bytes32)"
-  ](reserve, amount, user, 0, deadline, sig.v, sig.r, sig.s);
-}
-
-function depositETH(amount) {
+function repayERC20(shownAmount, actualAmount) {
   State.update({
     loading: true,
   });
-  return Ethers.provider()
-    .getSigner()
-    .getAddress()
-    .then((address) => {
-      const wrappedTokenGateway = new ethers.Contract(
-        config.wrappedTokenGatewayV3Address,
-        config.wrappedTokenGatewayV3ABI.body,
-        Ethers.provider().getSigner()
-      );
-      return wrappedTokenGateway.depositETH(
-        config.aavePoolV3Address,
-        address,
-        0,
-        {
-          value: amount,
-        }
-      );
-    })
-    .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You supplied ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
-    })
-    .catch(() => State.update({ loading: false }));
-}
-
-function depositErc20(amount) {
-  State.update({
-    loading: true,
-  });
+  const asset = underlyingAsset;
   const deadline = Math.floor(Date.now() / 1000 + 3600); // after an hour
   Ethers.provider()
     .getSigner()
     .getAddress()
-    .then((userAddress) => {
-      signERC20Approval(userAddress, token, tokenName, amount, deadline)
+    .then((address) => {
+      return signERC20Approval(
+        address,
+        asset,
+        tokenName,
+        actualAmount,
+        deadline
+      )
         .then((rawSig) => {
-          return supplyWithPermit(userAddress, token, amount, deadline, rawSig);
+          const sig = ethers.utils.splitSignature(rawSig);
+          const pool = new ethers.Contract(
+            config.aavePoolV3Address,
+            config.aavePoolV3ABI.body,
+            Ethers.provider().getSigner()
+          );
+
+          return pool[
+            "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)"
+          ](
+            asset,
+            actualAmount,
+            2, // variable interest rate
+            address,
+            deadline,
+            sig.v,
+            sig.r,
+            sig.s
+          ).then((tx) => {
+            tx.wait().then((res) => {
+              const { status } = res;
+              if (status === 1) {
+                onActionSuccess({
+                  msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
+                  callback: () => {
+                    onRequestClose();
+                    State.update({
+                      loading: false,
+                    });
+                  },
+                });
+                console.log("tx succeeded", res);
+              } else {
+                State.update({
+                  loading: false,
+                });
+                console.log("tx failed", res);
+              }
+            });
+          });
         })
+        .catch(() => State.update({ loading: false }));
+    })
+    .catch(() => State.update({ loading: false }));
+}
+
+function repayETH(shownAmount, actualAmount) {
+  State.update({ loading: true });
+  const wrappedTokenGateway = new ethers.Contract(
+    config.wrappedTokenGatewayV3Address,
+    config.wrappedTokenGatewayV3ABI.body,
+    Ethers.provider().getSigner()
+  );
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      wrappedTokenGateway
+        .repayETH(
+          config.aavePoolV3Address,
+          actualAmount,
+          2, // variable interest rate
+          address,
+          {
+            value: actualAmount,
+          }
+        )
         .then((tx) => {
           tx.wait().then((res) => {
             const { status } = res;
             if (status === 1) {
               onActionSuccess({
-                msg: `You supplied ${Big(amount)
-                  .div(Big(10).pow(decimals))
-                  .toFixed(8)} ${symbol}`,
+                msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
                 callback: () => {
                   onRequestClose();
                   State.update({
@@ -307,89 +411,15 @@ function depositErc20(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
-/**
- *
- * @param {string} chainId
- * @param {string} address user address
- * @param {string} asset asset address
- * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
- * @param {string} amount amount in USD with 2 fixed decimals
- * @returns
- */
-function getNewHealthFactor(chainId, address, asset, action, amount) {
-  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
-  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
-}
-
-const maxValue =
-  symbol === "ETH" || symbol === "WETH"
-    ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed()
-    : balance;
-
-function debounce(fn, wait) {
-  let timer = state.timer;
-  return () => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn();
-    }, wait);
-    State.update({ timer });
-  };
-}
-
-const updateNewHealthFactor = debounce(() => {
-  State.update({ newHealthFactor: "-" });
-
-  Ethers.provider()
-    .getSigner()
-    .getAddress()
-    .then((address) => {
-      getNewHealthFactor(
-        chainId,
-        address,
-        data.underlyingAsset,
-        "deposit",
-        state.amountInUSD
-      ).then((response) => {
-        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
-        State.update({ newHealthFactor });
-      });
-    });
-}, 1000);
-
-const changeValue = (value) => {
-  if (Number(value) > Number(maxValue)) {
-    value = maxValue;
-  }
-  if (Number(value) < 0) {
-    value = "0";
-  }
-  if (isValid(value)) {
-    const amountInUSD = Big(value)
-      .mul(marketReferencePriceInUsd)
-      .toFixed(2, ROUND_DOWN);
-    State.update({
-      amountInUSD,
-    });
-    updateNewHealthFactor();
-  } else {
-    State.update({
-      amountInUSD: "0.00",
-      newHealthFactor: "-",
-    });
-  }
-  State.update({ amount: value });
-};
-
 return (
   <>
     <Widget
       src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
       props={{
-        title: `Supply ${symbol}`,
+        title: `Repay ${symbol}`,
         onRequestClose: onRequestClose,
         children: (
-          <WithdrawContainer>
+          <RepayContainer>
             <Widget
               src={`${config.ownerId}/widget/AAVE.Modal.RoundedCard`}
               props={{
@@ -430,10 +460,13 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Wallet Balance: {balance}
+                            Wallet balance:{" "}
+                            {balance === "" || !isValid(balance)
+                              ? "-"
+                              : Number(balance).toFixed(7)}
                             <Max
                               onClick={() => {
-                                changeValue(maxValue);
+                                changeValue(shownMaxValue);
                               }}
                             >
                               MAX
@@ -456,22 +489,47 @@ return (
                     <Widget
                       src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
                       props={{
-                        left: <PurpleTexture>Supply APY</PurpleTexture>,
+                        left: <PurpleTexture>Remaining Debt</PurpleTexture>,
                         right: (
-                          <WhiteTexture>
-                            {(Number(supplyAPY) * 100).toFixed(2)}%
-                          </WhiteTexture>
-                        ),
-                      }}
-                    />
-                    <Widget
-                      src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
-                      props={{
-                        left: <PurpleTexture>Collateralization</PurpleTexture>,
-                        right: usageAsCollateralEnabled ? (
-                          <GreenTexture>Enabled</GreenTexture>
-                        ) : (
-                          <RedTexture>Disabled</RedTexture>
+                          <div style={{ textAlign: "right" }}>
+                            <WhiteTexture>
+                              {Number(variableBorrows).toFixed(7) +
+                                ` ${symbol}`}
+                              <img
+                                src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                                width={16}
+                                height={16}
+                              />{" "}
+                              {isValid(state.amount)
+                                ? Big(variableBorrows)
+                                    .minus(state.amount)
+                                    .toFixed(7) + ` ${symbol}`
+                                : `- ${symbol}`}
+                            </WhiteTexture>
+                            <WhiteTexture>
+                              {isValid(variableBorrows) &&
+                              isValid(marketReferencePriceInUsd)
+                                ? "$ " +
+                                  Big(variableBorrows)
+                                    .times(marketReferencePriceInUsd)
+                                    .toFixed(2)
+                                : "$ -"}
+                              <img
+                                src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                                width={16}
+                                height={16}
+                              />{" "}
+                              {isValid(state.amount) &&
+                              isValid(state.amount) &&
+                              isValid(marketReferencePriceInUsd)
+                                ? "$ " +
+                                  Big(variableBorrows)
+                                    .minus(state.amount)
+                                    .times(marketReferencePriceInUsd)
+                                    .toFixed(2)
+                                : "$ -"}
+                            </WhiteTexture>
+                          </div>
                         ),
                       }}
                     />
@@ -510,23 +568,26 @@ return (
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
                 config,
-                children: `Supply ${symbol}`,
+                children: `Repay ${symbol}`,
                 loading: state.loading,
                 onClick: () => {
-                  const amount = Big(state.amount)
+                  const actualAmount = Big(
+                    state.amount === shownMaxValue
+                      ? actualMaxValue
+                      : state.amount
+                  )
                     .mul(Big(10).pow(decimals))
                     .toFixed(0);
+                  const shownAmount = state.amount;
                   if (symbol === "ETH" || symbol === "WETH") {
-                    // supply weth
-                    depositETH(amount);
+                    repayETH(shownAmount, actualAmount);
                   } else {
-                    // supply common
-                    depositErc20(amount);
+                    repayERC20(shownAmount, actualAmount);
                   }
                 },
               }}
             />
-          </WithdrawContainer>
+          </RepayContainer>
         ),
         config,
       }}

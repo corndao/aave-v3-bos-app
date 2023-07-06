@@ -1,9 +1,17 @@
-const { config, data, onRequestClose, onActionSuccess } = props;
+const {
+  config,
+  data,
+  onRequestClose,
+  onActionSuccess,
+  chainId,
+  withdrawETHGas,
+  withdrawERC20Gas,
+  formatHealthFactor,
+} = props;
 
 if (!data) {
-  return;
+  return <div />;
 }
-
 const ROUND_DOWN = 0;
 function isValid(a) {
   if (!a) return false;
@@ -21,6 +29,7 @@ const {
   marketReferencePriceInUsd,
   aTokenAddress,
   availableLiquidity,
+  healthFactor,
 } = data;
 
 const availableLiquidityAmount = Big(availableLiquidity)
@@ -63,6 +72,13 @@ const WhiteTexture = styled.div`
   font-weight: bold;
   color: white;
 `;
+
+const GreenTexture = styled.div`
+  font-size: 14px;
+  font-weight: bold;
+  color: #2cffa7;
+`;
+
 const TransactionOverviewContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -101,14 +117,30 @@ State.init({
   allowanceAmount: 0,
   needApprove: false,
   loading: false,
+  newHealthFactor: "-",
+  gas: "-",
 });
+
+function updateGas() {
+  if (["ETH", "WETH"].includes(symbol)) {
+    withdrawETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    withdrawERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
+}
+
+updateGas();
 
 const _remainingSupply = Number(underlyingBalance) - Number(state.amount);
 const remainingSupply = isNaN(_remainingSupply)
   ? underlyingBalance
   : Big(_remainingSupply).toFixed(2);
 
-function withdrawErc20(asset, amount) {
+function withdrawErc20(asset, actualAmount, shownAmount) {
   State.update({
     loading: true,
   });
@@ -122,16 +154,18 @@ function withdrawErc20(asset, amount) {
         Ethers.provider().getSigner()
       );
 
-      return pool["withdraw(address,uint256,address)"](asset, amount, address);
+      return pool["withdraw(address,uint256,address)"](
+        asset,
+        actualAmount,
+        address
+      );
     })
     .then((tx) => {
       tx.wait().then((res) => {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You withdraw ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
+            msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
             callback: () => {
               onRequestClose();
               State.update({
@@ -151,7 +185,7 @@ function withdrawErc20(asset, amount) {
     .catch(() => State.update({ loading: false }));
 }
 
-function withdrawETH(amount) {
+function withdrawETH(actualAmount, shownAmount) {
   State.update({
     loading: true,
   });
@@ -167,7 +201,7 @@ function withdrawETH(amount) {
 
       return wrappedTokenGateway.withdrawETH(
         config.aavePoolV3Address,
-        amount,
+        actualAmount,
         address
       );
     })
@@ -176,9 +210,7 @@ function withdrawETH(amount) {
         const { status } = res;
         if (status === 1) {
           onActionSuccess({
-            msg: `You withdraw ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
+            msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
             callback: () => {
               onRequestClose();
               State.update({
@@ -222,6 +254,20 @@ function allowanceForGateway(tokenAddress) {
     });
 }
 
+/**
+ *
+ * @param {string} chainId
+ * @param {string} address user address
+ * @param {string} asset asset address
+ * @param {string} action 'deposit' | 'withdraw' | 'borrow' | 'repay'
+ * @param {string} amount amount in USD with 2 fixed decimals
+ * @returns
+ */
+function getNewHealthFactor(chainId, address, asset, action, amount) {
+  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
+}
+
 function update() {
   allowanceForGateway(aTokenAddress)
     .then((amount) => Number(amount.toString()))
@@ -245,32 +291,85 @@ function update() {
 
 update();
 
-/**
- * max value you can withdraw
- */
-const maxValue = Math.min(
-  Number(underlyingBalance),
-  Number(availableLiquidityAmount)
-);
+function bigMin(_a, _b) {
+  const a = Big(_a);
+  const b = Big(_b);
+  return a.gt(b) ? b : a;
+}
+
+const actualMaxValue =
+  isValid(underlyingBalance) && isValid(availableLiquidityAmount)
+    ? Big(underlyingBalance).lt(availableLiquidityAmount)
+      ? config.MAX_UINT_256
+      : Big(availableLiquidityAmount)
+          .mul(Big(10).pow(decimals))
+          .toFixed(0, ROUND_DOWN)
+    : "0";
+const shownMaxValue =
+  isValid(underlyingBalance) && isValid(availableLiquidityAmount)
+    ? bigMin(underlyingBalance, availableLiquidityAmount).toFixed()
+    : "0";
+
+function debounce(fn, wait) {
+  let timer = state.timer;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn();
+    }, wait);
+    State.update({ timer });
+  };
+}
+
+const updateNewHealthFactor = debounce(() => {
+  State.update({ newHealthFactor: "-" });
+
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((address) => {
+      getNewHealthFactor(
+        chainId,
+        address,
+        data.underlyingAsset,
+        "withdraw",
+        state.amountInUSD
+      ).then((response) => {
+        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
+        State.update({ newHealthFactor });
+      });
+    });
+}, 1000);
 
 const changeValue = (value) => {
-  if (Number(value) > maxValue) {
-    value = maxValue;
+  if (Number(value) > shownMaxValue) {
+    value = shownMaxValue;
   }
   if (Number(value) < 0) {
     value = "0";
   }
   if (isValid(value)) {
+    const amountInUSD = Big(value)
+      .mul(marketReferencePriceInUsd)
+      .toFixed(2, ROUND_DOWN);
     State.update({
-      amountInUSD: Big(value)
-        .mul(marketReferencePriceInUsd)
-        .toFixed(2, ROUND_DOWN),
+      amountInUSD,
     });
+    updateNewHealthFactor();
   } else {
-    State.update({ amountInUSD: "0.00" });
+    State.update({
+      amountInUSD: "0.00",
+      newHealthFactor: "-",
+    });
   }
   State.update({ amount: value });
 };
+
+const disabled =
+  state.newHealthFactor !== "∞" &&
+  (!isValid(state.newHealthFactor) ||
+    state.newHealthFactor === "" ||
+    Big(state.newHealthFactor).lt(1));
 
 return (
   <Widget
@@ -324,7 +423,7 @@ return (
                           {Big(underlyingBalance).toFixed(3, ROUND_DOWN)}
                           <Max
                             onClick={() => {
-                              changeValue(maxValue);
+                              changeValue(shownMaxValue);
                             }}
                           >
                             MAX
@@ -349,13 +448,41 @@ return (
                     props={{
                       left: <PurpleTexture>Remaining Supply</PurpleTexture>,
                       right: (
-                        <WhiteTexture>{remainingSupply} USDT</WhiteTexture>
+                        <WhiteTexture>
+                          {remainingSupply} {symbol}
+                        </WhiteTexture>
+                      ),
+                    }}
+                  />
+                  <Widget
+                    src={`${config.ownerId}/widget/AAVE.Modal.FlexBetween`}
+                    props={{
+                      left: <PurpleTexture>Health Factor</PurpleTexture>,
+                      right: (
+                        <div style={{ textAlign: "right" }}>
+                          <GreenTexture>
+                            {healthFactor}
+                            <img
+                              src={`${config.ipfsPrefix}/bafkreiesqu5jyvifklt2tfrdhv6g4h6dubm2z4z4dbydjd6if3bdnitg7q`}
+                              width={16}
+                              height={16}
+                            />{" "}
+                            {state.newHealthFactor}
+                          </GreenTexture>
+                          <WhiteTexture>
+                            Liquidation at &lt; {config.FIXED_LIQUIDATION_VALUE}
+                          </WhiteTexture>
+                        </div>
                       ),
                     }}
                   />
                 </TransactionOverviewContainer>
               ),
             }}
+          />
+          <Widget
+            src={`${config.ownerId}/widget/AAVE.GasEstimation`}
+            props={{ gas: state.gas, config }}
           />
           {state.needApprove && symbol === "ETH" && (
             <Widget
@@ -364,6 +491,7 @@ return (
                 config,
                 loading: state.loading,
                 children: `Approve ${symbol}`,
+                disabled,
                 onClick: () => {
                   State.update({
                     loading: true,
@@ -392,16 +520,21 @@ return (
                 config,
                 loading: state.loading,
                 children: "Withdraw",
+                disabled,
                 onClick: () => {
-                  const amount = Big(state.amount)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
+                  const actualAmount =
+                    state.amount === shownMaxValue
+                      ? actualMaxValue
+                      : Big(state.amount)
+                          .mul(Big(10).pow(decimals))
+                          .toFixed(0, ROUND_DOWN);
+                  const shownAmount = state.amount;
                   if (symbol === "ETH" || symbol === "WETH") {
                     // supply weth
-                    withdrawETH(amount);
+                    withdrawETH(actualAmount, shownAmount);
                   } else {
                     // supply common
-                    withdrawErc20(underlyingAsset, amount);
+                    withdrawErc20(underlyingAsset, actualAmount, shownAmount);
                   }
                 },
               }}

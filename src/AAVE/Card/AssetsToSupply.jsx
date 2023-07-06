@@ -5,11 +5,29 @@ const {
   setShowSupplyModal,
   onActionSuccess,
   chainId,
+  healthFactor,
+  formatHealthFactor,
+  depositETHGas,
+  depositERC20Gas,
 } = props;
 
 State.init({
   data: undefined,
 });
+
+const SupplyButton = ({ data }) => (
+  <Widget
+    src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+    props={{
+      config,
+      children: "Supply",
+      onClick: () => {
+        State.update({ data });
+        setShowSupplyModal(true);
+      },
+    }}
+  />
+);
 
 return (
   <>
@@ -87,17 +105,7 @@ return (
                         </>
                       )}
                     </div>,
-                    <Widget
-                      src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                      props={{
-                        config,
-                        children: "Supply",
-                        onClick: () => {
-                          State.update({ data: row });
-                          setShowSupplyModal(true);
-                        },
-                      }}
-                    />,
+                    <SupplyButton data={row} />,
                   ]),
                 }}
               />
@@ -183,17 +191,7 @@ return (
                                   ],
                                 }}
                               />,
-                              <Widget
-                                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-                                props={{
-                                  config,
-                                  children: "Supply",
-                                  onClick: () => {
-                                    State.update({ data: row });
-                                    setShowSupplyModal(true);
-                                  },
-                                }}
-                              />,
+                              <SupplyButton data={row} />,
                             ],
                           }}
                         />,
@@ -216,9 +214,15 @@ return (
         props={{
           config,
           onRequestClose: () => setShowSupplyModal(false),
-          data: state.data,
+          data: {
+            ...state.data,
+            healthFactor,
+          },
           onActionSuccess,
           chainId,
+          depositETHGas,
+          depositERC20Gas,
+          formatHealthFactor,
         }}
       />
     )}
