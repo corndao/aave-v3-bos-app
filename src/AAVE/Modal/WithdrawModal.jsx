@@ -365,6 +365,12 @@ const changeValue = (value) => {
   State.update({ amount: value });
 };
 
+const disabled =
+  state.newHealthFactor !== "∞" &&
+  (!isValid(state.newHealthFactor) ||
+    state.newHealthFactor === "" ||
+    Big(state.newHealthFactor).lt(1));
+
 return (
   <Widget
     src={`${config.ownerId}/widget/AAVE.Modal.BaseModal`}
@@ -485,11 +491,7 @@ return (
                 config,
                 loading: state.loading,
                 children: `Approve ${symbol}`,
-                disabled:
-                  state.newHealthFactor !== "∞" &&
-                  (!isValid(state.newHealthFactor) ||
-                    state.newHealthFactor === "" ||
-                    Big(state.newHealthFactor).lt(1)),
+                disabled,
                 onClick: () => {
                   State.update({
                     loading: true,
@@ -518,11 +520,7 @@ return (
                 config,
                 loading: state.loading,
                 children: "Withdraw",
-                disabled:
-                  state.newHealthFactor !== "∞" &&
-                  (!isValid(state.newHealthFactor) ||
-                    state.newHealthFactor === "" ||
-                    Big(state.newHealthFactor).lt(1)),
+                disabled,
                 onClick: () => {
                   const actualAmount =
                     state.amount === shownMaxValue
