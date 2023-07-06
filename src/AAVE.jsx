@@ -429,6 +429,7 @@ function bigMin(_a, _b) {
 }
 
 function formatHealthFactor(healthFactor) {
+  if (healthFactor === "∞") return healthFactor;
   if (!healthFactor || !isValid(healthFactor)) return "-";
   if (Number(healthFactor) === -1) return "∞";
   return Big(healthFactor).toFixed(2, ROUND_DOWN);
@@ -567,7 +568,7 @@ function updateData() {
       const userDebts = JSON.parse(userDebtsResponse.body);
       const assetsToBorrow = {
         ...userDebts,
-        healthFactor: userDebts.healthFactor,
+        healthFactor: formatHealthFactor(userDebts.healthFactor),
         debts: userDebts.debts
           .map((userDebt) => {
             const market = marketsMapping[userDebt.symbol];
