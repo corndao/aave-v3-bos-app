@@ -185,7 +185,7 @@ State.init({
 });
 
 return (
-  <>
+  <SwitchContainer>
     {state.showDropdown && (
       <DropdownMobile>
         <div>Select Aave Market</div>
@@ -231,57 +231,55 @@ return (
         </div>
       </DropdownMobile>
     )}
-    <SwitchContainer>
-      <DropdownContainer onClick={toggleDropdown}>
-        <ChainImage />
-        <SwitchTitle>{config.chainName}</SwitchTitle>
-        {!disabled && <DropdownImage />}
-      </DropdownContainer>
-      {state.showDropdown && (
-        <div className="dropdown-pc">
-          <div>Select Aave Market</div>
-          <div
-            className="dropdown-pc-item"
-            onClick={() => {
-              State.update({ showDropdown: false });
-              switchNetwork(1);
-            }}
-          >
-            <EthImage />
-            <div>Ethereum</div>
-          </div>
-          <div
-            className="dropdown-pc-item"
-            onClick={() => {
-              State.update({ showDropdown: false });
-              switchNetwork(42161);
-            }}
-          >
-            <ArbImage />
-            <div>Arbitrum</div>
-          </div>
-          <div
-            className="dropdown-pc-item"
-            onClick={() => {
-              State.update({ showDropdown: false });
-              switchNetwork(137);
-            }}
-          >
-            <PolygonImage />
-            <div>Polygon</div>
-          </div>
-          <div
-            className="dropdown-pc-item"
-            onClick={() => {
-              State.update({ showDropdown: false });
-              switchNetwork(1442);
-            }}
-          >
-            <PolygonImage />
-            <div>Polygon zkEVM Testnet</div>
-          </div>
+    <DropdownContainer onClick={toggleDropdown}>
+      <ChainImage />
+      <SwitchTitle>{config.chainName}</SwitchTitle>
+      {!disabled && <DropdownImage />}
+    </DropdownContainer>
+    {state.showDropdown && (
+      <div className="dropdown-pc">
+        <div>Select Aave Market</div>
+        <div
+          className="dropdown-pc-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(1);
+          }}
+        >
+          <EthImage />
+          <div>Ethereum</div>
         </div>
-      )}
-    </SwitchContainer>
-  </>
+        <div
+          className="dropdown-pc-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(42161);
+          }}
+        >
+          <ArbImage />
+          <div>Arbitrum</div>
+        </div>
+        <div
+          className="dropdown-pc-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(137);
+          }}
+        >
+          <PolygonImage />
+          <div>Polygon</div>
+        </div>
+        <div
+          className="dropdown-pc-item"
+          onClick={() => {
+            State.update({ showDropdown: false });
+            switchNetwork(1442);
+          }}
+        >
+          <PolygonImage />
+          <div>Polygon zkEVM Testnet</div>
+        </div>
+      </div>
+    )}
+  </SwitchContainer>
 );
