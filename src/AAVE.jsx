@@ -112,11 +112,7 @@ if (
     .getNetwork()
     .then((data) => {
       const chainId = data?.chainId;
-      if (chainId && chainId === DEFAULT_CHAIN_ID) {
-        State.update({ chainId });
-      } else {
-        switchEthereumChain(DEFAULT_CHAIN_ID);
-      }
+      State.update({ chainId });
     });
 }
 
@@ -680,13 +676,7 @@ const body = loading ? (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
-      {state.walletConnected
-        ? state.chainId === DEFAULT_CHAIN_ID
-          ? "Loading..."
-          : `Please switch network to ${
-              getNetworkConfig(DEFAULT_CHAIN_ID).chainName
-            }`
-        : "Need to connect wallet first."}
+      {state.walletConnected ? "Loading..." : "Need to connect wallet first."}
     </Body>
   </>
 ) : (
@@ -702,7 +692,6 @@ const body = loading ? (
             switchNetwork: (chainId) => {
               switchEthereumChain(chainId);
             },
-            disabled: true,
           }}
         />
         <Widget
