@@ -326,6 +326,9 @@ function approve(amount) {
 }
 
 function update() {
+  if (supportPermit) {
+    return;
+  }
   if (
     !isValid(state.amount) ||
     !isValid(state.allowanceAmount) ||
@@ -377,8 +380,6 @@ function depositErc20(amount) {
             });
           })
           .catch(() => State.update({ loading: false }));
-        // 2. depositFromApproval
-        // 2. repayFromApproval
       } else {
         signERC20Approval(userAddress, token, tokenName, amount, deadline)
           .then((rawSig) => {
