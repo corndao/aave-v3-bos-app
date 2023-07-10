@@ -351,7 +351,6 @@ function depositErc20(amount) {
     .getAddress()
     .then((userAddress) => {
       if (!supportPermit) {
-        State.update({ loading: false });
         depositFromApproval(amount)
           .then((tx) => {
             tx.wait().then((res) => {
