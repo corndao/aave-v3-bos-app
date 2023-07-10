@@ -36,7 +36,6 @@ const {
   supportPermit,
 } = data;
 
-console.log({ supportPermit });
 const RepayContainer = styled.div`
   display: flex;
   flex-direction: column;

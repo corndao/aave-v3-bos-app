@@ -214,6 +214,7 @@ function getGasPrice() {
   return Ethers.provider().getGasPrice();
 }
 
+console.log({ assetsToSupply: state.assetsToSupply });
 function gasEstimation(action) {
   const assetsToSupply = state.assetsToSupply;
   if (!assetsToSupply) {
