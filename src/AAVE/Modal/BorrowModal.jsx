@@ -135,7 +135,7 @@ function updateGas() {
 
 updateGas();
 
-const maxValue = availableBorrows;
+const maxValue = Big(availableBorrows).toFixed(decimals);
 
 /**
  *
