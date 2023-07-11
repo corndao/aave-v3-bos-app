@@ -397,7 +397,11 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Available: {availableBorrows}
+                            Available:{" "}
+                            {isValid(availableBorrows) &&
+                            availableBorrows !== "-"
+                              ? Big(availableBorrows).toFixed(7)
+                              : availableBorrows}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);
