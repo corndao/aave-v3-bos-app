@@ -418,8 +418,8 @@ function calculateAvailableBorrows({
   marketReferencePriceInUsd,
 }) {
   return isValid(availableBorrowsUSD) && isValid(marketReferencePriceInUsd)
-    ? Big(availableBorrowsUSD).div(marketReferencePriceInUsd).toFixed(7)
-    : Number(0).toFixed(7);
+    ? Big(availableBorrowsUSD).div(marketReferencePriceInUsd).toFixed()
+    : Number(0).toFixed();
 }
 
 function bigMin(_a, _b) {
@@ -485,7 +485,10 @@ function updateData() {
               ? state.ethBalance
               : userBalances[idx].balance
           ).div(Big(10).pow(userBalances[idx].decimals));
-          const balance = balanceRaw.toFixed(7, ROUND_DOWN);
+          const balance = balanceRaw.toFixed(
+            userBalances[idx].decimals,
+            ROUND_DOWN
+          );
           const balanceInUSD = balanceRaw
             .mul(market.marketReferencePriceInUsd)
             .toFixed(3, ROUND_DOWN);

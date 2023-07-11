@@ -216,7 +216,7 @@ return (
                           }}
                         />,
                         <div>
-                          <div>{row.availableBorrows}</div>
+                          <div>{Number(row.availableBorrows).toFixed(7)}</div>
                           <div>
                             $ {Number(row.availableBorrowsUSD).toFixed(2)}
                           </div>

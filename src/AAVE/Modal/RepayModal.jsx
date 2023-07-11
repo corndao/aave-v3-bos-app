@@ -165,8 +165,8 @@ const actualMaxValue =
     : "0";
 const shownMaxValue =
   isValid(balance) && isValid(variableBorrows)
-    ? bigMin(getAvailableBalance(), variableBorrows).toFixed()
-    : "0";
+    ? bigMin(getAvailableBalance(), variableBorrows).toFixed(decimals)
+    : Big("0").toFixed(decimals);
 
 /**
  *
