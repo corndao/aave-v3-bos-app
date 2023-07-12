@@ -214,7 +214,6 @@ function getGasPrice() {
   return Ethers.provider().getGasPrice();
 }
 
-console.log({ assetsToSupply: state.assetsToSupply });
 function gasEstimation(action) {
   const assetsToSupply = state.assetsToSupply;
   if (!assetsToSupply) {
@@ -458,7 +457,7 @@ function updateData() {
     }
     const markets = JSON.parse(marketsResponse.body);
     const marketsMapping = markets.reduce((prev, cur) => {
-      prev[cur.symbol] = cur;
+      prev[cur.underlyingAsset] = cur;
       return prev;
     }, {});
 
@@ -530,7 +529,7 @@ function updateUserSupplies(marketsMapping) {
       (row) => Number(row.underlyingBalance) !== 0
     );
     const yourSupplies = userDeposits.map((userDeposit) => {
-      const market = marketsMapping[userDeposit.symbol];
+      const market = marketsMapping[userDeposit.underlyingAsset];
       return {
         ...market,
         ...userDeposit,
@@ -562,7 +561,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
   const prevYourBorrows = state.yourBorrows;
   // userDebts depends on the balance from assetsToSupply
   const assetsToSupplyMap = assetsToSupply.reduce((prev, cur) => {
-    prev[cur.symbol] = cur;
+    prev[cur.token] = cur;
     return prev;
   }, {});
 
@@ -576,7 +575,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
       healthFactor: formatHealthFactor(userDebts.healthFactor),
       debts: userDebts.debts
         .map((userDebt) => {
-          const market = marketsMapping[userDebt.symbol];
+          const market = marketsMapping[userDebt.underlyingAsset];
           if (!market) {
             throw new Error("Fatal error: Market not found");
           }
@@ -602,8 +601,9 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
             availableBorrowsUSD,
-            balance: assetsToSupplyMap[symbol].balance,
-            balanceInUSD: assetsToSupplyMap[symbol].balanceInUSD,
+            balance: assetsToSupplyMap[userDebt.underlyingAsset].balance,
+            balanceInUSD:
+              assetsToSupplyMap[userDebt.underlyingAsset].balanceInUSD,
           };
         })
         .sort((asset1, asset2) => {
