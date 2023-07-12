@@ -38,6 +38,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
+        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -49,6 +50,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
+        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -60,6 +62,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
+        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -414,8 +417,8 @@ function calculateAvailableBorrows({
   marketReferencePriceInUsd,
 }) {
   return isValid(availableBorrowsUSD) && isValid(marketReferencePriceInUsd)
-    ? Big(availableBorrowsUSD).div(marketReferencePriceInUsd).toFixed(7)
-    : Number(0).toFixed(7);
+    ? Big(availableBorrowsUSD).div(marketReferencePriceInUsd).toFixed()
+    : Number(0).toFixed();
 }
 
 function bigMin(_a, _b) {
@@ -481,7 +484,10 @@ function updateData() {
               ? state.ethBalance
               : userBalances[idx].balance
           ).div(Big(10).pow(userBalances[idx].decimals));
-          const balance = balanceRaw.toFixed(7, ROUND_DOWN);
+          const balance = balanceRaw.toFixed(
+            userBalances[idx].decimals,
+            ROUND_DOWN
+          );
           const balanceInUSD = balanceRaw
             .mul(market.marketReferencePriceInUsd)
             .toFixed(3, ROUND_DOWN);

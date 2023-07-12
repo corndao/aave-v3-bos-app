@@ -307,8 +307,8 @@ const actualMaxValue =
     : "0";
 const shownMaxValue =
   isValid(underlyingBalance) && isValid(availableLiquidityAmount)
-    ? bigMin(underlyingBalance, availableLiquidityAmount).toFixed()
-    : "0";
+    ? bigMin(underlyingBalance, availableLiquidityAmount).toFixed(decimals)
+    : Big("0").toFixed(decimals);
 
 function debounce(fn, wait) {
   let timer = state.timer;
