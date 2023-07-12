@@ -323,8 +323,8 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
 
 const maxValue =
   symbol === "ETH" || symbol === "WETH"
-    ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed()
-    : balance;
+    ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed(decimals)
+    : Big(balance).toFixed(decimals);
 
 function debounce(fn, wait) {
   let timer = state.timer;

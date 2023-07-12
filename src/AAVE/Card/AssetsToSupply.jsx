@@ -80,7 +80,7 @@ return (
                       }}
                     />,
                     <div>
-                      <div>{row.balance}</div>
+                      <div>{Number(row.balance).toFixed(7)}</div>
                       <div>$ {row.balanceInUSD}</div>
                     </div>,
                     `${(Number(row.supplyAPY) * 100).toFixed(2)} %`,
@@ -150,7 +150,9 @@ return (
                                         Wallet Balance
                                       </div>
                                       <div className="card-data-value">
-                                        <div>{row.balance}</div>
+                                        <div>
+                                          {Number(row.balance).toFixed(7)}
+                                        </div>
                                         <div>$ {row.balanceInUSD}</div>
                                       </div>
                                     </div>,
