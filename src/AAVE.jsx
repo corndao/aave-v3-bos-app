@@ -382,7 +382,8 @@ State.init({
   selectTab: "supply", // supply | borrow
 });
 
-const loading = !state.assetsToSupply || !state.yourSupplies;
+const loading =
+  !state.assetsToSupply || !state.yourSupplies || !state.assetsToBorrow;
 
 // Import functions to state.imports
 function importFunctions(imports) {
