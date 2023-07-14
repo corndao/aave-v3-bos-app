@@ -510,6 +510,7 @@ function updateData() {
     }
     const userBalancesMap = userBalances.reduce((prev, cur) => {
       prev[cur.token] = cur;
+      return prev;
     }, {});
     const assetsToSupply = markets
       .map((market, idx) => {
