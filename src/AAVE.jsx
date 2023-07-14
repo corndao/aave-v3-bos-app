@@ -380,6 +380,7 @@ State.init({
   address: undefined,
   ethBalance: undefined,
   selectTab: "supply", // supply | borrow
+  userBalances: undefined,
 });
 
 const loading =
@@ -435,6 +436,38 @@ function formatHealthFactor(healthFactor) {
   return Big(healthFactor).toFixed(2, ROUND_DOWN);
 }
 
+function getUserBalancesBySequences(underlyingAssets) {
+  const seqAmount = 5;
+  let idx = 0;
+  for (let i = 0; i < underlyingAssets.length; i += seqAmount) {
+    const nowSeq = underlyingAssets.slice(i, i + seqAmount);
+    if (state[`userBalances${idx}`]) {
+      continue;
+    }
+    getUserBalances(state.chainId, state.address, nowSeq).then(
+      (userBalancesResponse) => {
+        const userBalances = JSON.parse(userBalancesResponse.body);
+        State.update({
+          [`userBalances${idx++}`]: userBalances,
+        });
+      }
+    );
+  }
+
+  const totalSeqAmount = Math.ceil(underlyingAssets.length / seqAmount);
+  const result = Array(totalSeqAmount)
+    .fill(0)
+    .map((_, idx) => `userBalances${idx}`)
+    .map((key) => state[key])
+    .filter((element) => !!element);
+
+  if (result.length === totalSeqAmount) {
+    State.update({
+      userBalances: result.reduce((prev, cur) => [...prev, ...cur], []),
+    });
+  }
+}
+
 // update data in async manner
 function updateData() {
   const provider = Ethers.provider();
@@ -466,64 +499,61 @@ function updateData() {
     }, {});
 
     // get user balances
-    getUserBalances(
-      state.chainId,
-      state.address,
-      markets.map((market) => market.underlyingAsset)
-    ).then((userBalancesResponse) => {
-      if (!userBalancesResponse) {
-        return;
-      }
-      const userBalances = JSON.parse(userBalancesResponse.body);
-      const assetsToSupply = markets
-        .map((market, idx) => {
-          if (!isValid(userBalances[idx].decimals)) {
-            return;
-          }
-          const balanceRaw = Big(
-            market.symbol === "WETH"
-              ? state.ethBalance
-              : userBalances[idx].balance
-          ).div(Big(10).pow(userBalances[idx].decimals));
-          const balance = balanceRaw.toFixed(
-            userBalances[idx].decimals,
-            ROUND_DOWN
-          );
-          const balanceInUSD = balanceRaw
-            .mul(market.marketReferencePriceInUsd)
-            .toFixed(3, ROUND_DOWN);
-          return {
-            ...userBalances[idx],
-            ...market,
-            balance,
-            balanceInUSD,
-            ...(market.symbol === "WETH"
-              ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
-              : {}),
-          };
-        })
-        .sort((asset1, asset2) => {
-          const balanceInUSD1 = Number(asset1.balanceInUSD);
-          const balanceInUSD2 = Number(asset2.balanceInUSD);
-          if (balanceInUSD1 !== balanceInUSD2)
-            return balanceInUSD2 - balanceInUSD1;
-          return asset1.symbol.localeCompare(asset2.symbol);
-        });
-
-      State.update({
-        assetsToSupply,
+    getUserBalancesBySequences(markets.map((market) => market.underlyingAsset));
+    const userBalances = state.userBalances;
+    console.log({ userBalances });
+    if (userBalances.length !== markets.length) {
+      return;
+    }
+    const assetsToSupply = markets
+      .map((market, idx) => {
+        if (!isValid(userBalances[idx].decimals)) {
+          return;
+        }
+        const balanceRaw = Big(
+          market.symbol === "WETH"
+            ? state.ethBalance
+            : userBalances[idx].balance
+        ).div(Big(10).pow(userBalances[idx].decimals));
+        const balance = balanceRaw.toFixed(
+          userBalances[idx].decimals,
+          ROUND_DOWN
+        );
+        const balanceInUSD = balanceRaw
+          .mul(market.marketReferencePriceInUsd)
+          .toFixed(3, ROUND_DOWN);
+        return {
+          ...userBalances[idx],
+          ...market,
+          balance,
+          balanceInUSD,
+          ...(market.symbol === "WETH"
+            ? {
+                symbol: "ETH",
+                name: "Ethereum",
+              }
+            : {}),
+        };
+      })
+      .filter((asset) => !!asset)
+      .sort((asset1, asset2) => {
+        const balanceInUSD1 = Number(asset1.balanceInUSD);
+        const balanceInUSD2 = Number(asset2.balanceInUSD);
+        if (balanceInUSD1 !== balanceInUSD2)
+          return balanceInUSD2 - balanceInUSD1;
+        return asset1.symbol.localeCompare(asset2.symbol);
       });
 
-      // get user borrow data
-      updateUserDebts(marketsMapping, assetsToSupply);
+    State.update({
+      assetsToSupply,
     });
 
-    // get user supplies
-    updateUserSupplies(marketsMapping);
+    // get user borrow data
+    updateUserDebts(marketsMapping, assetsToSupply);
   });
+
+  // get user supplies
+  updateUserSupplies(marketsMapping);
 }
 
 function updateUserSupplies(marketsMapping) {
