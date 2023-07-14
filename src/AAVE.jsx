@@ -501,13 +501,15 @@ function updateData() {
     // get user balances
     getUserBalancesBySequences(markets.map((market) => market.underlyingAsset));
     const userBalances = state.userBalances;
-    console.log({ userBalances });
     if (userBalances.length !== markets.length) {
       return;
     }
+    const userBalancesMap = userBalances.reduce((prev, cur) => {
+      prev[cur.token] = cur;
+    }, {});
     const assetsToSupply = markets
       .map((market, idx) => {
-        if (!isValid(userBalances[idx].decimals)) {
+        if (!isValid(userBalancesMap[market.underlyingAsset].decimals)) {
           return;
         }
         const balanceRaw = Big(
