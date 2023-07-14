@@ -450,7 +450,7 @@ function getUserBalancesBySequences(underlyingAssets) {
     }
     getUserBalances(state.chainId, state.address, nowSeq).then(
       (userBalancesResponse) => {
-        const userBalances = JSON.parse(userBalancesResponse.body);
+        const userBalances = userBalancesResponse.body;
         State.update({
           [`userBalances${idx++}`]: userBalances,
         });
@@ -496,7 +496,7 @@ function updateData() {
     if (!marketsResponse) {
       return;
     }
-    const markets = JSON.parse(marketsResponse.body);
+    const markets = marketsResponse.body;
     const marketsMapping = markets.reduce((prev, cur) => {
       prev[cur.underlyingAsset] = cur;
       return prev;
@@ -568,7 +568,7 @@ function updateUserSupplies(marketsMapping) {
     if (!userDepositsResponse) {
       return;
     }
-    const userDeposits = JSON.parse(userDepositsResponse.body).filter(
+    const userDeposits = userDepositsResponse.body.filter(
       (row) => Number(row.underlyingBalance) !== 0
     );
     const yourSupplies = userDeposits.map((userDeposit) => {
@@ -612,7 +612,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
     if (!userDebtsResponse) {
       return;
     }
-    const userDebts = JSON.parse(userDebtsResponse.body);
+    const userDebts = userDebtsResponse.body;
     const assetsToBorrow = {
       ...userDebts,
       healthFactor: formatHealthFactor(userDebts.healthFactor),

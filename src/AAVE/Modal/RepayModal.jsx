@@ -210,7 +210,7 @@ const updateNewHealthFactor = debounce(() => {
         "repay",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
+        const newHealthFactor = formatHealthFactor(response.body);
         State.update({ newHealthFactor });
       });
     });
