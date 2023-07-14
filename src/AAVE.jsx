@@ -284,7 +284,9 @@ function repayERC20Gas() {
 // }
 // returns Market[]
 function getMarkets(chainId) {
-  return asyncFetch(`https://aave-api.pages.dev/${chainId}/markets`);
+  return asyncFetch(
+    `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/markets`
+  );
 }
 
 /**
@@ -298,7 +300,7 @@ function getMarkets(chainId) {
 // }
 // returns TokenBalance[]
 function getUserBalances(chainId, account, tokens) {
-  const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
+  const url = `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/balances?account=${account}&tokens=${tokens.join(
     "|"
   )}`;
   return asyncFetch(url);
@@ -316,7 +318,7 @@ function getUserBalances(chainId, account, tokens) {
 // returns UserDeposit[]
 function getUserDeposits(chainId, address) {
   return asyncFetch(
-    `https://aave-api.pages.dev/${chainId}/deposits/${address}`
+    `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/deposits/${address}`
   );
 }
 
@@ -337,7 +339,9 @@ function getUserDeposits(chainId, address) {
 // }
 // returns UserDebtSummary
 function getUserDebts(chainId, address) {
-  return asyncFetch(`https://aave-api.pages.dev/${chainId}/debts/${address}`);
+  return asyncFetch(
+    `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/debts/${address}`
+  );
 }
 
 // App config
