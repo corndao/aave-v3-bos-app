@@ -557,10 +557,9 @@ function updateData() {
 
     // get user borrow data
     updateUserDebts(marketsMapping, assetsToSupply);
+    // get user supplies
+    updateUserSupplies(marketsMapping);
   });
-
-  // get user supplies
-  updateUserSupplies(marketsMapping);
 }
 
 function updateUserSupplies(marketsMapping) {
