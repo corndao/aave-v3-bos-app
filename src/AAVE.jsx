@@ -445,9 +445,6 @@ function getUserBalancesBySequences(underlyingAssets) {
   let idx = 0;
   for (let i = 0; i < underlyingAssets.length; i += seqAmount) {
     const nowSeq = underlyingAssets.slice(i, i + seqAmount);
-    if (state[`userBalances${idx}`]) {
-      continue;
-    }
     getUserBalances(state.chainId, state.address, nowSeq).then(
       (userBalancesResponse) => {
         const userBalances = userBalancesResponse.body;
