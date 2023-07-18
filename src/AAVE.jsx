@@ -505,6 +505,7 @@ function updateData() {
               ? {
                   symbol: "ETH",
                   name: "Ethereum",
+                  supportPermit: true,
                 }
               : {}),
           };
@@ -547,6 +548,7 @@ function updateUserSupplies(marketsMapping) {
           ? {
               symbol: "ETH",
               name: "Ethereum",
+              supportPermit: true,
             }
           : {}),
       };
@@ -596,7 +598,6 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
           )
             .times(ACTUAL_BORROW_AMOUNT_RATE)
             .toFixed();
-          const symbol = userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol;
           return {
             ...market,
             ...userDebt,
@@ -604,6 +605,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
               ? {
                   symbol: "ETH",
                   name: "Ethereum",
+                  supportPermit: true,
                 }
               : {}),
             availableBorrows: calculateAvailableBorrows({
