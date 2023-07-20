@@ -481,18 +481,12 @@ function updateData() {
       const userBalances = userBalancesResponse.body;
       const assetsToSupply = markets
         .map((market, idx) => {
-          if (!isValid(userBalances[idx].decimals)) {
-            return;
-          }
           const balanceRaw = Big(
             market.symbol === "WETH"
               ? state.ethBalance
               : userBalances[idx].balance
-          ).div(Big(10).pow(userBalances[idx].decimals));
-          const balance = balanceRaw.toFixed(
-            userBalances[idx].decimals,
-            ROUND_DOWN
-          );
+          ).div(Big(10).pow(market.decimals));
+          const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
           const balanceInUSD = balanceRaw
             .mul(market.marketReferencePriceInUsd)
             .toFixed(3, ROUND_DOWN);
