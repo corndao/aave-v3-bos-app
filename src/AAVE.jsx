@@ -8,6 +8,8 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
   variableDebtTokenABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/VariableDebtToken.json",
+  walletBalanceProviderABI:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WalletBalanceProvider.json",
 };
 const DEFAULT_CHAIN_ID = 1442;
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
@@ -21,12 +23,19 @@ function getNetworkConfig(chainId) {
     erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
     aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
     variableDebtTokenABI: fetch(CONTRACT_ABI.variableDebtTokenABI),
+    walletBalanceProviderABI: fetch(CONTRACT_ABI.walletBalanceProviderABI),
   };
 
   const constants = {
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    balanceProviderAddress: {
+      1: "0xC7be5307ba715ce89b152f3Df0658295b3dbA8E2",
+      42161: "0xBc790382B3686abffE4be14A030A96aC6154023a",
+      137: "0xBc790382B3686abffE4be14A030A96aC6154023a",
+      1442: "0x0da6DCAd2bE4801b644AEE679e0AdE008bB4bc6b",
+    },
   };
 
   switch (chainId) {
@@ -439,8 +448,26 @@ function formatHealthFactor(healthFactor) {
   return Big(healthFactor).toFixed(2, ROUND_DOWN);
 }
 
+function batchBalanceOf(chainId, userAddress, tokenAddresses, abi) {
+  const balanceProvider = new ethers.Contract(
+    config.balanceProviderAddress[chainId],
+    abi.body,
+    Ethers.provider().getSigner()
+  );
+
+  return balanceProvider.batchBalanceOf([userAddress], tokenAddresses);
+}
+
 // update data in async manner
 function updateData() {
+  // check abi loaded
+  if (
+    Object.keys(CONTRACT_ABI)
+      .map((key) => config[key])
+      .filter((ele) => !!ele).length !== Object.keys(CONTRACT_ABI).length
+  ) {
+    return;
+  }
   const provider = Ethers.provider();
   if (!provider) {
     return;
@@ -470,55 +497,51 @@ function updateData() {
     }, {});
 
     // get user balances
-    getUserBalances(
+    batchBalanceOf(
       state.chainId,
       state.address,
-      markets.map((market) => market.underlyingAsset)
-    ).then((userBalancesResponse) => {
-      if (!userBalancesResponse) {
-        return;
-      }
-      const userBalances = userBalancesResponse.body;
-      const assetsToSupply = markets
-        .map((market, idx) => {
-          const balanceRaw = Big(
-            market.symbol === "WETH"
-              ? state.ethBalance
-              : userBalances[idx].balance
-          ).div(Big(10).pow(market.decimals));
-          const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
-          const balanceInUSD = balanceRaw
-            .mul(market.marketReferencePriceInUsd)
-            .toFixed(3, ROUND_DOWN);
-          return {
-            ...userBalances[idx],
-            ...market,
-            balance,
-            balanceInUSD,
-            ...(market.symbol === "WETH"
-              ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                  supportPermit: true,
-                }
-              : {}),
-          };
-        })
-        .sort((asset1, asset2) => {
-          const balanceInUSD1 = Number(asset1.balanceInUSD);
-          const balanceInUSD2 = Number(asset2.balanceInUSD);
-          if (balanceInUSD1 !== balanceInUSD2)
-            return balanceInUSD2 - balanceInUSD1;
-          return asset1.symbol.localeCompare(asset2.symbol);
+      markets.map((market) => market.underlyingAsset),
+      config.walletBalanceProviderABI
+    )
+      .then((balances) => balances.toString())
+      .then((userBalances) => {
+        const assetsToSupply = markets
+          .map((market, idx) => {
+            const balanceRaw = Big(
+              market.symbol === "WETH" ? state.ethBalance : userBalances[idx]
+            ).div(Big(10).pow(market.decimals));
+            const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
+            const balanceInUSD = balanceRaw
+              .mul(market.marketReferencePriceInUsd)
+              .toFixed(3, ROUND_DOWN);
+            return {
+              ...market,
+              balance,
+              balanceInUSD,
+              ...(market.symbol === "WETH"
+                ? {
+                    symbol: "ETH",
+                    name: "Ethereum",
+                    supportPermit: true,
+                  }
+                : {}),
+            };
+          })
+          .sort((asset1, asset2) => {
+            const balanceInUSD1 = Number(asset1.balanceInUSD);
+            const balanceInUSD2 = Number(asset2.balanceInUSD);
+            if (balanceInUSD1 !== balanceInUSD2)
+              return balanceInUSD2 - balanceInUSD1;
+            return asset1.symbol.localeCompare(asset2.symbol);
+          });
+
+        State.update({
+          assetsToSupply,
         });
 
-      State.update({
-        assetsToSupply,
+        // get user borrow data
+        updateUserDebts(marketsMapping, assetsToSupply);
       });
-
-      // get user borrow data
-      updateUserDebts(marketsMapping, assetsToSupply);
-    });
     // get user supplies
     updateUserSupplies(marketsMapping);
   });
