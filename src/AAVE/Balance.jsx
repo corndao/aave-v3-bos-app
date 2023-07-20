@@ -1,5 +1,5 @@
 const WalletBalanceProviderABI =
-  "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/abi/abi/WalletBalanceProvider.json";
+  "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WalletBalanceProvider.json";
 
 const abi = fetch(WalletBalanceProviderABI);
 
