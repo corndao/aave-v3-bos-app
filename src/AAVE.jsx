@@ -503,7 +503,7 @@ function updateData() {
       markets.map((market) => market.underlyingAsset),
       config.walletBalanceProviderABI
     )
-      .then((balances) => balances.toString())
+      .then((balances) => balances.map((balance) => balance.toString()))
       .then((userBalances) => {
         const assetsToSupply = markets
           .map((market, idx) => {
@@ -590,7 +590,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
   const prevYourBorrows = state.yourBorrows;
   // userDebts depends on the balance from assetsToSupply
   const assetsToSupplyMap = assetsToSupply.reduce((prev, cur) => {
-    prev[cur.token] = cur;
+    prev[cur.underlyingAsset] = cur;
     return prev;
   }, {});
 
@@ -606,7 +606,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
         .map((userDebt) => {
           const market = marketsMapping[userDebt.underlyingAsset];
           if (!market) {
-            throw new Error("Fatal error: Market not found");
+            return;
           }
           const { availableLiquidityUSD } = market;
           const availableBorrowsUSD = bigMin(
@@ -635,6 +635,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
               assetsToSupplyMap[userDebt.underlyingAsset].balanceInUSD,
           };
         })
+        .filter((asset) => !!asset)
         .sort((asset1, asset2) => {
           const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
           const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
