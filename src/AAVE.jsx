@@ -459,7 +459,7 @@ function batchBalanceOf(chainId, userAddress, tokenAddresses, abi) {
 }
 
 // update data in async manner
-function updateData() {
+function updateData(refresh) {
   // check abi loaded
   if (
     Object.keys(CONTRACT_ABI)
@@ -538,16 +538,15 @@ function updateData() {
         State.update({
           assetsToSupply,
         });
-
         // get user borrow data
-        updateUserDebts(marketsMapping, assetsToSupply);
+        updateUserDebts(marketsMapping, assetsToSupply, refresh);
       });
     // get user supplies
-    updateUserSupplies(marketsMapping);
+    updateUserSupplies(marketsMapping, refresh);
   });
 }
 
-function updateUserSupplies(marketsMapping) {
+function updateUserSupplies(marketsMapping, refresh) {
   const prevYourSupplies = state.yourSupplies;
   getUserDeposits(state.chainId, state.address).then((userDepositsResponse) => {
     if (!userDepositsResponse) {
@@ -575,14 +574,18 @@ function updateUserSupplies(marketsMapping) {
       yourSupplies,
     });
 
-    if (JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies)) {
+    if (
+      refresh &&
+      JSON.stringify(prevYourSupplies) === JSON.stringify(yourSupplies) &&
+      yourSupplies.length !== 0
+    ) {
       console.log("refresh supplies again ...", prevYourSupplies, yourSupplies);
       setTimeout(updateData, 500);
     }
   });
 }
 
-function updateUserDebts(marketsMapping, assetsToSupply) {
+function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
   if (!marketsMapping || !assetsToSupply) {
     return;
   }
@@ -663,7 +666,10 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
       assetsToBorrow,
     });
 
-    if (JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)) {
+    if (
+      refresh &&
+      JSON.stringify(prevYourBorrows) === JSON.stringify(yourBorrows)
+    ) {
       console.log("refresh borrows again ...", prevYourBorrows, yourBorrows);
       setTimeout(updateData, 500);
     }
@@ -672,7 +678,7 @@ function updateUserDebts(marketsMapping, assetsToSupply) {
 
 function onActionSuccess({ msg, callback }) {
   // update data if action finishes
-  updateData();
+  updateData(true);
   // update UI after data has almost loaded
   setTimeout(() => {
     if (callback) {
