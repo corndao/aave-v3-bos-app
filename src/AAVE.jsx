@@ -30,12 +30,6 @@ function getNetworkConfig(chainId) {
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    balanceProviderAddress: {
-      1: "0xC7be5307ba715ce89b152f3Df0658295b3dbA8E2",
-      42161: "0xBc790382B3686abffE4be14A030A96aC6154023a",
-      137: "0xBc790382B3686abffE4be14A030A96aC6154023a",
-      1442: "0x0da6DCAd2bE4801b644AEE679e0AdE008bB4bc6b",
-    },
   };
 
   switch (chainId) {
@@ -47,6 +41,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
+        balanceProviderAddress: "0xC7be5307ba715ce89b152f3Df0658295b3dbA8E2",
         ...abis,
         ...constants,
       };
@@ -58,6 +53,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
+        balanceProviderAddress: "0xBc790382B3686abffE4be14A030A96aC6154023a",
         ...abis,
         ...constants,
       };
@@ -69,6 +65,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
+        balanceProviderAddress: "0xBc790382B3686abffE4be14A030A96aC6154023a",
         ...abis,
         ...constants,
       };
@@ -80,6 +77,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
+        balanceProviderAddress: "0x0da6DCAd2bE4801b644AEE679e0AdE008bB4bc6b",
         ...abis,
         ...constants,
       };
@@ -446,7 +444,7 @@ function formatHealthFactor(healthFactor) {
 
 function batchBalanceOf(chainId, userAddress, tokenAddresses, abi) {
   const balanceProvider = new ethers.Contract(
-    config.balanceProviderAddress[chainId],
+    config.balanceProviderAddress,
     abi.body,
     Ethers.provider().getSigner()
   );
