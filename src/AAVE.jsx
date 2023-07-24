@@ -47,7 +47,6 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
-        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -59,7 +58,6 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
-        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -71,7 +69,6 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
-        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -83,7 +80,6 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
-        borrowBlackListToken: ["AAVE"],
         ...abis,
         ...constants,
       };
@@ -646,11 +642,9 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
             return availableBorrowsUSD2 - availableBorrowsUSD1;
           return asset1.symbol.localeCompare(asset2.symbol);
         })
-        .filter(
-          (asset) =>
-            !config.borrowBlackListToken ||
-            !config.borrowBlackListToken.includes(asset.symbol)
-        ),
+        .filter((asset) => {
+          return asset.borrowingEnabled;
+        }),
     };
     const yourBorrows = {
       ...assetsToBorrow,
