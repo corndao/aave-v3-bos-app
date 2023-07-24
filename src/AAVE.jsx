@@ -30,6 +30,7 @@ function getNetworkConfig(chainId) {
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    API_BASE_URL: "https://aave-data-service-7a85eea3aebe.herokuapp.com",
   };
 
   switch (chainId) {
@@ -287,9 +288,7 @@ function repayERC20Gas() {
 // }
 // returns Market[]
 function getMarkets(chainId) {
-  return asyncFetch(
-    `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/markets`
-  );
+  return asyncFetch(`${config.API_BASE_URL}/${chainId}/markets`);
 }
 
 /**
@@ -303,9 +302,9 @@ function getMarkets(chainId) {
 // }
 // returns TokenBalance[]
 function getUserBalances(chainId, account, tokens) {
-  const url = `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/balances?account=${account}&tokens=${tokens.join(
-    "|"
-  )}`;
+  const url = `${
+    config.API_BASE_URL
+  }/${chainId}/balances?account=${account}&tokens=${tokens.join("|")}`;
   return asyncFetch(url);
 }
 
@@ -320,9 +319,7 @@ function getUserBalances(chainId, account, tokens) {
 // }
 // returns UserDeposit[]
 function getUserDeposits(chainId, address) {
-  return asyncFetch(
-    `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/deposits/${address}`
-  );
+  return asyncFetch(`${config.API_BASE_URL}/${chainId}/deposits/${address}`);
 }
 
 // interface UserDebtSummary {
@@ -342,9 +339,7 @@ function getUserDeposits(chainId, address) {
 // }
 // returns UserDebtSummary
 function getUserDebts(chainId, address) {
-  return asyncFetch(
-    `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/debts/${address}`
-  );
+  return asyncFetch(`${config.API_BASE_URL}/${chainId}/debts/${address}`);
 }
 
 // App config

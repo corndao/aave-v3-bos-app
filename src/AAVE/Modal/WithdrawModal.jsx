@@ -264,7 +264,7 @@ function allowanceForGateway(tokenAddress) {
  * @returns
  */
 function getNewHealthFactor(chainId, address, asset, action, amount) {
-  const url = `https://aave-data-service-7a85eea3aebe.herokuapp.com/${chainId}/health/${address}`;
+  const url = `${config.API_BASE_URL}/${chainId}/health/${address}`;
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
 }
 
