@@ -181,7 +181,7 @@ const shownMaxValue =
  * @returns
  */
 function getNewHealthFactor(chainId, address, asset, action, amount) {
-  const url = `${config.API_BASE_URL}/${chainId}/health/${address}`;
+  const url = `${config.AAVE_API_BASE_URL}/${chainId}/health/${address}`;
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
 }
 

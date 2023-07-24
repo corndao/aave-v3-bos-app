@@ -9,7 +9,7 @@ const { config } = props;
 // }
 // returns Market[]
 function getMarkets(chainId) {
-  return asyncFetch(`${config.API_BASE_URL}/${chainId}/markets`);
+  return asyncFetch(`${config.AAVE_API_BASE_URL}/${chainId}/markets`);
 }
 
 /**
@@ -24,7 +24,7 @@ function getMarkets(chainId) {
 // returns TokenBalance[]
 function getUserBalances(chainId, account, tokens) {
   const url = `${
-    config.API_BASE_URL
+    config.AAVE_API_BASE_URL
   }/${chainId}/balances?account=${account}&tokens=${tokens.join("|")}`;
   return asyncFetch(url);
 }
@@ -40,7 +40,9 @@ function getUserBalances(chainId, account, tokens) {
 // }
 // returns UserDeposit[]
 function getUserDeposits(chainId, address) {
-  return asyncFetch(`${config.API_BASE_URL}/${chainId}/deposits/${address}`);
+  return asyncFetch(
+    `${config.AAVE_API_BASE_URL}/${chainId}/deposits/${address}`
+  );
 }
 
 // --- End of functions definition ---
