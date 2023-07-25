@@ -8,6 +8,8 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/AAVEPoolV3.json",
   variableDebtTokenABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/VariableDebtToken.json",
+  walletBalanceProviderABI:
+    "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WalletBalanceProvider.json",
 };
 const DEFAULT_CHAIN_ID = 1442;
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
@@ -21,12 +23,14 @@ function getNetworkConfig(chainId) {
     erc20Abi: fetch(CONTRACT_ABI.erc20Abi),
     aavePoolV3ABI: fetch(CONTRACT_ABI.aavePoolV3ABI),
     variableDebtTokenABI: fetch(CONTRACT_ABI.variableDebtTokenABI),
+    walletBalanceProviderABI: fetch(CONTRACT_ABI.walletBalanceProviderABI),
   };
 
   const constants = {
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    AAVE_API_BASE_URL: "https://aave-data-service-7a85eea3aebe.herokuapp.com",
   };
 
   switch (chainId) {
@@ -38,7 +42,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
           "0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C",
-        borrowBlackListToken: ["AAVE"],
+        balanceProviderAddress: "0xC7be5307ba715ce89b152f3Df0658295b3dbA8E2",
         ...abis,
         ...constants,
       };
@@ -50,7 +54,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0xB5Ee21786D28c5Ba61661550879475976B707099",
-        borrowBlackListToken: ["AAVE"],
+        balanceProviderAddress: "0xBc790382B3686abffE4be14A030A96aC6154023a",
         ...abis,
         ...constants,
       };
@@ -62,7 +66,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
           "0x1e4b7A6b903680eab0c5dAbcb8fD429cD2a9598c",
-        borrowBlackListToken: ["AAVE"],
+        balanceProviderAddress: "0xBc790382B3686abffE4be14A030A96aC6154023a",
         ...abis,
         ...constants,
       };
@@ -74,7 +78,7 @@ function getNetworkConfig(chainId) {
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
           "0xD82940E16D25aB1349914e1C369eF1b287d457BF",
-        borrowBlackListToken: ["AAVE"],
+        balanceProviderAddress: "0x0da6DCAd2bE4801b644AEE679e0AdE008bB4bc6b",
         ...abis,
         ...constants,
       };
@@ -284,7 +288,7 @@ function repayERC20Gas() {
 // }
 // returns Market[]
 function getMarkets(chainId) {
-  return asyncFetch(`https://aave-api.pages.dev/${chainId}/markets`);
+  return asyncFetch(`${config.AAVE_API_BASE_URL}/${chainId}/markets`);
 }
 
 /**
@@ -298,9 +302,9 @@ function getMarkets(chainId) {
 // }
 // returns TokenBalance[]
 function getUserBalances(chainId, account, tokens) {
-  const url = `https://aave-api.pages.dev/${chainId}/balances?account=${account}&tokens=${tokens.join(
-    "|"
-  )}`;
+  const url = `${
+    config.AAVE_API_BASE_URL
+  }/${chainId}/balances?account=${account}&tokens=${tokens.join("|")}`;
   return asyncFetch(url);
 }
 
@@ -316,7 +320,7 @@ function getUserBalances(chainId, account, tokens) {
 // returns UserDeposit[]
 function getUserDeposits(chainId, address) {
   return asyncFetch(
-    `https://aave-api.pages.dev/${chainId}/deposits/${address}`
+    `${config.AAVE_API_BASE_URL}/${chainId}/deposits/${address}`
   );
 }
 
@@ -337,7 +341,7 @@ function getUserDeposits(chainId, address) {
 // }
 // returns UserDebtSummary
 function getUserDebts(chainId, address) {
-  return asyncFetch(`https://aave-api.pages.dev/${chainId}/debts/${address}`);
+  return asyncFetch(`${config.AAVE_API_BASE_URL}/${chainId}/debts/${address}`);
 }
 
 // App config
@@ -382,7 +386,8 @@ State.init({
   selectTab: "supply", // supply | borrow
 });
 
-const loading = !state.assetsToSupply || !state.yourSupplies;
+const loading =
+  !state.assetsToSupply || !state.yourSupplies || !state.assetsToBorrow;
 
 // Import functions to state.imports
 function importFunctions(imports) {
@@ -434,12 +439,26 @@ function formatHealthFactor(healthFactor) {
   return Big(healthFactor).toFixed(2, ROUND_DOWN);
 }
 
-/**
- * Update AAVE data
- *
- * @param {boolean} refresh  needs to refresh data if not updated yet
- */
+function batchBalanceOf(chainId, userAddress, tokenAddresses, abi) {
+  const balanceProvider = new ethers.Contract(
+    config.balanceProviderAddress,
+    abi.body,
+    Ethers.provider().getSigner()
+  );
+
+  return balanceProvider.batchBalanceOf([userAddress], tokenAddresses);
+}
+
+// update data in async manner
 function updateData(refresh) {
+  // check abi loaded
+  if (
+    Object.keys(CONTRACT_ABI)
+      .map((key) => config[key])
+      .filter((ele) => !!ele).length !== Object.keys(CONTRACT_ABI).length
+  ) {
+    return;
+  }
   const provider = Ethers.provider();
   if (!provider) {
     return;
@@ -462,68 +481,57 @@ function updateData(refresh) {
     if (!marketsResponse) {
       return;
     }
-    const markets = JSON.parse(marketsResponse.body);
+    const markets = marketsResponse.body;
     const marketsMapping = markets.reduce((prev, cur) => {
-      prev[cur.symbol] = cur;
+      prev[cur.underlyingAsset] = cur;
       return prev;
     }, {});
 
     // get user balances
-    getUserBalances(
+    batchBalanceOf(
       state.chainId,
       state.address,
-      markets.map((market) => market.underlyingAsset)
-    ).then((userBalancesResponse) => {
-      if (!userBalancesResponse) {
-        return;
-      }
-      const userBalances = JSON.parse(userBalancesResponse.body);
-      const assetsToSupply = markets
-        .map((market, idx) => {
-          if (!isValid(userBalances[idx].decimals)) {
-            return;
-          }
-          const balanceRaw = Big(
-            market.symbol === "WETH"
-              ? state.ethBalance
-              : userBalances[idx].balance
-          ).div(Big(10).pow(userBalances[idx].decimals));
-          const balance = balanceRaw.toFixed(
-            userBalances[idx].decimals,
-            ROUND_DOWN
-          );
-          const balanceInUSD = balanceRaw
-            .mul(market.marketReferencePriceInUsd)
-            .toFixed(3, ROUND_DOWN);
-          return {
-            ...userBalances[idx],
-            ...market,
-            balance,
-            balanceInUSD,
-            ...(market.symbol === "WETH"
-              ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
-                }
-              : {}),
-          };
-        })
-        .sort((asset1, asset2) => {
-          const balanceInUSD1 = Number(asset1.balanceInUSD);
-          const balanceInUSD2 = Number(asset2.balanceInUSD);
-          if (balanceInUSD1 !== balanceInUSD2)
-            return balanceInUSD2 - balanceInUSD1;
-          return asset1.symbol.localeCompare(asset2.symbol);
+      markets.map((market) => market.underlyingAsset),
+      config.walletBalanceProviderABI
+    )
+      .then((balances) => balances.map((balance) => balance.toString()))
+      .then((userBalances) => {
+        const assetsToSupply = markets
+          .map((market, idx) => {
+            const balanceRaw = Big(
+              market.symbol === "WETH" ? state.ethBalance : userBalances[idx]
+            ).div(Big(10).pow(market.decimals));
+            const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
+            const balanceInUSD = balanceRaw
+              .mul(market.marketReferencePriceInUsd)
+              .toFixed(3, ROUND_DOWN);
+            return {
+              ...market,
+              balance,
+              balanceInUSD,
+              ...(market.symbol === "WETH"
+                ? {
+                    symbol: "ETH",
+                    name: "Ethereum",
+                    supportPermit: true,
+                  }
+                : {}),
+            };
+          })
+          .sort((asset1, asset2) => {
+            const balanceInUSD1 = Number(asset1.balanceInUSD);
+            const balanceInUSD2 = Number(asset2.balanceInUSD);
+            if (balanceInUSD1 !== balanceInUSD2)
+              return balanceInUSD2 - balanceInUSD1;
+            return asset1.symbol.localeCompare(asset2.symbol);
+          });
+
+        State.update({
+          assetsToSupply,
         });
-
-      State.update({
-        assetsToSupply,
+        // get user borrow data
+        updateUserDebts(marketsMapping, assetsToSupply, refresh);
       });
-
-      // get user borrow data
-      updateUserDebts(marketsMapping, assetsToSupply, refresh);
-    });
-
     // get user supplies
     updateUserSupplies(marketsMapping, refresh);
   });
@@ -535,11 +543,11 @@ function updateUserSupplies(marketsMapping, refresh) {
     if (!userDepositsResponse) {
       return;
     }
-    const userDeposits = JSON.parse(userDepositsResponse.body).filter(
+    const userDeposits = userDepositsResponse.body.filter(
       (row) => Number(row.underlyingBalance) !== 0
     );
     const yourSupplies = userDeposits.map((userDeposit) => {
-      const market = marketsMapping[userDeposit.symbol];
+      const market = marketsMapping[userDeposit.underlyingAsset];
       return {
         ...market,
         ...userDeposit,
@@ -547,6 +555,7 @@ function updateUserSupplies(marketsMapping, refresh) {
           ? {
               symbol: "ETH",
               name: "Ethereum",
+              supportPermit: true,
             }
           : {}),
       };
@@ -575,7 +584,7 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
   const prevYourBorrows = state.yourBorrows;
   // userDebts depends on the balance from assetsToSupply
   const assetsToSupplyMap = assetsToSupply.reduce((prev, cur) => {
-    prev[cur.symbol] = cur;
+    prev[cur.underlyingAsset] = cur;
     return prev;
   }, {});
 
@@ -583,15 +592,15 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
     if (!userDebtsResponse) {
       return;
     }
-    const userDebts = JSON.parse(userDebtsResponse.body);
+    const userDebts = userDebtsResponse.body;
     const assetsToBorrow = {
       ...userDebts,
       healthFactor: formatHealthFactor(userDebts.healthFactor),
       debts: userDebts.debts
         .map((userDebt) => {
-          const market = marketsMapping[userDebt.symbol];
+          const market = marketsMapping[userDebt.underlyingAsset];
           if (!market) {
-            throw new Error("Fatal error: Market not found");
+            return;
           }
           const { availableLiquidityUSD } = market;
           const availableBorrowsUSD = bigMin(
@@ -600,7 +609,6 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
           )
             .times(ACTUAL_BORROW_AMOUNT_RATE)
             .toFixed();
-          const symbol = userDebt.symbol === "WETH" ? "ETH" : userDebt.symbol;
           return {
             ...market,
             ...userDebt,
@@ -608,6 +616,7 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
               ? {
                   symbol: "ETH",
                   name: "Ethereum",
+                  supportPermit: true,
                 }
               : {}),
             availableBorrows: calculateAvailableBorrows({
@@ -615,10 +624,12 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
             availableBorrowsUSD,
-            balance: assetsToSupplyMap[symbol].balance,
-            balanceInUSD: assetsToSupplyMap[symbol].balanceInUSD,
+            balance: assetsToSupplyMap[userDebt.underlyingAsset].balance,
+            balanceInUSD:
+              assetsToSupplyMap[userDebt.underlyingAsset].balanceInUSD,
           };
         })
+        .filter((asset) => !!asset)
         .sort((asset1, asset2) => {
           const availableBorrowsUSD1 = Number(asset1.availableBorrowsUSD);
           const availableBorrowsUSD2 = Number(asset2.availableBorrowsUSD);
@@ -626,11 +637,9 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
             return availableBorrowsUSD2 - availableBorrowsUSD1;
           return asset1.symbol.localeCompare(asset2.symbol);
         })
-        .filter(
-          (asset) =>
-            !config.borrowBlackListToken ||
-            !config.borrowBlackListToken.includes(asset.symbol)
-        ),
+        .filter((asset) => {
+          return asset.borrowingEnabled;
+        }),
     };
     const yourBorrows = {
       ...assetsToBorrow,
