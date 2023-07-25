@@ -563,9 +563,9 @@ function updateUserSupplies(marketsMapping, refresh) {
       return {
         ...market,
         ...userDeposit,
-        ...(market.symbol === config.nativeCurrency.symbol
+        ...(market.symbol === config.nativeWrapCurrency.symbol
           ? {
-              ...config.nativeWrapCurrency,
+              ...config.nativeCurrency,
               supportPermit: true,
             }
           : {}),
