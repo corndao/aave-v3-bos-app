@@ -663,8 +663,8 @@ return (
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
-                    if (symbol === "ETH" || symbol === "WETH") {
-                      // supply weth
+                    if (symbol === "ETH") {
+                      // supply eth
                       depositETH(amount);
                     } else {
                       // supply common

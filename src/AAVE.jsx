@@ -13,7 +13,9 @@ const CONTRACT_ABI = {
 };
 const DEFAULT_CHAIN_ID = 1442;
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
+const WETH_TOKEN = { name: "Wrapped Ether", symbol: "WETH", decimals: 18 };
 const MATIC_TOKEN = { name: "Matic", symbol: "MATIC", decimals: 18 };
+const WMATIC_TOKEN = { name: "Wrapped Matic", symbol: "WMATIC", decimals: 18 };
 const ACTUAL_BORROW_AMOUNT_RATE = 0.99;
 
 // Get AAVE network config by chain id
@@ -38,6 +40,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Ethereum Mainnet",
         nativeCurrency: ETH_TOKEN,
+        nativeWrapCurrency: WETH_TOKEN,
         rpcUrl: "https://rpc.ankr.com/eth",
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
@@ -50,6 +53,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Arbitrum Mainnet",
         nativeCurrency: ETH_TOKEN,
+        nativeWrapCurrency: WETH_TOKEN,
         rpcUrl: "https://arb1.arbitrum.io/rpc",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
@@ -62,6 +66,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Polygon Mainnet",
         nativeCurrency: MATIC_TOKEN,
+        nativeWrapCurrency: WMATIC_TOKEN,
         rpcUrl: "https://rpc.ankr.com/polygon",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
@@ -74,6 +79,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Polygon zkEVM Testnet",
         nativeCurrency: ETH_TOKEN,
+        nativeWrapCurrency: WETH_TOKEN,
         rpcUrl: "https://rpc.public.zkevm-test.net",
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
@@ -487,6 +493,17 @@ function updateData(refresh) {
       return prev;
     }, {});
 
+    const nativeMarket = markets.find(
+      (market) => market.symbol === config.nativeWrapCurrency.symbol
+    );
+    markets.push({
+      ...nativeMarket,
+      ...{
+        ...config.nativeCurrency,
+        supportPermit: true,
+      },
+    });
+
     // get user balances
     batchBalanceOf(
       state.chainId,
@@ -499,7 +516,9 @@ function updateData(refresh) {
         const assetsToSupply = markets
           .map((market, idx) => {
             const balanceRaw = Big(
-              market.symbol === "WETH" ? state.ethBalance : userBalances[idx]
+              market.symbol === config.nativeCurrency.symbol
+                ? state.ethBalance
+                : userBalances[idx]
             ).div(Big(10).pow(market.decimals));
             const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
             const balanceInUSD = balanceRaw
@@ -509,13 +528,6 @@ function updateData(refresh) {
               ...market,
               balance,
               balanceInUSD,
-              ...(market.symbol === "WETH"
-                ? {
-                    symbol: "ETH",
-                    name: "Ethereum",
-                    supportPermit: true,
-                  }
-                : {}),
             };
           })
           .sort((asset1, asset2) => {
@@ -551,10 +563,9 @@ function updateUserSupplies(marketsMapping, refresh) {
       return {
         ...market,
         ...userDeposit,
-        ...(market.symbol === "WETH"
+        ...(market.symbol === config.nativeCurrency.symbol
           ? {
-              symbol: "ETH",
-              name: "Ethereum",
+              ...config.nativeWrapCurrency,
               supportPermit: true,
             }
           : {}),
@@ -612,10 +623,9 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
           return {
             ...market,
             ...userDebt,
-            ...(market.symbol === "WETH"
+            ...(market.symbol === config.nativeWrapCurrency.symbol
               ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
+                  ...config.nativeCurrency,
                   supportPermit: true,
                 }
               : {}),
