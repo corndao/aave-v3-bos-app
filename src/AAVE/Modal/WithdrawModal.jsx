@@ -484,7 +484,7 @@ return (
             src={`${config.ownerId}/widget/AAVE.GasEstimation`}
             props={{ gas: state.gas, config }}
           />
-          {state.needApprove && symbol === "ETH" && (
+          {state.needApprove && symbol === config.nativeCurrency.symbol && (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
@@ -513,7 +513,7 @@ return (
               }}
             />
           )}
-          {!(state.needApprove && symbol === "ETH") && (
+          {!(state.needApprove && symbol === config.nativeCurrency.symbol) && (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
@@ -529,7 +529,7 @@ return (
                           .mul(Big(10).pow(decimals))
                           .toFixed(0, ROUND_DOWN);
                   const shownAmount = state.amount;
-                  if (symbol === "ETH" || symbol === "WETH") {
+                  if (symbol === config.nativeCurrency.symbol) {
                     // supply weth
                     withdrawETH(actualAmount, shownAmount);
                   } else {
