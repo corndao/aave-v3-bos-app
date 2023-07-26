@@ -127,7 +127,7 @@ State.init({
 });
 
 function updateGas() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     repayETHGas().then((value) => {
       State.update({ gas: value });
     });
