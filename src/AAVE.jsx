@@ -232,18 +232,19 @@ function gasEstimation(action) {
   if (!assetsToSupply) {
     return "-";
   }
-  const ethAsset = assetsToSupply.find((asset) => asset.symbol === "ETH");
-  if (!ethAsset) {
+  const baseAsset = assetsToSupply.find(
+    (asset) => asset.symbol === config.nativeCurrency.symbol
+  );
+  if (!baseAsset) {
     return "-";
   }
-  const { marketReferencePriceInUsd: ethPrice, decimals: ethDecimals } =
-    ethAsset;
+  const { marketReferencePriceInUsd, decimals } = baseAsset;
   return getGasPrice().then((gasPrice) => {
     const gasLimit = GAS_LIMIT_RECOMMENDATIONS[action].limit;
     return Big(gasPrice.toString())
       .mul(gasLimit)
-      .div(Big(10).pow(ethDecimals))
-      .mul(ethPrice)
+      .div(Big(10).pow(decimals))
+      .mul(marketReferencePriceInUsd)
       .toFixed(2);
   });
 }
