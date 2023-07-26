@@ -544,7 +544,10 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Wallet Balance: {balance}
+                            Wallet Balance:{" "}
+                            {isValid(balance) && balance !== "-"
+                              ? Big(balance).toFixed(7)
+                              : balance}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);
