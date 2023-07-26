@@ -436,7 +436,7 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
 }
 
 const maxValue =
-  symbol === "ETH" || symbol === "WETH"
+  symbol === config.nativeCurrency.symbol
     ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed(decimals)
     : Big(balance).toFixed(decimals);
 
@@ -666,7 +666,7 @@ return (
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
-                    if (symbol === "ETH") {
+                    if (symbol === config.nativeCurrency.symbol) {
                       // supply eth
                       depositETH(amount);
                     } else {
