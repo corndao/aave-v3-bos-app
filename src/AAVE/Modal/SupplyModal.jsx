@@ -29,7 +29,7 @@ const {
   supplyAPY,
   usageAsCollateralEnabled,
   decimals,
-  token,
+  underlyingAsset,
   name: tokenName,
   healthFactor,
   supportPermit,
@@ -269,7 +269,7 @@ function depositETH(amount) {
 }
 
 function getAllowance() {
-  const tokenAddress = token;
+  const tokenAddress = underlyingAsset;
   Ethers.provider()
     .getSigner()
     .getAddress()
@@ -295,7 +295,7 @@ function getAllowance() {
 getAllowance();
 
 function depositFromApproval(amount) {
-  const tokenAddress = token;
+  const tokenAddress = underlyingAsset;
   const pool = new ethers.Contract(
     config.aavePoolV3Address,
     config.aavePoolV3ABI.body,
@@ -316,7 +316,7 @@ function depositFromApproval(amount) {
 }
 
 function approve(amount) {
-  const tokenAddress = token;
+  const tokenAddress = underlyingAsset;
   const token = new ethers.Contract(
     tokenAddress,
     config.erc20Abi.body,
@@ -461,7 +461,7 @@ const updateNewHealthFactor = debounce(() => {
       getNewHealthFactor(
         chainId,
         address,
-        data.underlyingAsset,
+        underlyingAsset,
         "deposit",
         state.amountInUSD
       ).then((response) => {
