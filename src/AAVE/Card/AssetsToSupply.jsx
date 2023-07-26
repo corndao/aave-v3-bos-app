@@ -85,24 +85,15 @@ return (
                     </div>,
                     `${(Number(row.supplyAPY) * 100).toFixed(2)} %`,
                     <div style={{ paddingLeft: "50px" }}>
-                      {row.isIsolated && "—"}
-                      {!row.isIsolated && (
-                        <>
-                          {row.usageAsCollateralEnabled && (
-                            <img
-                              src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
-                              width={16}
-                              height={16}
-                            />
-                          )}
-                          {!row.usageAsCollateralEnabled && (
-                            <img
-                              src={`${config.ipfsPrefix}/bafkreie5skej6q2tik3qa3yldkep4r465poq33ay55uzp2p6hty2ifhkmq`}
-                              width={16}
-                              height={16}
-                            />
-                          )}
-                        </>
+                      {(row.isIsolated ||
+                        (!row.isIsolated && !row.usageAsCollateralEnabled)) &&
+                        "—"}
+                      {!row.isIsolated && row.usageAsCollateralEnabled && (
+                        <img
+                          src={`${config.ipfsPrefix}/bafkreibsy5fzn67veowyalveo6t34rnqvktmok2zutdsp4f5slem3grc3i`}
+                          width={16}
+                          height={16}
+                        />
                       )}
                     </div>,
                     <SupplyButton data={row} />,
