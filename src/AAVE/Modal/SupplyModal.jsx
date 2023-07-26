@@ -126,15 +126,15 @@ State.init({
 });
 
 function updateGas() {
-  // if (symbol === config.nativeCurrency.symbol) {
-  //   depositETHGas().then((value) => {
-  //     State.update({ gas: value });
-  //   });
-  // } else {
-  //   depositERC20Gas().then((value) => {
-  //     State.update({ gas: value });
-  //   });
-  // }
+  if (symbol === config.nativeCurrency.symbol) {
+    depositETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    depositERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
 }
 
 updateGas();

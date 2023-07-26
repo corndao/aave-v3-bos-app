@@ -122,15 +122,15 @@ State.init({
 });
 
 function updateGas() {
-  // if (symbol === config.nativeCurrency.symbol) {
-  //   withdrawETHGas().then((value) => {
-  //     State.update({ gas: value });
-  //   });
-  // } else {
-  //   withdrawERC20Gas().then((value) => {
-  //     State.update({ gas: value });
-  //   });
-  // }
+  if (symbol === config.nativeCurrency.symbol) {
+    withdrawETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    withdrawERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
 }
 
 updateGas();

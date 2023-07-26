@@ -127,15 +127,15 @@ State.init({
 });
 
 function updateGas() {
-  // if (symbol === config.nativeCurrency.symbol) {
-  //   repayETHGas().then((value) => {
-  //     State.update({ gas: value });
-  //   });
-  // } else {
-  //   repayERC20Gas().then((value) => {
-  //     State.update({ gas: value });
-  //   });
-  // }
+  if (symbol === config.nativeCurrency.symbol) {
+    repayETHGas().then((value) => {
+      State.update({ gas: value });
+    });
+  } else {
+    repayERC20Gas().then((value) => {
+      State.update({ gas: value });
+    });
+  }
 }
 
 updateGas();
