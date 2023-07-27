@@ -122,7 +122,7 @@ State.init({
 });
 
 function updateGas() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     borrowETHGas().then((value) => {
       State.update({ gas: value });
     });
@@ -455,7 +455,7 @@ return (
               src={`${config.ownerId}/widget/AAVE.GasEstimation`}
               props={{ gas: state.gas, config }}
             />
-            {state.needApprove && symbol === "ETH" && (
+            {state.needApprove && symbol === config.nativeCurrency.symbol && (
               <Widget
                 src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                 props={{
@@ -487,7 +487,9 @@ return (
                 }}
               />
             )}
-            {!(state.needApprove && symbol === "ETH") && (
+            {!(
+              state.needApprove && symbol === config.nativeCurrency.symbol
+            ) && (
               <Widget
                 src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
                 props={{
@@ -498,7 +500,7 @@ return (
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
-                    if (symbol === "ETH" || symbol === "WETH") {
+                    if (symbol === config.nativeCurrency.symbol) {
                       // borrow weth
                       borrowETH(amount);
                     } else {

@@ -29,7 +29,7 @@ const {
   supplyAPY,
   usageAsCollateralEnabled,
   decimals,
-  token,
+  underlyingAsset,
   name: tokenName,
   healthFactor,
   supportPermit,
@@ -126,7 +126,7 @@ State.init({
 });
 
 function updateGas() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     depositETHGas().then((value) => {
       State.update({ gas: value });
     });
@@ -269,7 +269,7 @@ function depositETH(amount) {
 }
 
 function getAllowance() {
-  const tokenAddress = token;
+  const tokenAddress = underlyingAsset;
   Ethers.provider()
     .getSigner()
     .getAddress()
@@ -295,7 +295,7 @@ function getAllowance() {
 getAllowance();
 
 function depositFromApproval(amount) {
-  const tokenAddress = token;
+  const tokenAddress = underlyingAsset;
   const pool = new ethers.Contract(
     config.aavePoolV3Address,
     config.aavePoolV3ABI.body,
@@ -316,7 +316,7 @@ function depositFromApproval(amount) {
 }
 
 function approve(amount) {
-  const tokenAddress = token;
+  const tokenAddress = underlyingAsset;
   const token = new ethers.Contract(
     tokenAddress,
     config.erc20Abi.body,
@@ -381,6 +381,7 @@ function depositErc20(amount) {
           })
           .catch(() => State.update({ loading: false }));
       } else {
+        const token = underlyingAsset;
         signERC20Approval(userAddress, token, tokenName, amount, deadline)
           .then((rawSig) => {
             return supplyWithPermit(
@@ -436,7 +437,7 @@ function getNewHealthFactor(chainId, address, asset, action, amount) {
 }
 
 const maxValue =
-  symbol === "ETH" || symbol === "WETH"
+  symbol === config.nativeCurrency.symbol
     ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed(decimals)
     : Big(balance).toFixed(decimals);
 
@@ -461,7 +462,7 @@ const updateNewHealthFactor = debounce(() => {
       getNewHealthFactor(
         chainId,
         address,
-        data.underlyingAsset,
+        underlyingAsset,
         "deposit",
         state.amountInUSD
       ).then((response) => {
@@ -544,7 +545,10 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Wallet Balance: {balance}
+                            Wallet Balance:{" "}
+                            {isValid(balance) && balance !== "-"
+                              ? Big(balance).toFixed(7)
+                              : balance}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);
@@ -663,8 +667,8 @@ return (
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
-                    if (symbol === "ETH" || symbol === "WETH") {
-                      // supply weth
+                    if (symbol === config.nativeCurrency.symbol) {
+                      // supply eth
                       depositETH(amount);
                     } else {
                       // supply common

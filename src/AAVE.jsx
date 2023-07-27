@@ -12,8 +12,11 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WalletBalanceProvider.json",
 };
 const DEFAULT_CHAIN_ID = 1442;
+const NATIVE_SYMBOL_ADDRESS_MAP_KEY = "0x0";
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
+const WETH_TOKEN = { name: "Wrapped Ether", symbol: "WETH", decimals: 18 };
 const MATIC_TOKEN = { name: "Matic", symbol: "MATIC", decimals: 18 };
+const WMATIC_TOKEN = { name: "Wrapped Matic", symbol: "WMATIC", decimals: 18 };
 const ACTUAL_BORROW_AMOUNT_RATE = 0.99;
 
 // Get AAVE network config by chain id
@@ -38,6 +41,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Ethereum Mainnet",
         nativeCurrency: ETH_TOKEN,
+        nativeWrapCurrency: WETH_TOKEN,
         rpcUrl: "https://rpc.ankr.com/eth",
         aavePoolV3Address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         wrappedTokenGatewayV3Address:
@@ -50,6 +54,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Arbitrum Mainnet",
         nativeCurrency: ETH_TOKEN,
+        nativeWrapCurrency: WETH_TOKEN,
         rpcUrl: "https://arb1.arbitrum.io/rpc",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
@@ -62,6 +67,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Polygon Mainnet",
         nativeCurrency: MATIC_TOKEN,
+        nativeWrapCurrency: WMATIC_TOKEN,
         rpcUrl: "https://rpc.ankr.com/polygon",
         aavePoolV3Address: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         wrappedTokenGatewayV3Address:
@@ -74,6 +80,7 @@ function getNetworkConfig(chainId) {
       return {
         chainName: "Polygon zkEVM Testnet",
         nativeCurrency: ETH_TOKEN,
+        nativeWrapCurrency: WETH_TOKEN,
         rpcUrl: "https://rpc.public.zkevm-test.net",
         aavePoolV3Address: "0x4412c92f6579D9FC542D108382c8D1d6D2Be63d9",
         wrappedTokenGatewayV3Address:
@@ -226,18 +233,19 @@ function gasEstimation(action) {
   if (!assetsToSupply) {
     return "-";
   }
-  const ethAsset = assetsToSupply.find((asset) => asset.symbol === "ETH");
-  if (!ethAsset) {
+  const baseAsset = assetsToSupply.find(
+    (asset) => asset.symbol === config.nativeCurrency.symbol
+  );
+  if (!baseAsset) {
     return "-";
   }
-  const { marketReferencePriceInUsd: ethPrice, decimals: ethDecimals } =
-    ethAsset;
+  const { marketReferencePriceInUsd, decimals } = baseAsset;
   return getGasPrice().then((gasPrice) => {
     const gasLimit = GAS_LIMIT_RECOMMENDATIONS[action].limit;
     return Big(gasPrice.toString())
       .mul(gasLimit)
-      .div(Big(10).pow(ethDecimals))
-      .mul(ethPrice)
+      .div(Big(10).pow(decimals))
+      .mul(marketReferencePriceInUsd)
       .toFixed(2);
   });
 }
@@ -382,7 +390,7 @@ State.init({
   assetsToBorrow: undefined,
   yourBorrows: undefined,
   address: undefined,
-  ethBalance: undefined,
+  baseAssetBalance: undefined,
   selectTab: "supply", // supply | borrow
 });
 
@@ -472,8 +480,8 @@ function updateData(refresh) {
   provider
     .getSigner()
     ?.getBalance()
-    .then((balance) => State.update({ ethBalance: balance }));
-  if (!state.address || !state.ethBalance) {
+    .then((balance) => State.update({ baseAssetBalance: balance }));
+  if (!state.address || !state.baseAssetBalance) {
     return;
   }
 
@@ -487,6 +495,17 @@ function updateData(refresh) {
       return prev;
     }, {});
 
+    const nativeMarket = markets.find(
+      (market) => market.symbol === config.nativeWrapCurrency.symbol
+    );
+    markets.push({
+      ...nativeMarket,
+      ...{
+        ...config.nativeCurrency,
+        supportPermit: true,
+      },
+    });
+
     // get user balances
     batchBalanceOf(
       state.chainId,
@@ -499,7 +518,9 @@ function updateData(refresh) {
         const assetsToSupply = markets
           .map((market, idx) => {
             const balanceRaw = Big(
-              market.symbol === "WETH" ? state.ethBalance : userBalances[idx]
+              market.symbol === config.nativeCurrency.symbol
+                ? state.baseAssetBalance
+                : userBalances[idx]
             ).div(Big(10).pow(market.decimals));
             const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
             const balanceInUSD = balanceRaw
@@ -509,13 +530,6 @@ function updateData(refresh) {
               ...market,
               balance,
               balanceInUSD,
-              ...(market.symbol === "WETH"
-                ? {
-                    symbol: "ETH",
-                    name: "Ethereum",
-                    supportPermit: true,
-                  }
-                : {}),
             };
           })
           .sort((asset1, asset2) => {
@@ -551,10 +565,9 @@ function updateUserSupplies(marketsMapping, refresh) {
       return {
         ...market,
         ...userDeposit,
-        ...(market.symbol === "WETH"
+        ...(market.symbol === config.nativeWrapCurrency.symbol
           ? {
-              symbol: "ETH",
-              name: "Ethereum",
+              ...config.nativeCurrency,
               supportPermit: true,
             }
           : {}),
@@ -584,7 +597,11 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
   const prevYourBorrows = state.yourBorrows;
   // userDebts depends on the balance from assetsToSupply
   const assetsToSupplyMap = assetsToSupply.reduce((prev, cur) => {
-    prev[cur.underlyingAsset] = cur;
+    if (cur.symbol !== config.nativeCurrency.symbol) {
+      prev[cur.underlyingAsset] = cur;
+    } else {
+      prev[NATIVE_SYMBOL_ADDRESS_MAP_KEY] = cur;
+    }
     return prev;
   }, {});
 
@@ -609,13 +626,16 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
           )
             .times(ACTUAL_BORROW_AMOUNT_RATE)
             .toFixed();
+          const assetsToSupplyMapKey =
+            market.symbol === config.nativeWrapCurrency.symbol
+              ? NATIVE_SYMBOL_ADDRESS_MAP_KEY
+              : userDebt.underlyingAsset;
           return {
             ...market,
             ...userDebt,
-            ...(market.symbol === "WETH"
+            ...(market.symbol === config.nativeWrapCurrency.symbol
               ? {
-                  symbol: "ETH",
-                  name: "Ethereum",
+                  ...config.nativeCurrency,
                   supportPermit: true,
                 }
               : {}),
@@ -624,9 +644,8 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
             availableBorrowsUSD,
-            balance: assetsToSupplyMap[userDebt.underlyingAsset].balance,
-            balanceInUSD:
-              assetsToSupplyMap[userDebt.underlyingAsset].balanceInUSD,
+            balance: assetsToSupplyMap[assetsToSupplyMapKey].balance,
+            balanceInUSD: assetsToSupplyMap[assetsToSupplyMapKey].balanceInUSD,
           };
         })
         .filter((asset) => !!asset)
