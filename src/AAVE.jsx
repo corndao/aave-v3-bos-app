@@ -12,6 +12,7 @@ const CONTRACT_ABI = {
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WalletBalanceProvider.json",
 };
 const DEFAULT_CHAIN_ID = 1442;
+const NATIVE_SYMBOL_ADDRESS_MAP_KEY = "0x0";
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
 const WETH_TOKEN = { name: "Wrapped Ether", symbol: "WETH", decimals: 18 };
 const MATIC_TOKEN = { name: "Matic", symbol: "MATIC", decimals: 18 };
@@ -596,7 +597,11 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
   const prevYourBorrows = state.yourBorrows;
   // userDebts depends on the balance from assetsToSupply
   const assetsToSupplyMap = assetsToSupply.reduce((prev, cur) => {
-    prev[cur.underlyingAsset] = cur;
+    if (cur.symbol !== config.nativeCurrency.symbol) {
+      prev[cur.underlyingAsset] = cur;
+    } else {
+      prev[NATIVE_SYMBOL_ADDRESS_MAP_KEY] = cur;
+    }
     return prev;
   }, {});
 
@@ -621,6 +626,10 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
           )
             .times(ACTUAL_BORROW_AMOUNT_RATE)
             .toFixed();
+          const assetsToSupplyMapKey =
+            market.symbol === config.nativeWrapCurrency.symbol
+              ? NATIVE_SYMBOL_ADDRESS_MAP_KEY
+              : userDebt.underlyingAsset;
           return {
             ...market,
             ...userDebt,
@@ -635,9 +644,8 @@ function updateUserDebts(marketsMapping, assetsToSupply, refresh) {
               marketReferencePriceInUsd: market.marketReferencePriceInUsd,
             }),
             availableBorrowsUSD,
-            balance: assetsToSupplyMap[userDebt.underlyingAsset].balance,
-            balanceInUSD:
-              assetsToSupplyMap[userDebt.underlyingAsset].balanceInUSD,
+            balance: assetsToSupplyMap[assetsToSupplyMapKey].balance,
+            balanceInUSD: assetsToSupplyMap[assetsToSupplyMapKey].balanceInUSD,
           };
         })
         .filter((asset) => !!asset)

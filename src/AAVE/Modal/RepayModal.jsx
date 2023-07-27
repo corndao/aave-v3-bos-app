@@ -147,7 +147,7 @@ function bigMin(_a, _b) {
 }
 
 function getAvailableBalance() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     const newBalance = Number(balance) - 0.01;
     if (newBalance <= 0) {
       return 0;
@@ -715,7 +715,7 @@ return (
                       .mul(Big(10).pow(decimals))
                       .toFixed(0);
                     const shownAmount = state.amount;
-                    if (symbol === "ETH" || symbol === "WETH") {
+                    if (symbol === config.nativeCurrency.symbol) {
                       repayETH(shownAmount, actualAmount);
                     } else {
                       repayERC20(shownAmount, actualAmount);
