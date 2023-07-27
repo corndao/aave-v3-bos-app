@@ -390,7 +390,7 @@ State.init({
   assetsToBorrow: undefined,
   yourBorrows: undefined,
   address: undefined,
-  ethBalance: undefined,
+  baseAssetBalance: undefined,
   selectTab: "supply", // supply | borrow
 });
 
@@ -480,8 +480,8 @@ function updateData(refresh) {
   provider
     .getSigner()
     ?.getBalance()
-    .then((balance) => State.update({ ethBalance: balance }));
-  if (!state.address || !state.ethBalance) {
+    .then((balance) => State.update({ baseAssetBalance: balance }));
+  if (!state.address || !state.baseAssetBalance) {
     return;
   }
 
@@ -519,7 +519,7 @@ function updateData(refresh) {
           .map((market, idx) => {
             const balanceRaw = Big(
               market.symbol === config.nativeCurrency.symbol
-                ? state.ethBalance
+                ? state.baseAssetBalance
                 : userBalances[idx]
             ).div(Big(10).pow(market.decimals));
             const balance = balanceRaw.toFixed(market.decimals, ROUND_DOWN);
