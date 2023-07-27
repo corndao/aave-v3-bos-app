@@ -381,6 +381,7 @@ function depositErc20(amount) {
           })
           .catch(() => State.update({ loading: false }));
       } else {
+        const token = underlyingAsset;
         signERC20Approval(userAddress, token, tokenName, amount, deadline)
           .then((rawSig) => {
             return supplyWithPermit(
