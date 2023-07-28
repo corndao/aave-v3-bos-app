@@ -130,6 +130,8 @@ if (
       if (!config) {
         console.log(`Unsupport chain, chainId: ${chainId}`);
         switchEthereumChain(DEFAULT_CHAIN_ID);
+      } else {
+        State.update({ chainId });
       }
     });
 }
