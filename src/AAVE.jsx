@@ -11,7 +11,7 @@ const CONTRACT_ABI = {
   walletBalanceProviderABI:
     "https://raw.githubusercontent.com/corndao/aave-v3-bos-app/main/abi/WalletBalanceProvider.json",
 };
-const DEFAULT_CHAIN_ID = 1442;
+const DEFAULT_CHAIN_ID = 1;
 const NATIVE_SYMBOL_ADDRESS_MAP_KEY = "0x0";
 const ETH_TOKEN = { name: "Ethereum", symbol: "ETH", decimals: 18 };
 const WETH_TOKEN = { name: "Wrapped Ether", symbol: "WETH", decimals: 18 };
