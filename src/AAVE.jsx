@@ -126,7 +126,11 @@ if (
     .getNetwork()
     .then((data) => {
       const chainId = data?.chainId;
-      State.update({ chainId });
+      const config = getNetworkConfig(chainId);
+      if (!config) {
+        console.log(`Unsupport chain, chainId: ${chainId}`);
+        switchEthereumChain(DEFAULT_CHAIN_ID);
+      }
     });
 }
 
