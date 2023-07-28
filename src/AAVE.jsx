@@ -727,7 +727,13 @@ const body = loading ? (
   <>
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
-      {state.walletConnected ? "Loading..." : "Need to connect wallet first."}
+      {state.walletConnected
+        ? !!getNetworkConfig(chainId)
+          ? "Loading..."
+          : `Please switch network to ${
+              getNetworkConfig(DEFAULT_CHAIN_ID).chainName
+            }`
+        : "Need to connect wallet first."}
     </Body>
   </>
 ) : (
