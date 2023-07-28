@@ -728,7 +728,7 @@ const body = loading ? (
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
       {state.walletConnected
-        ? !!getNetworkConfig(state.chainId)
+        ? !state.chainId || !!getNetworkConfig(state.chainId)
           ? "Loading..."
           : `Please switch network to ${
               getNetworkConfig(DEFAULT_CHAIN_ID).chainName
