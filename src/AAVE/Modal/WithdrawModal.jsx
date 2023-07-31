@@ -122,7 +122,7 @@ State.init({
 });
 
 function updateGas() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     withdrawETHGas().then((value) => {
       State.update({ gas: value });
     });
@@ -264,7 +264,7 @@ function allowanceForGateway(tokenAddress) {
  * @returns
  */
 function getNewHealthFactor(chainId, address, asset, action, amount) {
-  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  const url = `${config.AAVE_API_BASE_URL}/${chainId}/health/${address}`;
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
 }
 
@@ -335,7 +335,7 @@ const updateNewHealthFactor = debounce(() => {
         "withdraw",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
+        const newHealthFactor = formatHealthFactor(response.body);
         State.update({ newHealthFactor });
       });
     });
@@ -484,7 +484,7 @@ return (
             src={`${config.ownerId}/widget/AAVE.GasEstimation`}
             props={{ gas: state.gas, config }}
           />
-          {state.needApprove && symbol === "ETH" && (
+          {state.needApprove && symbol === config.nativeCurrency.symbol && (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
@@ -513,7 +513,7 @@ return (
               }}
             />
           )}
-          {!(state.needApprove && symbol === "ETH") && (
+          {!(state.needApprove && symbol === config.nativeCurrency.symbol) && (
             <Widget
               src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
               props={{
@@ -529,7 +529,7 @@ return (
                           .mul(Big(10).pow(decimals))
                           .toFixed(0, ROUND_DOWN);
                   const shownAmount = state.amount;
-                  if (symbol === "ETH" || symbol === "WETH") {
+                  if (symbol === config.nativeCurrency.symbol) {
                     // supply weth
                     withdrawETH(actualAmount, shownAmount);
                   } else {

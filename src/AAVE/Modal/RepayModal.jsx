@@ -33,6 +33,7 @@ const {
   variableBorrows,
   name: tokenName,
   balance,
+  supportPermit,
 } = data;
 
 const RepayContainer = styled.div`
@@ -121,10 +122,12 @@ State.init({
   loading: false,
   newHealthFactor: "-",
   gas: "-",
+  allowanceAmount: "0",
+  needApprove: false,
 });
 
 function updateGas() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     repayETHGas().then((value) => {
       State.update({ gas: value });
     });
@@ -144,7 +147,7 @@ function bigMin(_a, _b) {
 }
 
 function getAvailableBalance() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     const newBalance = Number(balance) - 0.01;
     if (newBalance <= 0) {
       return 0;
@@ -178,7 +181,7 @@ const shownMaxValue =
  * @returns
  */
 function getNewHealthFactor(chainId, address, asset, action, amount) {
-  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  const url = `${config.AAVE_API_BASE_URL}/${chainId}/health/${address}`;
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
 }
 
@@ -207,7 +210,7 @@ const updateNewHealthFactor = debounce(() => {
         "repay",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
+        const newHealthFactor = formatHealthFactor(response.body);
         State.update({ newHealthFactor });
       });
     });
@@ -239,6 +242,79 @@ function getNonce(tokenAddress, userAddress) {
 
   return token.nonces(userAddress).then((nonce) => nonce.toNumber());
 }
+
+function getAllowance() {
+  const tokenAddress = underlyingAsset;
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((userAddress) => {
+      const token = new ethers.Contract(
+        tokenAddress,
+        config.erc20Abi.body,
+        Ethers.provider().getSigner()
+      );
+      token
+        .allowance(userAddress, config.aavePoolV3Address)
+        .then((allowanceAmount) => allowanceAmount.toString())
+        .then((allowanceAmount) => {
+          State.update({
+            allowanceAmount: Big(allowanceAmount)
+              .div(Big(10).pow(decimals))
+              .toFixed(),
+          });
+        });
+    });
+}
+getAllowance();
+
+function repayFromApproval(amount) {
+  const tokenAddress = underlyingAsset;
+  const pool = new ethers.Contract(
+    config.aavePoolV3Address,
+    config.aavePoolV3ABI.body,
+    Ethers.provider().getSigner()
+  );
+
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((userAddress) => {
+      return pool["repay(address,uint256,uint256,address)"](
+        tokenAddress,
+        amount,
+        2, // variable interest rate
+        userAddress
+      );
+    });
+}
+
+function approve(amount) {
+  const tokenAddress = underlyingAsset;
+  const token = new ethers.Contract(
+    tokenAddress,
+    config.erc20Abi.body,
+    Ethers.provider().getSigner()
+  );
+  return token["approve(address,uint256)"](config.aavePoolV3Address, amount);
+}
+
+function update() {
+  if (supportPermit) {
+    return;
+  }
+  if (
+    !isValid(state.amount) ||
+    !isValid(state.allowanceAmount) ||
+    Number(state.allowanceAmount) < Number(state.amount) ||
+    Number(state.amount) === 0
+  ) {
+    State.update({ needApprove: true });
+  } else {
+    State.update({ needApprove: false });
+  }
+}
+update();
 
 /**
  *
@@ -308,33 +384,9 @@ function repayERC20(shownAmount, actualAmount) {
     .getSigner()
     .getAddress()
     .then((address) => {
-      return signERC20Approval(
-        address,
-        asset,
-        tokenName,
-        actualAmount,
-        deadline
-      )
-        .then((rawSig) => {
-          const sig = ethers.utils.splitSignature(rawSig);
-          const pool = new ethers.Contract(
-            config.aavePoolV3Address,
-            config.aavePoolV3ABI.body,
-            Ethers.provider().getSigner()
-          );
-
-          return pool[
-            "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)"
-          ](
-            asset,
-            actualAmount,
-            2, // variable interest rate
-            address,
-            deadline,
-            sig.v,
-            sig.r,
-            sig.s
-          ).then((tx) => {
+      if (!supportPermit) {
+        repayFromApproval(actualAmount)
+          .then((tx) => {
             tx.wait().then((res) => {
               const { status } = res;
               if (status === 1) {
@@ -355,9 +407,60 @@ function repayERC20(shownAmount, actualAmount) {
                 console.log("tx failed", res);
               }
             });
-          });
-        })
-        .catch(() => State.update({ loading: false }));
+          })
+          .catch(() => State.update({ loading: false }));
+      } else {
+        return signERC20Approval(
+          address,
+          asset,
+          tokenName,
+          actualAmount,
+          deadline
+        )
+          .then((rawSig) => {
+            const sig = ethers.utils.splitSignature(rawSig);
+            const pool = new ethers.Contract(
+              config.aavePoolV3Address,
+              config.aavePoolV3ABI.body,
+              Ethers.provider().getSigner()
+            );
+
+            return pool[
+              "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)"
+            ](
+              asset,
+              actualAmount,
+              2, // variable interest rate
+              address,
+              deadline,
+              sig.v,
+              sig.r,
+              sig.s
+            ).then((tx) => {
+              tx.wait().then((res) => {
+                const { status } = res;
+                if (status === 1) {
+                  onActionSuccess({
+                    msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
+                    callback: () => {
+                      onRequestClose();
+                      State.update({
+                        loading: false,
+                      });
+                    },
+                  });
+                  console.log("tx succeeded", res);
+                } else {
+                  State.update({
+                    loading: false,
+                  });
+                  console.log("tx failed", res);
+                }
+              });
+            });
+          })
+          .catch(() => State.update({ loading: false }));
+      }
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -564,29 +667,63 @@ return (
               src={`${config.ownerId}/widget/AAVE.GasEstimation`}
               props={{ gas: state.gas, config }}
             />
-            <Widget
-              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-              props={{
-                config,
-                children: `Repay ${symbol}`,
-                loading: state.loading,
-                onClick: () => {
-                  const actualAmount = Big(
-                    state.amount === shownMaxValue
-                      ? actualMaxValue
-                      : state.amount
-                  )
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
-                  const shownAmount = state.amount;
-                  if (symbol === "ETH" || symbol === "WETH") {
-                    repayETH(shownAmount, actualAmount);
-                  } else {
-                    repayERC20(shownAmount, actualAmount);
-                  }
-                },
-              }}
-            />
+            {state.needApprove && (
+              <Widget
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                props={{
+                  config,
+                  loading: state.loading,
+                  children: `Approve ${symbol}`,
+                  disabled,
+                  onClick: () => {
+                    State.update({
+                      loading: true,
+                    });
+                    const amount = Big(state.amount)
+                      .mul(Big(10).pow(decimals))
+                      .toFixed(0);
+                    approve(amount)
+                      .then((tx) => {
+                        tx.wait().then((res) => {
+                          const { status } = res;
+                          if (status === 1) {
+                            State.update({
+                              needApprove: false,
+                              loading: false,
+                            });
+                          }
+                        });
+                      })
+                      .catch(() => State.update({ loading: false }));
+                  },
+                }}
+              />
+            )}
+            {!state.needApprove && (
+              <Widget
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                props={{
+                  config,
+                  children: `Repay ${symbol}`,
+                  loading: state.loading,
+                  onClick: () => {
+                    const actualAmount = Big(
+                      state.amount === shownMaxValue
+                        ? actualMaxValue
+                        : state.amount
+                    )
+                      .mul(Big(10).pow(decimals))
+                      .toFixed(0);
+                    const shownAmount = state.amount;
+                    if (symbol === config.nativeCurrency.symbol) {
+                      repayETH(shownAmount, actualAmount);
+                    } else {
+                      repayERC20(shownAmount, actualAmount);
+                    }
+                  },
+                }}
+              />
+            )}
           </RepayContainer>
         ),
         config,

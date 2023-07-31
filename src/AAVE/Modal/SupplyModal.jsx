@@ -29,9 +29,10 @@ const {
   supplyAPY,
   usageAsCollateralEnabled,
   decimals,
-  token,
+  underlyingAsset,
   name: tokenName,
   healthFactor,
+  supportPermit,
 } = data;
 
 const WithdrawContainer = styled.div`
@@ -120,10 +121,12 @@ State.init({
   loading: false,
   newHealthFactor: "-",
   gas: "-",
+  allowanceAmount: "0",
+  needApprove: false,
 });
 
 function updateGas() {
-  if (["ETH", "WETH"].includes(symbol)) {
+  if (symbol === config.nativeCurrency.symbol) {
     depositETHGas().then((value) => {
       State.update({ gas: value });
     });
@@ -265,44 +268,156 @@ function depositETH(amount) {
     .catch(() => State.update({ loading: false }));
 }
 
+function getAllowance() {
+  const tokenAddress = underlyingAsset;
+  Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((userAddress) => {
+      const token = new ethers.Contract(
+        tokenAddress,
+        config.erc20Abi.body,
+        Ethers.provider().getSigner()
+      );
+      token
+        .allowance(userAddress, config.aavePoolV3Address)
+        .then((allowanceAmount) => allowanceAmount.toString())
+        .then((allowanceAmount) => {
+          State.update({
+            allowanceAmount: Big(allowanceAmount)
+              .div(Big(10).pow(decimals))
+              .toFixed(),
+          });
+        });
+    });
+}
+
+getAllowance();
+
+function depositFromApproval(amount) {
+  const tokenAddress = underlyingAsset;
+  const pool = new ethers.Contract(
+    config.aavePoolV3Address,
+    config.aavePoolV3ABI.body,
+    Ethers.provider().getSigner()
+  );
+
+  return Ethers.provider()
+    .getSigner()
+    .getAddress()
+    .then((userAddress) => {
+      return pool["supply(address,uint256,address,uint16)"](
+        tokenAddress,
+        amount,
+        userAddress,
+        0
+      );
+    });
+}
+
+function approve(amount) {
+  const tokenAddress = underlyingAsset;
+  const token = new ethers.Contract(
+    tokenAddress,
+    config.erc20Abi.body,
+    Ethers.provider().getSigner()
+  );
+  return token["approve(address,uint256)"](config.aavePoolV3Address, amount);
+}
+
+function update() {
+  if (supportPermit) {
+    return;
+  }
+  if (
+    !isValid(state.amount) ||
+    !isValid(state.allowanceAmount) ||
+    Number(state.allowanceAmount) < Number(state.amount) ||
+    Number(state.amount) === 0
+  ) {
+    State.update({ needApprove: true });
+  } else {
+    State.update({ needApprove: false });
+  }
+}
+
+update();
+
 function depositErc20(amount) {
   State.update({
     loading: true,
   });
   const deadline = Math.floor(Date.now() / 1000 + 3600); // after an hour
+
   Ethers.provider()
     .getSigner()
     .getAddress()
     .then((userAddress) => {
-      signERC20Approval(userAddress, token, tokenName, amount, deadline)
-        .then((rawSig) => {
-          return supplyWithPermit(userAddress, token, amount, deadline, rawSig);
-        })
-        .then((tx) => {
-          tx.wait().then((res) => {
-            const { status } = res;
-            if (status === 1) {
-              onActionSuccess({
-                msg: `You supplied ${Big(amount)
-                  .div(Big(10).pow(decimals))
-                  .toFixed(8)} ${symbol}`,
-                callback: () => {
-                  onRequestClose();
-                  State.update({
-                    loading: false,
-                  });
-                },
-              });
-              console.log("tx succeeded", res);
-            } else {
-              State.update({
-                loading: false,
-              });
-              console.log("tx failed", res);
-            }
-          });
-        })
-        .catch(() => State.update({ loading: false }));
+      if (!supportPermit) {
+        depositFromApproval(amount)
+          .then((tx) => {
+            tx.wait().then((res) => {
+              const { status } = res;
+              if (status === 1) {
+                onActionSuccess({
+                  msg: `You supplied ${Big(amount)
+                    .div(Big(10).pow(decimals))
+                    .toFixed(8)} ${symbol}`,
+                  callback: () => {
+                    onRequestClose();
+                    State.update({
+                      loading: false,
+                    });
+                  },
+                });
+                console.log("tx succeeded", res);
+              } else {
+                State.update({
+                  loading: false,
+                });
+                console.log("tx failed", res);
+              }
+            });
+          })
+          .catch(() => State.update({ loading: false }));
+      } else {
+        const token = underlyingAsset;
+        signERC20Approval(userAddress, token, tokenName, amount, deadline)
+          .then((rawSig) => {
+            return supplyWithPermit(
+              userAddress,
+              token,
+              amount,
+              deadline,
+              rawSig
+            );
+          })
+          .then((tx) => {
+            tx.wait().then((res) => {
+              const { status } = res;
+              if (status === 1) {
+                onActionSuccess({
+                  msg: `You supplied ${Big(amount)
+                    .div(Big(10).pow(decimals))
+                    .toFixed(8)} ${symbol}`,
+                  callback: () => {
+                    onRequestClose();
+                    State.update({
+                      loading: false,
+                    });
+                  },
+                });
+                console.log("tx succeeded", res);
+              } else {
+                State.update({
+                  loading: false,
+                });
+                console.log("tx failed", res);
+              }
+            });
+          })
+          .catch(() => State.update({ loading: false }));
+      }
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -317,12 +432,12 @@ function depositErc20(amount) {
  * @returns
  */
 function getNewHealthFactor(chainId, address, asset, action, amount) {
-  const url = `https://aave-api.pages.dev/${chainId}/health/${address}`;
+  const url = `${config.AAVE_API_BASE_URL}/${chainId}/health/${address}`;
   return asyncFetch(`${url}?asset=${asset}&action=${action}&amount=${amount}`);
 }
 
 const maxValue =
-  symbol === "ETH" || symbol === "WETH"
+  symbol === config.nativeCurrency.symbol
     ? Big(balance).minus(MIN_ETH_GAS_FEE).toFixed(decimals)
     : Big(balance).toFixed(decimals);
 
@@ -347,11 +462,11 @@ const updateNewHealthFactor = debounce(() => {
       getNewHealthFactor(
         chainId,
         address,
-        data.underlyingAsset,
+        underlyingAsset,
         "deposit",
         state.amountInUSD
       ).then((response) => {
-        const newHealthFactor = formatHealthFactor(JSON.parse(response.body));
+        const newHealthFactor = formatHealthFactor(response.body);
         State.update({ newHealthFactor });
       });
     });
@@ -430,7 +545,10 @@ return (
                         left: <GrayTexture>${state.amountInUSD}</GrayTexture>,
                         right: (
                           <GrayTexture>
-                            Wallet Balance: {balance}
+                            Wallet Balance:{" "}
+                            {isValid(balance) && balance !== "-"
+                              ? Big(balance).toFixed(7)
+                              : balance}
                             <Max
                               onClick={() => {
                                 changeValue(maxValue);
@@ -506,26 +624,60 @@ return (
               src={`${config.ownerId}/widget/AAVE.GasEstimation`}
               props={{ gas: state.gas, config }}
             />
-            <Widget
-              src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
-              props={{
-                config,
-                children: `Supply ${symbol}`,
-                loading: state.loading,
-                onClick: () => {
-                  const amount = Big(state.amount)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
-                  if (symbol === "ETH" || symbol === "WETH") {
-                    // supply weth
-                    depositETH(amount);
-                  } else {
-                    // supply common
-                    depositErc20(amount);
-                  }
-                },
-              }}
-            />
+            {state.needApprove && (
+              <Widget
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                props={{
+                  config,
+                  loading: state.loading,
+                  children: `Approve ${symbol}`,
+                  disabled,
+                  onClick: () => {
+                    State.update({
+                      loading: true,
+                    });
+                    const amount = Big(state.amount)
+                      .mul(Big(10).pow(decimals))
+                      .toFixed(0);
+                    approve(amount)
+                      .then((tx) => {
+                        tx.wait().then((res) => {
+                          const { status } = res;
+                          if (status === 1) {
+                            State.update({
+                              needApprove: false,
+                              loading: false,
+                            });
+                          }
+                        });
+                      })
+                      .catch(() => State.update({ loading: false }));
+                  },
+                }}
+              />
+            )}
+            {!state.needApprove && (
+              <Widget
+                src={`${config.ownerId}/widget/AAVE.PrimaryButton`}
+                props={{
+                  config,
+                  children: `Supply ${symbol}`,
+                  loading: state.loading,
+                  onClick: () => {
+                    const amount = Big(state.amount)
+                      .mul(Big(10).pow(decimals))
+                      .toFixed(0);
+                    if (symbol === config.nativeCurrency.symbol) {
+                      // supply eth
+                      depositETH(amount);
+                    } else {
+                      // supply common
+                      depositErc20(amount);
+                    }
+                  },
+                }}
+              />
+            )}
           </WithdrawContainer>
         ),
         config,
