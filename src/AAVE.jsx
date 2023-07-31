@@ -127,9 +127,9 @@ if (
     .then((data) => {
       const chainId = data?.chainId;
       const config = getNetworkConfig(chainId);
-      State.update({ _chainId: chainId });
       if (!config) {
         console.log(`Unsupport chain, chainId: ${chainId}`);
+        State.update({ isChainSupported: false });
         switchEthereumChain(DEFAULT_CHAIN_ID);
       } else {
         State.update({ chainId });
@@ -387,7 +387,7 @@ const config = getConfig(context.networkId);
 State.init({
   imports: {},
   chainId: undefined, // chainId is undefined in the case of unsupported chains
-  _chainId: undefined, // _chainId is always assigned a value, including unsupported chains
+  isChainSupported: true,
   showWithdrawModal: false,
   showSupplyModal: false,
   showRepayModal: false,
@@ -730,7 +730,7 @@ const body = loading ? (
     <Widget src={`${config.ownerId}/widget/AAVE.Header`} props={{ config }} />
     <Body>
       {state.walletConnected
-        ? !state._chainId || !!getNetworkConfig(state._chainId)
+        ? state.isChainSupported
           ? "Loading..."
           : `Please switch network to ${
               getNetworkConfig(DEFAULT_CHAIN_ID).chainName
