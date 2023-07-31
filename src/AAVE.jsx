@@ -132,7 +132,7 @@ if (
         State.update({ isChainSupported: false });
         switchEthereumChain(DEFAULT_CHAIN_ID);
       } else {
-        State.update({ chainId });
+        State.update({ chainId, isChainSupported: true });
       }
     });
 }
