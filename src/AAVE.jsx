@@ -33,7 +33,7 @@ function getNetworkConfig(chainId) {
     FIXED_LIQUIDATION_VALUE: "1.0",
     MAX_UINT_256:
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    AAVE_API_BASE_URL: "https://aave-api.pages.dev",
+    AAVE_API_BASE_URL: "https://aave-data-service-7a85eea3aebe.herokuapp.com",
   };
 
   switch (chainId) {
