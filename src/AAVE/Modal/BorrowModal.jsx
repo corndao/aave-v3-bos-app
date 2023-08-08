@@ -135,6 +135,8 @@ function updateGas() {
 
 updateGas();
 
+const disabled =
+  !state.amount || !isValid(state.amount) || Number(state.amount) === 0;
 const maxValue = Big(availableBorrows).toFixed(decimals);
 
 /**
@@ -462,6 +464,7 @@ return (
                   config,
                   loading: state.loading,
                   children: `Approve ${symbol}`,
+                  disabled,
                   onClick: () => {
                     State.update({
                       loading: true,
@@ -496,6 +499,7 @@ return (
                   config,
                   children: `Borrow ${symbol}`,
                   loading: state.loading,
+                  disabled,
                   onClick: () => {
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))

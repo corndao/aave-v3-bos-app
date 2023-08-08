@@ -36,6 +36,9 @@ const {
   supportPermit,
 } = data;
 
+const disabled =
+  !state.amount || !isValid(state.amount) || Number(state.amount) === 0;
+
 const RepayContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -706,6 +709,7 @@ return (
                   config,
                   children: `Repay ${symbol}`,
                   loading: state.loading,
+                  disabled,
                   onClick: () => {
                     const actualAmount = Big(
                       state.amount === shownMaxValue

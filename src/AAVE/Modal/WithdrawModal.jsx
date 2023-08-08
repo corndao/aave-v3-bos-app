@@ -366,10 +366,13 @@ const changeValue = (value) => {
 };
 
 const disabled =
-  state.newHealthFactor !== "∞" &&
-  (!isValid(state.newHealthFactor) ||
-    state.newHealthFactor === "" ||
-    Big(state.newHealthFactor).lt(1));
+  (state.newHealthFactor !== "∞" &&
+    (!isValid(state.newHealthFactor) ||
+      state.newHealthFactor === "" ||
+      Big(state.newHealthFactor).lt(1))) ||
+  !state.amount ||
+  !isValid(state.amount) ||
+  Number(state.amount) === 0;
 
 return (
   <Widget

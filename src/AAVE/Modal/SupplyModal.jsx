@@ -472,6 +472,9 @@ const updateNewHealthFactor = debounce(() => {
     });
 }, 1000);
 
+const disabled =
+  !state.amount || !isValid(state.amount) || Number(state.amount) === 0;
+
 const changeValue = (value) => {
   if (Number(value) > Number(maxValue)) {
     value = maxValue;
@@ -663,6 +666,7 @@ return (
                   config,
                   children: `Supply ${symbol}`,
                   loading: state.loading,
+                  disabled,
                   onClick: () => {
                     const amount = Big(state.amount)
                       .mul(Big(10).pow(decimals))
