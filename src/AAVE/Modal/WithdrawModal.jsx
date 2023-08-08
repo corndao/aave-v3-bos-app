@@ -505,6 +505,11 @@ return (
                         const { status } = res;
                         if (status === 1) {
                           State.update({ needApprove: false, loading: false });
+                        } else {
+                          console.log("tx failed", res);
+                          State.update({
+                            loading: false,
+                          });
                         }
                       });
                     })

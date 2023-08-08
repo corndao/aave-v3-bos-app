@@ -648,6 +648,11 @@ return (
                               needApprove: false,
                               loading: false,
                             });
+                          } else {
+                            console.log("tx failed", res);
+                            State.update({
+                              loading: false,
+                            });
                           }
                         });
                       })
