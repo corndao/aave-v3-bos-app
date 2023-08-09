@@ -242,28 +242,30 @@ function depositETH(amount) {
       );
     })
     .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You supplied ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
+      tx.wait()
+        .then((res) => {
+          const { status } = res;
+          if (status === 1) {
+            onActionSuccess({
+              msg: `You supplied ${Big(amount)
+                .div(Big(10).pow(decimals))
+                .toFixed(8)} ${symbol}`,
+              callback: () => {
+                onRequestClose();
+                State.update({
+                  loading: false,
+                });
+              },
+            });
+            console.log("tx succeeded", res);
+          } else {
+            console.log("tx failed", res);
+            State.update({
+              loading: false,
+            });
+          }
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -356,28 +358,30 @@ function depositErc20(amount) {
       if (!supportPermit) {
         depositFromApproval(amount)
           .then((tx) => {
-            tx.wait().then((res) => {
-              const { status } = res;
-              if (status === 1) {
-                onActionSuccess({
-                  msg: `You supplied ${Big(amount)
-                    .div(Big(10).pow(decimals))
-                    .toFixed(8)} ${symbol}`,
-                  callback: () => {
-                    onRequestClose();
-                    State.update({
-                      loading: false,
-                    });
-                  },
-                });
-                console.log("tx succeeded", res);
-              } else {
-                State.update({
-                  loading: false,
-                });
-                console.log("tx failed", res);
-              }
-            });
+            tx.wait()
+              .then((res) => {
+                const { status } = res;
+                if (status === 1) {
+                  onActionSuccess({
+                    msg: `You supplied ${Big(amount)
+                      .div(Big(10).pow(decimals))
+                      .toFixed(8)} ${symbol}`,
+                    callback: () => {
+                      onRequestClose();
+                      State.update({
+                        loading: false,
+                      });
+                    },
+                  });
+                  console.log("tx succeeded", res);
+                } else {
+                  State.update({
+                    loading: false,
+                  });
+                  console.log("tx failed", res);
+                }
+              })
+              .catch(() => State.update({ loading: false }));
           })
           .catch(() => State.update({ loading: false }));
       } else {
@@ -393,28 +397,30 @@ function depositErc20(amount) {
             );
           })
           .then((tx) => {
-            tx.wait().then((res) => {
-              const { status } = res;
-              if (status === 1) {
-                onActionSuccess({
-                  msg: `You supplied ${Big(amount)
-                    .div(Big(10).pow(decimals))
-                    .toFixed(8)} ${symbol}`,
-                  callback: () => {
-                    onRequestClose();
-                    State.update({
-                      loading: false,
-                    });
-                  },
-                });
-                console.log("tx succeeded", res);
-              } else {
-                State.update({
-                  loading: false,
-                });
-                console.log("tx failed", res);
-              }
-            });
+            tx.wait()
+              .then((res) => {
+                const { status } = res;
+                if (status === 1) {
+                  onActionSuccess({
+                    msg: `You supplied ${Big(amount)
+                      .div(Big(10).pow(decimals))
+                      .toFixed(8)} ${symbol}`,
+                    callback: () => {
+                      onRequestClose();
+                      State.update({
+                        loading: false,
+                      });
+                    },
+                  });
+                  console.log("tx succeeded", res);
+                } else {
+                  State.update({
+                    loading: false,
+                  });
+                  console.log("tx failed", res);
+                }
+              })
+              .catch(() => State.update({ loading: false }));
           })
           .catch(() => State.update({ loading: false }));
       }
@@ -644,15 +650,23 @@ return (
                       .toFixed(0);
                     approve(amount)
                       .then((tx) => {
-                        tx.wait().then((res) => {
-                          const { status } = res;
-                          if (status === 1) {
-                            State.update({
-                              needApprove: false,
-                              loading: false,
-                            });
-                          }
-                        });
+                        tx.wait()
+                          .then((res) => {
+                            const { status } = res;
+                            if (status === 1) {
+                              console.log("tx succeeded", res);
+                              State.update({
+                                needApprove: false,
+                                loading: false,
+                              });
+                            } else {
+                              console.log("tx failed", res);
+                              State.update({
+                                loading: false,
+                              });
+                            }
+                          })
+                          .catch(() => State.update({ loading: false }));
                       })
                       .catch(() => State.update({ loading: false }));
                   },
