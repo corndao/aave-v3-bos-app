@@ -253,28 +253,30 @@ function borrowERC20(amount) {
       );
     })
     .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You borrowed ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
+      tx.wait()
+        .then((res) => {
+          const { status } = res;
+          if (status === 1) {
+            onActionSuccess({
+              msg: `You borrowed ${Big(amount)
+                .div(Big(10).pow(decimals))
+                .toFixed(8)} ${symbol}`,
+              callback: () => {
+                onRequestClose();
+                State.update({
+                  loading: false,
+                });
+              },
+            });
+            console.log("tx succeeded", res);
+          } else {
+            console.log("tx failed", res);
+            State.update({
+              loading: false,
+            });
+          }
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -294,28 +296,30 @@ function borrowETH(amount) {
       0
     )
     .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You borrowed ${Big(amount)
-              .div(Big(10).pow(decimals))
-              .toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
+      tx.wait()
+        .then((res) => {
+          const { status } = res;
+          if (status === 1) {
+            onActionSuccess({
+              msg: `You borrowed ${Big(amount)
+                .div(Big(10).pow(decimals))
+                .toFixed(8)} ${symbol}`,
+              callback: () => {
+                onRequestClose();
+                State.update({
+                  loading: false,
+                });
+              },
+            });
+            console.log("tx succeeded", res);
+          } else {
+            console.log("tx failed", res);
+            State.update({
+              loading: false,
+            });
+          }
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -472,20 +476,22 @@ return (
 
                     approveDelegation(variableDebtTokenAddress)
                       .then((tx) => {
-                        tx.wait().then((res) => {
-                          const { status } = res;
-                          if (status === 1) {
-                            State.update({
-                              needApprove: false,
-                              loading: false,
-                            });
-                          } else {
-                            console.log("tx failed", res);
-                            State.update({
-                              loading: false,
-                            });
-                          }
-                        });
+                        tx.wait()
+                          .then((res) => {
+                            const { status } = res;
+                            if (status === 1) {
+                              State.update({
+                                needApprove: false,
+                                loading: false,
+                              });
+                            } else {
+                              console.log("tx failed", res);
+                              State.update({
+                                loading: false,
+                              });
+                            }
+                          })
+                          .catch(() => State.update({ loading: false }));
                       })
                       .catch(() => State.update({ loading: false }));
                   },

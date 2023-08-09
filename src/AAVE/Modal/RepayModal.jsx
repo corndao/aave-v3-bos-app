@@ -387,26 +387,28 @@ function repayERC20(shownAmount, actualAmount) {
       if (!supportPermit) {
         repayFromApproval(actualAmount)
           .then((tx) => {
-            tx.wait().then((res) => {
-              const { status } = res;
-              if (status === 1) {
-                onActionSuccess({
-                  msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
-                  callback: () => {
-                    onRequestClose();
-                    State.update({
-                      loading: false,
-                    });
-                  },
-                });
-                console.log("tx succeeded", res);
-              } else {
-                State.update({
-                  loading: false,
-                });
-                console.log("tx failed", res);
-              }
-            });
+            tx.wait()
+              .then((res) => {
+                const { status } = res;
+                if (status === 1) {
+                  onActionSuccess({
+                    msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
+                    callback: () => {
+                      onRequestClose();
+                      State.update({
+                        loading: false,
+                      });
+                    },
+                  });
+                  console.log("tx succeeded", res);
+                } else {
+                  State.update({
+                    loading: false,
+                  });
+                  console.log("tx failed", res);
+                }
+              })
+              .catch(() => State.update({ loading: false }));
           })
           .catch(() => State.update({ loading: false }));
       } else {
@@ -437,26 +439,30 @@ function repayERC20(shownAmount, actualAmount) {
               sig.r,
               sig.s
             ).then((tx) => {
-              tx.wait().then((res) => {
-                const { status } = res;
-                if (status === 1) {
-                  onActionSuccess({
-                    msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
-                    callback: () => {
-                      onRequestClose();
-                      State.update({
-                        loading: false,
-                      });
-                    },
-                  });
-                  console.log("tx succeeded", res);
-                } else {
-                  State.update({
-                    loading: false,
-                  });
-                  console.log("tx failed", res);
-                }
-              });
+              tx.wait()
+                .then((res) => {
+                  const { status } = res;
+                  if (status === 1) {
+                    onActionSuccess({
+                      msg: `You repaid ${Big(shownAmount).toFixed(
+                        8
+                      )} ${symbol}`,
+                      callback: () => {
+                        onRequestClose();
+                        State.update({
+                          loading: false,
+                        });
+                      },
+                    });
+                    console.log("tx succeeded", res);
+                  } else {
+                    State.update({
+                      loading: false,
+                    });
+                    console.log("tx failed", res);
+                  }
+                })
+                .catch(() => State.update({ loading: false }));
             });
           })
           .catch(() => State.update({ loading: false }));
@@ -488,26 +494,28 @@ function repayETH(shownAmount, actualAmount) {
           }
         )
         .then((tx) => {
-          tx.wait().then((res) => {
-            const { status } = res;
-            if (status === 1) {
-              onActionSuccess({
-                msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
-                callback: () => {
-                  onRequestClose();
-                  State.update({
-                    loading: false,
-                  });
-                },
-              });
-              console.log("tx succeeded", res);
-            } else {
-              State.update({
-                loading: false,
-              });
-              console.log("tx failed", res);
-            }
-          });
+          tx.wait()
+            .then((res) => {
+              const { status } = res;
+              if (status === 1) {
+                onActionSuccess({
+                  msg: `You repaid ${Big(shownAmount).toFixed(8)} ${symbol}`,
+                  callback: () => {
+                    onRequestClose();
+                    State.update({
+                      loading: false,
+                    });
+                  },
+                });
+                console.log("tx succeeded", res);
+              } else {
+                State.update({
+                  loading: false,
+                });
+                console.log("tx failed", res);
+              }
+            })
+            .catch(() => State.update({ loading: false }));
         })
         .catch(() => State.update({ loading: false }));
     })
@@ -684,20 +692,22 @@ return (
                       .toFixed(0);
                     approve(amount)
                       .then((tx) => {
-                        tx.wait().then((res) => {
-                          const { status } = res;
-                          if (status === 1) {
-                            State.update({
-                              needApprove: false,
-                              loading: false,
-                            });
-                          } else {
-                            console.log("tx failed", res);
-                            State.update({
-                              loading: false,
-                            });
-                          }
-                        });
+                        tx.wait()
+                          .then((res) => {
+                            const { status } = res;
+                            if (status === 1) {
+                              State.update({
+                                needApprove: false,
+                                loading: false,
+                              });
+                            } else {
+                              console.log("tx failed", res);
+                              State.update({
+                                loading: false,
+                              });
+                            }
+                          })
+                          .catch(() => State.update({ loading: false }));
                       })
                       .catch(() => State.update({ loading: false }));
                   },

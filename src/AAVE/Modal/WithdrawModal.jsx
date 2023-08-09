@@ -161,26 +161,28 @@ function withdrawErc20(asset, actualAmount, shownAmount) {
       );
     })
     .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
+      tx.wait()
+        .then((res) => {
+          const { status } = res;
+          if (status === 1) {
+            onActionSuccess({
+              msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
+              callback: () => {
+                onRequestClose();
+                State.update({
+                  loading: false,
+                });
+              },
+            });
+            console.log("tx succeeded", res);
+          } else {
+            console.log("tx failed", res);
+            State.update({
+              loading: false,
+            });
+          }
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -206,26 +208,28 @@ function withdrawETH(actualAmount, shownAmount) {
       );
     })
     .then((tx) => {
-      tx.wait().then((res) => {
-        const { status } = res;
-        if (status === 1) {
-          onActionSuccess({
-            msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
-            callback: () => {
-              onRequestClose();
-              State.update({
-                loading: false,
-              });
-            },
-          });
-          console.log("tx succeeded", res);
-        } else {
-          console.log("tx failed", res);
-          State.update({
-            loading: false,
-          });
-        }
-      });
+      tx.wait()
+        .then((res) => {
+          const { status } = res;
+          if (status === 1) {
+            onActionSuccess({
+              msg: `You withdraw ${Big(shownAmount).toFixed(8)} ${symbol}`,
+              callback: () => {
+                onRequestClose();
+                State.update({
+                  loading: false,
+                });
+              },
+            });
+            console.log("tx succeeded", res);
+          } else {
+            console.log("tx failed", res);
+            State.update({
+              loading: false,
+            });
+          }
+        })
+        .catch(() => State.update({ loading: false }));
     })
     .catch(() => State.update({ loading: false }));
 }
@@ -501,17 +505,22 @@ return (
                     .toFixed(0);
                   approveForGateway(aTokenAddress, amount)
                     .then((tx) => {
-                      tx.wait().then((res) => {
-                        const { status } = res;
-                        if (status === 1) {
-                          State.update({ needApprove: false, loading: false });
-                        } else {
-                          console.log("tx failed", res);
-                          State.update({
-                            loading: false,
-                          });
-                        }
-                      });
+                      tx.wait()
+                        .then((res) => {
+                          const { status } = res;
+                          if (status === 1) {
+                            State.update({
+                              needApprove: false,
+                              loading: false,
+                            });
+                          } else {
+                            console.log("tx failed", res);
+                            State.update({
+                              loading: false,
+                            });
+                          }
+                        })
+                        .catch(() => State.update({ loading: false }));
                     })
                     .catch(() => State.update({ loading: false }));
                 },
