@@ -649,9 +649,9 @@ return (
                       .then((tx) => {
                         tx.wait()
                           .then((res) => {
-                            console.log("tx succeeded", res);
                             const { status } = res;
                             if (status === 1) {
+                              console.log("tx succeeded", res);
                               State.update({
                                 needApprove: false,
                                 loading: false,
